@@ -1,70 +1,154 @@
-# Tontine 221 — Plateforme de Tontine Numérique Sénégalaise
+# 🌿 TontineSN — Application Laravel de Gestion de Tontines
 
-Application web Laravel 12 de gestion de tontines avec authentification OTP, intégration Mobile Money (Wave, Orange Money) et support USSD.
+Projet académique · Master Développement Web · Sénégal
 
-## Fonctionnalités
-
-- Authentification sans mot de passe via OTP (SMS)
-- Création et gestion de tontines
-- Gestion des cycles et tirages
-- Paiements Mobile Money (Wave, Orange Money)
-- Score de crédit des membres
-- Interface USSD pour accès sans smartphone
-- Espace admin avec logs d'activité
-- Support multilingue (Français / Wolof)
+---
 
 ## Stack technique
 
-- **Backend** : Laravel 12 (PHP 8.2+)
-- **Base de données** : MySQL / PostgreSQL
-- **Frontend** : Blade + CSS personnalisé
-- **Queue** : Laravel Jobs (reminders, cycles)
-- **Paiements** : Wave API, Orange Money API
+| Couche       | Technologie              |
+|--------------|--------------------------|
+| Backend      | Laravel 12.x / PHP 8.2+  |
+| Frontend     | Blade + Bootstrap 5 + Alpine.js |
+| Base données | MySQL 8.0+               |
+| Cache/Queue  | File (dev) / Redis (prod)|
+| Paiements    | Wave API + Orange Money  |
+| Notifications| SMS + FCM Push           |
+
+---
 
 ## Installation
 
+### 1. Prérequis
+- PHP 8.2+
+- Composer
+- MySQL 8.0+
+- Node.js (optionnel, pour Vite)
+
+### 2. Configuration
+
 ```bash
-git clone https://github.com/Sow221/tontine-221.git
-cd tontine-221
-composer install
+# Copier le fichier d'environnement
 cp .env.example .env
+
+# Configurer la base de données dans .env
+DB_DATABASE=tontine_sn
+DB_USERNAME=root
+DB_PASSWORD=votre_mot_de_passe
+
+# Générer la clé applicative
 php artisan key:generate
+```
+
+### 3. Base de données
+
+```bash
+# Créer la base de données MySQL
+mysql -u root -p -e "CREATE DATABASE tontine_sn CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# Lancer les migrations
 php artisan migrate
-npm install && npm run build
+
+# Insérer les données de test
+php artisan db:seed
+```
+
+### 4. Lancer le serveur
+
+```bash
 php artisan serve
 ```
 
-## Configuration `.env`
+Accès : http://localhost:8000
 
-```env
-DB_CONNECTION=mysql
-DB_DATABASE=tontine_221
+---
 
-WAVE_API_KEY=
-WAVE_SECRET=
-ORANGE_API_KEY=
-ORANGE_SECRET=
+## Comptes de test (après seeding)
 
-SMS_PROVIDER=
-SMS_API_KEY=
-```
+| Rôle        | Téléphone        |
+|-------------|------------------|
+| Super Admin | +221700000001    |
+| Gérante     | +221770000002    |
+| Membre      | +221780000003    |
 
-## Structure du projet
+> Connexion par OTP SMS (simulé en log en mode dev)
+
+---
+
+## Architecture
 
 ```
 app/
 ├── Http/
 │   ├── Controllers/
-│   │   ├── Admin/          # Dashboard admin
-│   │   ├── Web/            # Auth, Tontines, Cycles, Paiements
-│   │   └── UssdController  # Interface USSD
-│   ├── Middleware/         # Auth, RoleMiddleware, ActivityLogger
-│   └── Requests/           # Validation
-├── Models/                 # User, Tontine, Cycle, Transaction, CreditScore
-├── Services/               # AuthService, TontineService, MobileMoneyService...
-└── Jobs/                   # ProcessCycle, SendReminders
+│   │   ├── Web/          # AuthController, DashboardController, TontineController, PaymentController, CycleController
+│   │   ├── Admin/        # AdminDashboardController
+│   │   └── UssdController
+│   ├── Middleware/       # RoleMiddleware, ActivityLogger
+│   └── Requests/         # RegisterRequest, StoreTontineRequest
+├── Models/               # User, Tontine, Cycle, Transaction, CreditScore, OtpCode
+├── Services/             # AuthService, TontineService, MobileMoneyService, CreditScoringService, NotificationService
+└── Jobs/                 # ProcessCycle, SendReminders
 ```
 
-## Licence
+---
 
-MIT
+## Modules implémentés
+
+| Phase | Module                          | Statut |
+|-------|---------------------------------|--------|
+| 1     | Configuration & Migrations      | ✅     |
+| 2     | Authentification OTP sans mdp   | ✅     |
+| 3     | Tontines, Cycles, Membres       | ✅     |
+| 4     | Paiements Wave & Orange Money   | ✅     |
+| 5     | Crédit Scoring (algorithme CDC) | ✅     |
+| 5     | Notifications SMS/Push          | ✅     |
+| 6     | Interface USSD (*144#)          | ✅     |
+| 6     | Dashboard, Vues Blade           | ✅     |
+| 6     | Admin Panel                     | ✅     |
+
+---
+
+## Algorithme de crédit scoring
+
+```
+Score (/10) = (total_contribué / 100 000) × 0.3
+            + (paiements_à_temps / total_cycles) × 0.5
+            + (ancienneté_mois / 12) × 0.2
+
+Badges : Bronze ≥ 4.0 | Argent ≥ 6.5 | Or ≥ 8.5
+```
+
+---
+
+## USSD (*144#)
+
+```
+1. Mes tontines
+2. Payer cotisation
+3. Voir bénéficiaires
+4. Historique
+5. Mon score crédit
+0. Changer langue
+```
+
+Endpoint : `POST /ussd`
+
+---
+
+## Sécurité
+
+- Authentification sans mot de passe (OTP 6 chiffres, TTL 5 min)
+- Middleware de rôles (member / manager / admin / super_admin)
+- Rate limiting (5 req/min sur envoi OTP)
+- Vérification signature webhook Wave (HMAC-SHA256)
+- Journalisation des actions sensibles (activity_logs)
+- Protection CSRF sur tous les formulaires
+
+---
+
+## Langues supportées
+
+- 🇫🇷 Français (`resources/lang/fr/`)
+- 🇸🇳 Wolof (`resources/lang/wo/`)
+- 🇬🇧 Anglais (`resources/lang/en/`)

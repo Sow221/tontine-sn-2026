@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->unsignedInteger('max_members')->default(20);
-            $table->unsignedDecimal('penalty_rate', 5, 2)->default(0);
+            $table->decimal('penalty_rate', 5, 2)->unsigned()->default(0);
             $table->unsignedInteger('quorum')->default(1);
             $table->enum('draw_method', ['random', 'sequential'])->default('sequential');
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
