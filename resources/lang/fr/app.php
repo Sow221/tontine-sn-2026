@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'welcome'        => 'Bienvenue sur TontineSN',
+    'login'          => 'Connexion',
+    'logout'         => 'Déconnexion',
+    'dashboard'      => 'Tableau de bord',
+    'my_tontines'    => 'Mes tontines',
+    'create_tontine' => 'Créer une tontine',
+    'join_tontine'   => 'Rejoindre une tontine',
+    'pay'            => 'Payer',
+    'history'        => 'Historique',
+    'profile'        => 'Profil',
+    'credit_score'   => 'Score crédit',
+    'members'        => 'Membres',
+    'cycles'         => 'Cycles',
+    'amount'         => 'Montant',
+    'frequency'      => 'Fréquence',
+    'status'         => 'Statut',
+    'next_payment'   => 'Prochain paiement',
+    'no_tontines'    => 'Vous n\'avez pas encore de tontine.',
+    'otp_sent'       => 'Code envoyé par SMS.',
+    'otp_invalid'    => 'Code invalide ou expiré.',
+    'payment_success'=> 'Paiement confirmé avec succès.',
+    'payment_failed' => 'Échec du paiement.',
+];

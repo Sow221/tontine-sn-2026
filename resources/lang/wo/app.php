@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'welcome'        => 'Dalal ak jàmm ci TontineSN',
+    'login'          => 'Dugg',
+    'logout'         => 'Génn',
+    'dashboard'      => 'Tableau de bord',
+    'my_tontines'    => 'Sama tontines',
+    'create_tontine' => 'Sos tontine',
+    'join_tontine'   => 'Dugël ci tontine',
+    'pay'            => 'Fey',
+    'history'        => 'Xam-xam bi',
+    'profile'        => 'Sama profil',
+    'credit_score'   => 'Score crédit',
+    'members'        => 'Xarit yi',
+    'cycles'         => 'Cycles yi',
+    'amount'         => 'Xaalis bi',
+    'frequency'      => 'Yëgël',
+    'status'         => 'Yoon wi',
+    'next_payment'   => 'Fey bu jiitu',
+    'no_tontines'    => 'Amul sa tontine.',
+    'otp_sent'       => 'Code bi dem na ci SMS.',
+    'otp_invalid'    => 'Code bi dafa faux walla dafa jeex.',
+    'payment_success'=> 'Fey bi dafa dëkk.',
+    'payment_failed' => 'Fey bi dafa xaw.',
+];
