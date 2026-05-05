@@ -2,53 +2,51 @@
 
 namespace App\Services;
 
-use App\Models\OtpCode;
+use App\Mail\MagicLinkMail;
+use App\Models\MagicLink;
 use App\Models\User;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class AuthService
 {
-    public function sendOtp(string $phone): bool
+    public function sendMagicLink(string $email): bool
     {
-        // Invalider les anciens OTP
-        OtpCode::where('phone_number', $phone)
-                ->where('used', false)
-                ->update(['used' => true]);
+        // Invalider les anciens liens non utilisés
+        MagicLink::where('email', $email)
+                 ->where('used', false)
+                 ->update(['used' => true]);
 
-        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $token = Str::random(64);
 
-        OtpCode::create([
-            'phone_number' => $phone,
-            'code'         => $code,
-            'expires_at'   => Carbon::now()->addMinutes(config('tontine.otp.expiry_minutes')),
+        MagicLink::create([
+            'email'      => $email,
+            'token'      => hash('sha256', $token),
+            'expires_at' => now()->addMinutes(15),
         ]);
 
-        return app(NotificationService::class)->sendSms($phone, "TontineSN - Votre code : {$code}");
-    }
+        $url = route('auth.magic.verify', ['token' => $token]);
 
-    public function verifyOtp(string $phone, string $code): bool
-    {
-        $otp = OtpCode::where('phone_number', $phone)
-                      ->where('used', false)
-                      ->latest()
-                      ->first();
+        Mail::to($email)->send(new MagicLinkMail($url));
 
-        if (!$otp) return false;
-
-        $otp->increment('attempts');
-
-        if (!$otp->isValid($code)) return false;
-
-        $otp->update(['used' => true]);
         return true;
     }
 
-    public function findOrCreateUser(string $phone): User
+    public function verifyToken(string $token): ?User
     {
+        $link = MagicLink::where('token', hash('sha256', $token))
+                         ->where('used', false)
+                         ->first();
+
+        if (!$link || !$link->isValid()) {
+            return null;
+        }
+
+        $link->update(['used' => true]);
+
         return User::firstOrCreate(
-            ['phone_number' => $phone],
-            ['role' => 'member']
+            ['email' => $link->email],
+            ['role'  => 'member']
         );
     }
 }

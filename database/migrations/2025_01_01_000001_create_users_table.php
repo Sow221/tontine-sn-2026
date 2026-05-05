@@ -10,9 +10,8 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('phone_number', 20)->unique();
+            $table->string('email')->unique();
             $table->string('name', 100)->nullable();
-            $table->string('email')->nullable()->unique();
             $table->string('avatar')->nullable();
             $table->enum('role', ['member', 'manager', 'admin', 'super_admin'])->default('member');
             $table->enum('preferred_language', ['fr', 'wo', 'en'])->default('fr');
@@ -20,6 +19,7 @@ return new class extends Migration
             $table->string('kyc_document')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamp('last_seen_at')->nullable();
+            $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
         });

@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\RegisterRequest;
 use App\Services\AuthService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 
 class AuthController extends Controller
 {
@@ -17,40 +15,43 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    public function sendOtp(RegisterRequest $request)
+    public function sendMagicLink(Request $request)
     {
-        $phone = $request->phone_number;
-        $sent  = $this->authService->sendOtp($phone);
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
 
-        if (!$sent) {
-            return back()->withErrors(['phone_number' => 'Impossible d\'envoyer le SMS. Réessayez.']);
-        }
+        $this->authService->sendMagicLink($request->email);
 
-        Session::put('otp_phone', $phone);
-        return redirect()->route('auth.otp.form');
+        // On retourne toujours succès pour ne pas révéler si l'email existe
+        return redirect()->route('auth.magic.sent')
+                         ->with('email', $request->email);
     }
 
-    public function showOtpForm()
+    public function magicLinkSent()
     {
-        if (!Session::has('otp_phone')) {
-            return redirect()->route('auth.login');
-        }
-        return view('auth.otp', ['phone' => Session::get('otp_phone')]);
+        return view('auth.magic-sent', [
+            'email' => session('email'),
+        ]);
     }
 
-    public function verifyOtp(Request $request)
+    public function verifyMagicLink(Request $request)
     {
-        $request->validate(['code' => 'required|digits:6']);
+        $token = $request->query('token');
 
-        $phone = Session::get('otp_phone');
-
-        if (!$phone || !$this->authService->verifyOtp($phone, $request->code)) {
-            return back()->withErrors(['code' => 'Code invalide ou expiré.']);
+        if (!$token) {
+            return redirect()->route('auth.login')
+                             ->withErrors(['email' => 'Lien invalide.']);
         }
 
-        $user = $this->authService->findOrCreateUser($phone);
-        auth()->login($user);
-        Session::forget('otp_phone');
+        $user = $this->authService->verifyToken($token);
+
+        if (!$user) {
+            return redirect()->route('auth.login')
+                             ->withErrors(['email' => 'Ce lien est expiré ou déjà utilisé.']);
+        }
+
+        auth()->login($user, remember: true);
 
         return redirect()->intended(route('dashboard'));
     }

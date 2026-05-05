@@ -8,11 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('otp_codes', function (Blueprint $table) {
+        Schema::create('magic_links', function (Blueprint $table) {
             $table->id();
-            $table->string('phone_number', 20)->index();
-            $table->string('code', 10);
-            $table->tinyInteger('attempts')->default(0);
+            $table->string('email')->index();
+            $table->string('token', 64)->unique();
             $table->boolean('used')->default(false);
             $table->timestamp('expires_at');
             $table->timestamps();
@@ -21,6 +20,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('otp_codes');
+        Schema::dropIfExists('magic_links');
     }
 };

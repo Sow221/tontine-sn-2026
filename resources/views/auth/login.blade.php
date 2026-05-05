@@ -14,14 +14,12 @@
 <div class="auth-container">
     <div class="auth-card">
 
-        {{-- Logo --}}
         <div class="text-center mb-4">
             <div class="auth-logo">🌿</div>
             <h1 class="auth-title">TontineSN</h1>
             <p class="auth-subtitle">Gérez vos tontines en toute sécurité</p>
         </div>
 
-        {{-- Erreurs --}}
         @if($errors->any())
             <div class="alert alert-danger">
                 @foreach($errors->all() as $error)
@@ -30,34 +28,32 @@
             </div>
         @endif
 
-        {{-- Formulaire --}}
-        <form method="POST" action="{{ route('auth.send-otp') }}">
+        <form method="POST" action="{{ route('auth.send-magic-link') }}">
             @csrf
             <div class="mb-4">
-                <label class="form-label fw-semibold">Numéro de téléphone</label>
+                <label class="form-label fw-semibold">Adresse email</label>
                 <div class="input-group">
                     <span class="input-group-text bg-white">
-                        <img src="https://flagcdn.com/w20/sn.png" alt="SN" width="20"> +221
+                        <i class="fas fa-envelope text-muted"></i>
                     </span>
                     <input
-                        type="tel"
-                        name="phone_number"
+                        type="email"
+                        name="email"
                         class="form-control form-control-lg"
-                        placeholder="77 000 00 00"
-                        value="{{ old('phone_number') }}"
+                        placeholder="vous@exemple.com"
+                        value="{{ old('email') }}"
                         required
                         autofocus
                     >
                 </div>
-                <div class="form-text">Un code à 6 chiffres vous sera envoyé par SMS.</div>
+                <div class="form-text">Un lien de connexion vous sera envoyé par email.</div>
             </div>
 
             <button type="submit" class="btn btn-primary btn-lg w-100">
-                <i class="fas fa-paper-plane me-2"></i>Recevoir le code
+                <i class="fas fa-paper-plane me-2"></i>Recevoir le lien
             </button>
         </form>
 
-        {{-- Langues --}}
         <div class="text-center mt-4">
             <small class="text-muted">
                 <a href="?lang=fr" class="text-decoration-none me-2">🇫🇷 Français</a>

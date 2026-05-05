@@ -6,7 +6,6 @@ use App\Http\Controllers\Web\TontineController;
 use App\Http\Controllers\Web\PaymentController;
 use App\Http\Controllers\Web\CycleController;
 use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\UssdController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,16 +14,15 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', fn() => redirect()->route('auth.login'))->name('home');
+Route::get('/', fn() => view('welcome'))->name('home');
 
-// Authentification (OTP sans mot de passe)
+// Authentification (Magic Link)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
-    Route::post('/login/send-otp', [AuthController::class, 'sendOtp'])->name('auth.send-otp')
+    Route::post('/login/magic', [AuthController::class, 'sendMagicLink'])->name('auth.send-magic-link')
          ->middleware('throttle:5,1');
-    Route::get('/login/verify', [AuthController::class, 'showOtpForm'])->name('auth.otp.form');
-    Route::post('/login/verify', [AuthController::class, 'verifyOtp'])->name('auth.verify-otp')
-         ->middleware('throttle:10,1');
+    Route::get('/login/sent', [AuthController::class, 'magicLinkSent'])->name('auth.magic.sent');
+    Route::get('/login/verify', [AuthController::class, 'verifyMagicLink'])->name('auth.magic.verify');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout')->middleware('auth');
@@ -41,29 +39,18 @@ Route::get('/payment/failed', [PaymentController::class, 'failed'])->name('payme
 
 /*
 |--------------------------------------------------------------------------
-| USSD
-|--------------------------------------------------------------------------
-*/
-
-Route::post('/ussd', [UssdController::class, 'handle'])->name('ussd.handle');
-
-/*
-|--------------------------------------------------------------------------
 | Espace membre (authentifié)
 |--------------------------------------------------------------------------
 */
 
 Route::middleware(['auth'])->group(function () {
 
-    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Tontines
     Route::resource('tontines', TontineController::class);
     Route::post('/tontines/join', [TontineController::class, 'join'])->name('tontines.join');
     Route::post('/tontines/{tontine}/activate', [TontineController::class, 'activate'])->name('tontines.activate');
 
-    // Cycles & Paiements
     Route::get('/cycles/{cycle}/pay', [PaymentController::class, 'showForm'])->name('cycles.pay');
     Route::post('/cycles/{cycle}/pay', [PaymentController::class, 'initiate'])->name('cycles.pay.initiate');
     Route::post('/cycles/{cycle}/draw', [CycleController::class, 'draw'])->name('cycles.draw');
