@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'welcome'        => 'Welcome to TontineSN',
+    'login'          => 'Login',
+    'logout'         => 'Logout',
+    'dashboard'      => 'Dashboard',
+    'my_tontines'    => 'My tontines',
+    'create_tontine' => 'Create a tontine',
+    'join_tontine'   => 'Join a tontine',
+    'pay'            => 'Pay',
+    'history'        => 'History',
+    'profile'        => 'Profile',
+    'credit_score'   => 'Credit score',
+    'members'        => 'Members',
+    'cycles'         => 'Cycles',
+    'amount'         => 'Amount',
+    'frequency'      => 'Frequency',
+    'status'         => 'Status',
+    'next_payment'   => 'Next payment',
+    'no_tontines'    => 'You have no tontine yet.',
+    'otp_sent'       => 'Code sent by SMS.',
+    'otp_invalid'    => 'Invalid or expired code.',
+    'payment_success'=> 'Payment confirmed successfully.',
+    'payment_failed' => 'Payment failed.',
+];
