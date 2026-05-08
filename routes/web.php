@@ -22,8 +22,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login/magic', [AuthController::class, 'sendMagicLink'])->name('auth.send-magic-link')
          ->middleware('throttle:5,1');
     Route::get('/login/sent', [AuthController::class, 'magicLinkSent'])->name('auth.magic.sent');
-    Route::get('/login/verify', [AuthController::class, 'verifyMagicLink'])->name('auth.magic.verify');
 });
+
+// Vérification accessible même si déjà connecté
+Route::get('/login/verify', [AuthController::class, 'verifyMagicLink'])->name('auth.magic.verify');
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout')->middleware('auth');
 
@@ -33,8 +35,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout')->
 |--------------------------------------------------------------------------
 */
 
-Route::post('/webhooks/wave', [PaymentController::class, 'waveWebhook'])->name('webhooks.wave');
-Route::post('/webhooks/orange', [PaymentController::class, 'orangeWebhook'])->name('webhooks.orange');
+Route::post('/webhooks/paytech', [PaymentController::class, 'paytechWebhook'])->name('webhooks.paytech');
 Route::get('/payment/failed', [PaymentController::class, 'failed'])->name('payment.failed');
 
 /*
@@ -53,6 +54,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/cycles/{cycle}/pay', [PaymentController::class, 'showForm'])->name('cycles.pay');
     Route::post('/cycles/{cycle}/pay', [PaymentController::class, 'initiate'])->name('cycles.pay.initiate');
+    Route::get('/payment/pending/{transaction}', [PaymentController::class, 'pending'])->name('payment.pending');
+    Route::get('/payment/status/{transaction}', [PaymentController::class, 'status'])->name('payment.status');
     Route::post('/cycles/{cycle}/draw', [CycleController::class, 'draw'])->name('cycles.draw');
 
 });

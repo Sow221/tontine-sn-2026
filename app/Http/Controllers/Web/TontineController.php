@@ -97,10 +97,24 @@ class TontineController extends Controller
         $position = $tontine->members()->count() + 1;
 
         $tontine->members()->syncWithoutDetaching([
-            Auth::id() => ['status' => 'pending', 'position' => $position],
+            Auth::id() => [
+                'status'    => 'pending',
+                'position'  => $position,
+                'joined_at' => now(),
+            ],
         ]);
 
         return redirect()->route('tontines.show', $tontine)
                          ->with('success', 'Demande d\'adhésion envoyée.');
+    }
+
+    public function destroy(Tontine $tontine)
+    {
+        $this->authorize('delete', $tontine);
+
+        $tontine->delete();
+
+        return redirect()->route('tontines.index')
+                         ->with('success', 'Tontine supprimée.');
     }
 }

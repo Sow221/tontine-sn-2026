@@ -26,7 +26,15 @@ class DashboardController extends Controller
             ->sortBy('due_date')
             ->first();
 
-        $creditScore = $user->creditScore ?? $this->scorer->calculate($user);
+        $creditScore = $user->creditScore;
+
+        if (!$creditScore) {
+            dispatch(function () use ($user) {
+                app(\App\Services\CreditScoringService::class)->calculate($user);
+            })->afterResponse();
+
+            $creditScore = new \App\Models\CreditScore(['score' => 0, 'badge' => 'none']);
+        }
 
         $recentTransactions = $user->transactions()
             ->with('cycle.tontine')
