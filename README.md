@@ -12,8 +12,8 @@ Projet académique · Master Développement Web · Sénégal
 | Frontend     | Blade + Bootstrap 5 + Alpine.js |
 | Base données | MySQL 8.0+               |
 | Cache/Queue  | File (dev) / Redis (prod)|
-| Paiements    | Wave API + Orange Money  |
-| Notifications| SMS + FCM Push           |
+| Paiements    | PayTech.sn (Wave, Orange Money, Free Money) |
+| Notifications| FCM Push                 |
 
 ---
 
@@ -65,13 +65,13 @@ Accès : http://localhost:8000
 
 ## Comptes de test (après seeding)
 
-| Rôle        | Téléphone        |
-|-------------|------------------|
-| Super Admin | +221700000001    |
-| Gérante     | +221770000002    |
-| Membre      | +221780000003    |
+| Rôle        | Email                          |
+|-------------|--------------------------------|
+| Super Admin | awas28948@gmail.com            |
+| Gérante     | awas28948+manager@gmail.com    |
+| Membre      | awas28948+aminata@gmail.com    |
 
-> Connexion par OTP SMS (simulé en log en mode dev)
+> Connexion par Magic Link email (lien envoyé par mail, simulé en log en mode dev)
 
 ---
 
@@ -82,11 +82,11 @@ app/
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Web/          # AuthController, DashboardController, TontineController, PaymentController, CycleController
-│   │   ├── Admin/        # AdminDashboardController
-│   │   └── UssdController
+│   │   └── Admin/        # AdminDashboardController
 │   ├── Middleware/       # RoleMiddleware, ActivityLogger
-│   └── Requests/         # RegisterRequest, StoreTontineRequest
-├── Models/               # User, Tontine, Cycle, Transaction, CreditScore, OtpCode
+│   └── Requests/         # StoreTontineRequest
+├── Models/               # User, Tontine, Cycle, Transaction, CreditScore, MagicLink
+├── Policies/             # TontinePolicy
 ├── Services/             # AuthService, TontineService, MobileMoneyService, CreditScoringService, NotificationService
 └── Jobs/                 # ProcessCycle, SendReminders
 ```
@@ -98,14 +98,14 @@ app/
 | Phase | Module                          | Statut |
 |-------|---------------------------------|--------|
 | 1     | Configuration & Migrations      | ✅     |
-| 2     | Authentification OTP sans mdp   | ✅     |
+| 2     | Authentification Magic Link     | ✅     |
 | 3     | Tontines, Cycles, Membres       | ✅     |
 | 4     | Paiements Wave & Orange Money   | ✅     |
 | 5     | Crédit Scoring (algorithme CDC) | ✅     |
-| 5     | Notifications SMS/Push          | ✅     |
-| 6     | Interface USSD (*144#)          | ✅     |
+| 5     | Notifications Push (FCM)        | ✅     |
 | 6     | Dashboard, Vues Blade           | ✅     |
 | 6     | Admin Panel                     | ✅     |
+| 6     | Tests Feature (10 tests)        | ✅     |
 
 ---
 
@@ -118,37 +118,12 @@ Score (/10) = (total_contribué / 100 000) × 0.3
 
 Badges : Bronze ≥ 4.0 | Argent ≥ 6.5 | Or ≥ 8.5
 ```
-
----
-
-## USSD (*144#)
-
-```
-1. Mes tontines
-2. Payer cotisation
-3. Voir bénéficiaires
-4. Historique
-5. Mon score crédit
-0. Changer langue
-```
-
-Endpoint : `POST /ussd`
-
----
-
 ## Sécurité
 
-- Authentification sans mot de passe (OTP 6 chiffres, TTL 5 min)
+- Authentification sans mot de passe (Magic Link email, TTL 15 min, hash SHA-256)
 - Middleware de rôles (member / manager / admin / super_admin)
-- Rate limiting (5 req/min sur envoi OTP)
+- Rate limiting (5 req/min sur envoi Magic Link)
 - Vérification signature webhook Wave (HMAC-SHA256)
 - Journalisation des actions sensibles (activity_logs)
 - Protection CSRF sur tous les formulaires
-
----
-
-## Langues supportées
-
-- 🇫🇷 Français (`resources/lang/fr/`)
-- 🇸🇳 Wolof (`resources/lang/wo/`)
-- 🇬🇧 Anglais (`resources/lang/en/`)
+- Policies Laravel (TontinePolicy) sur toutes les actions sensibles
