@@ -13,7 +13,7 @@ class CycleController extends Controller
 
     public function draw(Cycle $cycle)
     {
-        $this->authorize('manage', $cycle->tontine);
+        $this->authorize('update', $cycle->tontine);
 
         if ($cycle->beneficiary_id) {
             return back()->withErrors(['draw' => 'Le tirage a déjà été effectué.']);

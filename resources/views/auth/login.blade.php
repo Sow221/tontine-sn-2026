@@ -55,11 +55,7 @@
         </form>
 
         <div class="text-center mt-4">
-            <small class="text-muted">
-                <a href="?lang=fr" class="text-decoration-none me-2">🇫🇷 Français</a>
-                <a href="?lang=wo" class="text-decoration-none me-2">🇸🇳 Wolof</a>
-                <a href="?lang=en" class="text-decoration-none">🇬🇧 English</a>
-            </small>
+            <small class="text-muted">Connexion sécurisée · Lien valable 15 minutes</small>
         </div>
 
     </div>
