@@ -7,7 +7,7 @@
 
         @auth
         <div class="d-flex align-items-center gap-3">
-            <span class="text-muted small">{{ auth()->user()->name ?? auth()->user()->phone_number }}</span>
+            <span class="text-muted small">{{ auth()->user()->name ?? auth()->user()->email }}</span>
             <form method="POST" action="{{ route('auth.logout') }}">
                 @csrf
                 <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">

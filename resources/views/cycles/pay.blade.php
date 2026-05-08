@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Paiement cotisation')
+@section('title', 'Payer ma cotisation')
 
 @section('content')
 <div class="container py-4">
@@ -23,34 +23,22 @@
     </div>
 
     {{-- Choix méthode --}}
-    <form method="POST" action="{{ route('cycles.pay.initiate', $cycle) }}" x-data="{ method: 'wave' }">
+    <form method="POST" action="{{ route('cycles.pay.initiate', $cycle) }}" x-data="{ method: 'paytech' }">
         @csrf
 
         <h6 class="fw-semibold mb-3">Choisir le mode de paiement</h6>
 
         <div class="payment-methods mb-4">
 
-            <label class="payment-option" :class="{ 'selected': method === 'wave' }">
-                <input type="radio" name="method" value="wave" x-model="method" class="d-none">
+            <label class="payment-option" :class="{ 'selected': method === 'paytech' }">
+                <input type="radio" name="method" value="paytech" x-model="method" class="d-none">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="payment-logo wave-logo">W</div>
+                    <div class="payment-logo" style="background:#009639; color:white; font-weight:800; font-size:11px;">PAY</div>
                     <div>
-                        <p class="fw-semibold mb-0">Wave</p>
-                        <small class="text-muted">Paiement instantané</small>
+                        <p class="fw-semibold mb-0">Paiement mobile</p>
+                        <small class="text-muted">Wave · Orange Money · Free Money</small>
                     </div>
-                    <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'wave'"></i>
-                </div>
-            </label>
-
-            <label class="payment-option" :class="{ 'selected': method === 'orange_money' }">
-                <input type="radio" name="method" value="orange_money" x-model="method" class="d-none">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="payment-logo om-logo">OM</div>
-                    <div>
-                        <p class="fw-semibold mb-0">Orange Money</p>
-                        <small class="text-muted">Paiement mobile</small>
-                    </div>
-                    <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'orange_money'"></i>
+                    <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'paytech'"></i>
                 </div>
             </label>
 
@@ -60,7 +48,7 @@
                     <div class="payment-logo cash-logo"><i class="fas fa-money-bill"></i></div>
                     <div>
                         <p class="fw-semibold mb-0">Espèces</p>
-                        <small class="text-muted">Remise en main propre</small>
+                        <small class="text-muted">Remise en main propre à la gérante</small>
                     </div>
                     <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'cash'"></i>
                 </div>
@@ -73,7 +61,7 @@
         </button>
 
         <p class="text-center text-muted small mt-3">
-            <i class="fas fa-shield-alt me-1"></i>Paiement sécurisé · TLS 1.3
+            <i class="fas fa-shield-alt me-1"></i>Paiement sécurisé via PayTech · TLS 1.3
         </p>
     </form>
 
