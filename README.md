@@ -71,7 +71,7 @@ Accès : http://localhost:8000
 | Gérante     | awas28948+manager@gmail.com    |
 | Membre      | awas28948+aminata@gmail.com    |
 
-> Connexion par Magic Link email (lien envoyé par mail, simulé en log en mode dev)
+> Connexion par email/mot de passe ou Google OAuth
 
 ---
 
@@ -81,13 +81,13 @@ Accès : http://localhost:8000
 app/
 ├── Http/
 │   ├── Controllers/
-│   │   ├── Web/          # AuthController, DashboardController, TontineController, PaymentController, CycleController
+│   │   ├── Web/          # AuthController, DashboardController, TontineController, PaymentController, CycleController, ProfileController, HistoriqueController
 │   │   └── Admin/        # AdminDashboardController
 │   ├── Middleware/       # RoleMiddleware, ActivityLogger
-│   └── Requests/         # StoreTontineRequest
-├── Models/               # User, Tontine, Cycle, Transaction, CreditScore, MagicLink
+│   └── Requests/         # StoreTontineRequest, UpdateTontineRequest
+├── Models/               # User, Tontine, Cycle, Transaction, CreditScore
 ├── Policies/             # TontinePolicy
-├── Services/             # AuthService, TontineService, MobileMoneyService, CreditScoringService, NotificationService
+├── Services/             # AuthService, TontineService, PayTechService, CreditScoringService, NotificationService
 └── Jobs/                 # ProcessCycle, SendReminders
 ```
 
@@ -95,17 +95,20 @@ app/
 
 ## Modules implémentés
 
-| Phase | Module                          | Statut |
-|-------|---------------------------------|--------|
-| 1     | Configuration & Migrations      | ✅     |
-| 2     | Authentification Magic Link     | ✅     |
-| 3     | Tontines, Cycles, Membres       | ✅     |
-| 4     | Paiements Wave & Orange Money   | ✅     |
-| 5     | Crédit Scoring (algorithme CDC) | ✅     |
-| 5     | Notifications Push (FCM)        | ✅     |
-| 6     | Dashboard, Vues Blade           | ✅     |
-| 6     | Admin Panel                     | ✅     |
-| 6     | Tests Feature (10 tests)        | ✅     |
+| Phase | Module                              | Statut |
+|-------|-------------------------------------|--------|
+| 1     | Configuration & Migrations          | ✅     |
+| 2     | Authentification email/mdp + Google | ✅     |
+| 2     | Réinitialisation mot de passe       | ✅     |
+| 3     | Tontines, Cycles, Membres           | ✅     |
+| 3     | Approbation des membres             | ✅     |
+| 4     | Paiements PayTech.sn                | ✅     |
+| 5     | Crédit Scoring (algorithme CDC)     | ✅     |
+| 5     | Notifications Push (FCM)            | ✅     |
+| 6     | Dashboard, Vues Blade               | ✅     |
+| 6     | Profil utilisateur & Historique     | ✅     |
+| 6     | Admin Panel (KYC, logs, users)      | ✅     |
+| 6     | Tests Feature (10 tests)            | ✅     |
 
 ---
 
@@ -120,10 +123,14 @@ Badges : Bronze ≥ 4.0 | Argent ≥ 6.5 | Or ≥ 8.5
 ```
 ## Sécurité
 
-- Authentification sans mot de passe (Magic Link email, TTL 15 min, hash SHA-256)
+- Authentification email/mot de passe + Google OAuth (Laravel Socialite)
+- Réinitialisation de mot de passe par email (Laravel Password Broker)
+- Guard Google OAuth : utilisateurs sans password protégés contre updatePassword
 - Middleware de rôles (member / manager / admin / super_admin)
-- Rate limiting (5 req/min sur envoi Magic Link)
-- Vérification signature webhook Wave (HMAC-SHA256)
+- Rate limiting (10 req/min sur connexion)
+- Vérification webhook PayTech par re-call API
+- Guard idempotence sur confirmPayment (double webhook)
 - Journalisation des actions sensibles (activity_logs)
 - Protection CSRF sur tous les formulaires
 - Policies Laravel (TontinePolicy) sur toutes les actions sensibles
+- lockForUpdate() sur join() pour éviter les race conditions
