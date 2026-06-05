@@ -63,7 +63,8 @@ class TontineTest extends TestCase
 
         $this->actingAs($user)
              ->post('/tontines/join', ['code' => 'XXXXXX'])
-             ->assertStatus(404);
+             ->assertRedirect()
+             ->assertSessionHasErrors('code');
     }
 
     // ── 3. Supprimer une tontine ───────────────────────────────────────────

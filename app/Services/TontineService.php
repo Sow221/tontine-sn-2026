@@ -12,6 +12,9 @@ class TontineService
 {
     public function createCycles(Tontine $tontine): void
     {
+        // Idempotence : ne pas créer si des cycles existent déjà
+        if ($tontine->cycles()->exists()) return;
+
         $members = $tontine->activeMembers()->count();
         if ($members === 0) return;
 
@@ -60,10 +63,18 @@ class TontineService
     public function recordPayment(Cycle $cycle, int $userId, int $amount, string $method, ?string $ref = null): Transaction
     {
         return DB::transaction(function () use ($cycle, $userId, $amount, $method, $ref) {
+
+            // Appliquer la pénalité de retard si le cycle est en overdue
+            $finalAmount = $amount;
+            if ($cycle->isOverdue() && $cycle->tontine->penalty_rate > 0) {
+                $penalty     = (int) round($amount * $cycle->tontine->penalty_rate / 100);
+                $finalAmount = $amount + $penalty;
+            }
+
             $transaction = Transaction::create([
                 'cycle_id'           => $cycle->id,
                 'user_id'            => $userId,
-                'amount'             => $amount,
+                'amount'             => $finalAmount,
                 'method'             => $method,
                 'external_reference' => $ref,
                 'status'             => $method === 'cash' ? 'success' : 'pending',
@@ -80,6 +91,8 @@ class TontineService
 
     public function confirmPayment(Transaction $transaction): void
     {
+        if ($transaction->status === 'success') return;
+
         DB::transaction(function () use ($transaction) {
             $transaction->update(['status' => 'success', 'paid_at' => now()]);
             $this->updateCycleTotal($transaction->cycle);
@@ -88,7 +101,7 @@ class TontineService
 
     private function updateCycleTotal(Cycle $cycle): void
     {
-        $total = $cycle->successfulTransactions()->sum('amount');
+        $total    = $cycle->successfulTransactions()->sum('amount');
         $expected = $cycle->expectedTotal();
 
         $status = match(true) {
