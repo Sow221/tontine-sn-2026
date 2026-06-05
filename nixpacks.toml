@@ -1,8 +1,8 @@
 [variables]
-NIXPACKS_PHP_VERSION = "8.3"
+NIXPACKS_PHP_VERSION = "8.2"
 
 [phases.setup]
-nixPkgs = ["php82Extensions.gd", "php82Extensions.intl", "php82Extensions.bcmath", "php82Extensions.zip", "php82Extensions.pdo_mysql", "php82Extensions.fileinfo", "php82Extensions.mbstring", "php82Extensions.xml", "php82Extensions.openssl"]
+nixPkgs = ["php82", "php82Packages.composer", "php82Extensions.gd", "php82Extensions.intl", "php82Extensions.bcmath", "php82Extensions.zip", "php82Extensions.pdo_mysql", "php82Extensions.fileinfo", "php82Extensions.mbstring", "php82Extensions.xml", "php82Extensions.openssl"]
 
 [phases.install]
 cmds = ["composer install --no-dev --optimize-autoloader"]
