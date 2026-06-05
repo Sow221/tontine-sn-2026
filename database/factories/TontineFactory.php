@@ -19,9 +19,11 @@ class TontineFactory extends Factory
             'start_date'  => now()->addDays(3)->toDateString(),
             'max_members' => 10,
             'penalty_rate'=> 0,
-            'draw_method' => 'sequential',
-            'quorum'      => 1,
-            'created_by'  => User::factory(),
+            'draw_method'    => 'sequential',
+            'weighted_draw' => false,
+            'veto_threshold'=> null,
+            'quorum'        => 1,
+            'created_by'    => User::factory(),
         ];
     }
 

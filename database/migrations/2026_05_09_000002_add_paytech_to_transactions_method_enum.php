@@ -8,14 +8,14 @@ return new class extends Migration
     public function up(): void
     {
         if (DB::getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE transactions MODIFY COLUMN method ENUM('wave','orange_money','cash','paytech') NOT NULL DEFAULT 'wave'");
+            DB::statement("ALTER TABLE transactions MODIFY COLUMN method ENUM('wave','orange_money','card','cash','paytech') NOT NULL DEFAULT 'wave'");
         }
     }
 
     public function down(): void
     {
         if (DB::getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE transactions MODIFY COLUMN method ENUM('wave','orange_money','cash') NOT NULL DEFAULT 'wave'");
+            DB::statement("ALTER TABLE transactions MODIFY COLUMN method ENUM('wave','orange_money','card','cash') NOT NULL DEFAULT 'wave'");
         }
     }
 };

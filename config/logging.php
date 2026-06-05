@@ -73,6 +73,25 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'transactions' => [
+            'driver' => 'monolog',
+            'name' => 'transactions',
+            'handler' => \Monolog\Handler\RotatingFileHandler::class,
+            'handler_with' => [
+                'filename' => storage_path('logs/transactions/transactions.log'),
+                'maxFiles' => env('LOG_TRANSACTIONS_RETENTION', 30),
+            ],
+            'formatter' => \Monolog\Formatter\JsonFormatter::class,
+            'formatter_with' => [
+                'dateFormat' => 'Y-m-d H:i:s.u',
+            ],
+            'processors' => [
+                \Monolog\Processor\PsrLogMessageProcessor::class,
+                \Monolog\Processor\IntrospectionProcessor::class,
+            ],
+            'level' => env('LOG_TRANSACTIONS_LEVEL', 'info'),
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

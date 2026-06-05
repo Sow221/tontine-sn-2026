@@ -12,7 +12,8 @@ return [
 
     'transaction' => [
         'daily_limit'       => env('TRANSACTION_DAILY_LIMIT', 500000),  // FCFA
-        'kyc_threshold'     => 1_000_000,                                // FCFA
+        'kyc_threshold'     => 300_000,   // KYC vérifié requis au-dessus de ce seuil
+        'kyc_doc_threshold' => 50_000,    // Doc soumis requis au-dessus de ce seuil
         'min_amount'        => 500,
         'max_amount'        => 500_000,
         'reverse_window_h'  => 24,                                       // heures
@@ -50,11 +51,13 @@ return [
         'overdue_days_after'   => [1, 3, 7],
     ],
 
-    'languages' => ['fr', 'wo', 'en'],
+    'languages' => ['fr', 'en'],
 
+    // USSD : prévu en évolution — non exposé dans l'interface membre v1
     'ussd' => [
         'code'        => '*144#',
         'session_ttl' => 120,
+        'enabled'     => false,
     ],
 
     'bceao' => [

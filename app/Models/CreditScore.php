@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CreditScore extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'user_id', 'score', 'total_contributed',
         'on_time_payments', 'total_cycles', 'seniority_months',
@@ -38,7 +40,7 @@ class CreditScore extends Model
         return match($this->badge) {
             'gold'   => 'warning',
             'silver' => 'secondary',
-            'bronze' => 'danger',
+            'bronze' => 'warning',
             default  => 'light',
         };
     }

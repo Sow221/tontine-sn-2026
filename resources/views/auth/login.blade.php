@@ -15,9 +15,8 @@
     <div class="auth-card">
 
         <div class="text-center mb-4">
-            <div class="auth-logo">🌿</div>
-            <h1 class="auth-title">TontineSN</h1>
-            <p class="auth-subtitle">Gérez vos tontines en toute sécurité</p>
+            <img src="{{ asset('images/Tontine.png') }}" alt="TontineSN" class="auth-logo-img">
+            <p class="auth-subtitle">Cotiser simple. Recevoir sûr.</p>
         </div>
 
         @if($errors->any())
@@ -28,35 +27,69 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('auth.send-magic-link') }}">
+        @if(session('status'))
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-1"></i>{{ session('status') }}
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('auth.login.post') }}">
             @csrf
-            <div class="mb-4">
+
+            <div class="mb-3">
                 <label class="form-label fw-semibold">Adresse email</label>
                 <div class="input-group">
                     <span class="input-group-text bg-white">
                         <i class="fas fa-envelope text-muted"></i>
                     </span>
-                    <input
-                        type="email"
-                        name="email"
-                        class="form-control form-control-lg"
-                        placeholder="vous@exemple.com"
-                        value="{{ old('email') }}"
-                        required
-                        autofocus
-                    >
+                    <input type="email" name="email"
+                           class="form-control form-control-lg @error('email') is-invalid @enderror"
+                           placeholder="vous@exemple.com"
+                           value="{{ old('email') }}"
+                           required autofocus>
                 </div>
-                <div class="form-text">Un lien de connexion vous sera envoyé par email.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Mot de passe</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white">
+                        <i class="fas fa-lock text-muted"></i>
+                    </span>
+                    <input type="password" name="password"
+                           class="form-control form-control-lg @error('password') is-invalid @enderror"
+                           placeholder="••••••••"
+                           required>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                    <label class="form-check-label small" for="remember">Se souvenir de moi</label>
+                </div>
+                <a href="{{ route('password.request') }}" class="small text-green text-decoration-none">
+                    Mot de passe oublié ?
+                </a>
             </div>
 
             <button type="submit" class="btn btn-primary btn-lg w-100">
-                <i class="fas fa-paper-plane me-2"></i>Recevoir le lien
+                <i class="fas fa-sign-in-alt me-2"></i>Se connecter
             </button>
         </form>
 
-        <div class="text-center mt-4">
-            <small class="text-muted">Connexion sécurisée · Lien valable 15 minutes</small>
+        <div class="text-center mt-3">
+            <a href="{{ route('auth.google') }}" class="btn btn-outline-secondary w-100">
+                <i class="fab fa-google me-2"></i>Continuer avec Google
+            </a>
         </div>
+
+        <p class="text-center text-muted small mt-4">
+            Pas encore de compte ?
+            <a href="{{ route('auth.register') }}" class="text-green fw-semibold text-decoration-none">S'inscrire</a>
+        </p>
+
+
 
     </div>
 </div>

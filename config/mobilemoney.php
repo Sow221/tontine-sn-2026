@@ -14,6 +14,6 @@ return [
         'server_key' => env('FCM_SERVER_KEY'),
     ],
 
-    'supported_methods' => ['paytech', 'cash'],
+    'supported_methods' => ['wave', 'orange_money', 'free_money', 'card', 'cash'],
 
 ];

@@ -1,105 +1,369 @@
 @extends('layouts.app')
-
-@section('title', 'Tableau de bord')
+@section('title', 'Accueil')
 
 @section('content')
+@php
+    $h = (int) now()->format('H');
+    $greeting = $h < 6 || $h >= 18 ? __('member.greeting_evening') : ($h < 13 ? __('member.greeting_morning') : __('member.greeting_afternoon'));
+    $totalCotise = $recentTransactions->where('status', 'success')->sum('amount');
+    $activeTontinesCount = $activeTontines->count();
+    $upcomingCount = $upcomingPayments->count();
+    $overdueCount = $overduePayments->count();
+@endphp
+
 <div class="container py-4">
 
-    {{-- Salutation --}}
-    <div class="mb-4">
-        <h2 class="fw-bold text-indigo mb-0">
-            Bonjour, {{ $user->name ?? 'Membre' }} 👋
-        </h2>
-        <p class="text-muted small">{{ now()->isoFormat('dddd D MMMM YYYY') }}</p>
-    </div>
-
-    {{-- Score crédit --}}
-    <div class="card card-score mb-4">
-        <div class="d-flex align-items-center justify-content-between">
-            <div>
-                <p class="text-muted small mb-1">Mon score crédit</p>
-                <h3 class="fw-bold mb-0">{{ $creditScore->score }}<span class="text-muted fs-6">/10</span></h3>
-                <span class="badge bg-{{ $creditScore->badgeColor() }} mt-1">{{ $creditScore->badgeLabel() }}</span>
+    {{-- ── HERO RÉSUMÉ ──────────────────────────────────────────────── --}}
+    <div class="dash-hero mb-4">
+        <div class="dash-hero__left">
+            <p class="dash-hero__greeting">{{ $greeting }}</p>
+            <h2 class="dash-hero__name">{{ $user->name ?? __('member.member') }}</h2>
+            <div class="dash-hero__meta">
+                @if($creditScore->score > 0)
+                <span class="dash-hero__score-badge bg-{{ $creditScore->badgeColor() }}">
+                    ★ {{ $creditScore->score }}/10
+                </span>
+                @endif
+                <span class="dash-hero__date">{{ now()->isoFormat('D MMM YYYY') }}</span>
             </div>
-            <div class="score-circle">
-                <svg viewBox="0 0 36 36" class="score-svg">
-                    <path class="score-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                    <path class="score-fill" stroke-dasharray="{{ $creditScore->score * 10 }}, 100"
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                    <text x="18" y="20.35" class="score-text">{{ $creditScore->score }}</text>
-                </svg>
+        </div>
+        <div class="dash-hero__right">
+            <div class="dash-kpi">
+                <div class="dash-kpi__value">{{ $activeTontinesCount }}</div>
+                <div class="dash-kpi__label">Tontines</div>
+            </div>
+            <div class="dash-kpi {{ $overdueCount > 0 ? 'dash-kpi--alert' : '' }}">
+                <div class="dash-kpi__value">{{ $upcomingCount }}</div>
+                <div class="dash-kpi__label">À payer{{ $overdueCount > 0 ? " ($overdueCount retard)" : '' }}</div>
+            </div>
+            <div class="dash-kpi">
+                <div class="dash-kpi__value">{{ $gamification['payment_streak'] }}🔥</div>
+                <div class="dash-kpi__label">Série</div>
             </div>
         </div>
     </div>
 
-    {{-- Prochain paiement --}}
-    @if($nextPayment)
-    <div class="card card-warning mb-4">
-        <div class="d-flex align-items-center gap-3">
-            <div class="icon-box bg-yellow-light">
-                <i class="fas fa-clock text-warning fs-4"></i>
+    {{-- ── NOUVEAU BADGE ─────────────────────────────────────────────── --}}
+    @if($newBadges->isNotEmpty())
+    <div class="alert-badge mb-3">
+        <span class="fs-4">🏅</span>
+        <div>
+            <strong>Nouveau(x) badge(s) débloqué(s) !</strong>
+            <div class="mt-1 d-flex flex-wrap gap-1">
+                @foreach($newBadges as $badge)
+                <span class="badge bg-warning text-dark">{{ $badge->icon }} {{ $badge->name }}</span>
+                @endforeach
             </div>
-            <div class="flex-grow-1">
-                <p class="text-muted small mb-0">Prochain paiement</p>
-                <h5 class="fw-bold mb-0">{{ number_format($nextPayment->tontine->amount, 0, ',', ' ') }} FCFA</h5>
-                <small class="text-muted">{{ $nextPayment->tontine->name }} · {{ $nextPayment->due_date->format('d/m/Y') }}</small>
+        </div>
+    </div>
+    @endif
+
+    {{-- ── BÉNÉFICIAIRE — priorité absolue ──────────────────────────── --}}
+    @foreach($beneficiaireCycles as $cycle)
+    <div class="action-banner action-banner--gold mb-3">
+        <div class="action-banner__icon">🎉</div>
+        <div class="action-banner__body">
+            <strong>C'est votre tour de recevoir !</strong>
+            <p class="mb-0 small text-muted">
+                {{ $cycle->tontine->name }} — Cycle {{ $cycle->cycle_number }} ·
+                <strong class="text-green">{{ number_format($cycle->tontine->amount * $cycle->tontine->active_members_count, 0, ',', ' ') }} FCFA</strong>
+            </p>
+        </div>
+        <a href="{{ route('tontines.show', $cycle->tontine) }}" class="btn btn-sm btn-warning rounded-pill flex-shrink-0">Voir</a>
+    </div>
+    @endforeach
+
+    {{-- ── RETARDS ────────────────────────────────────────────────────── --}}
+    @foreach($overduePayments as $cycle)
+    <div class="action-banner action-banner--red mb-3">
+        <div class="action-banner__icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="action-banner__body">
+            <strong>Cotisation en retard</strong>
+            <p class="mb-0 small text-muted">{{ $cycle->tontine->name }} · Échéance dépassée le {{ $cycle->due_date->format('d/m/Y') }}</p>
+        </div>
+        <a href="{{ route('cycles.pay', $cycle) }}" class="btn btn-sm btn-danger rounded-pill flex-shrink-0">Régulariser</a>
+    </div>
+    @endforeach
+
+    {{-- ── EN ATTENTE D'APPROBATION ───────────────────────────────────── --}}
+    @foreach($pendingMemberships as $tontine)
+    <div class="action-banner action-banner--yellow mb-3">
+        <div class="action-banner__icon"><i class="fas fa-hourglass-half"></i></div>
+        <div class="action-banner__body">
+            <strong>Adhésion en attente</strong>
+            <p class="mb-0 small text-muted">{{ $tontine->name }} — En attente d'approbation du créateur</p>
+        </div>
+        <a href="{{ route('tontines.show', $tontine) }}" class="btn btn-sm btn-outline-warning rounded-pill flex-shrink-0">Voir</a>
+    </div>
+    @endforeach
+
+    {{-- ── MES TONTINES ACTIVES ──────────────────────────────────────── --}}
+    @if($activeTontines->isNotEmpty())
+    <div class="section-header mb-3">
+        <h5 class="section-header__title">Mes tontines actives</h5>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ route('tontines.create') }}" class="btn btn-sm btn-primary rounded-pill">
+                <i class="fas fa-plus me-1"></i>Nouvelle
+            </a>
+            <a href="{{ route('tontines.index') }}" class="section-header__link">Voir tout</a>
+        </div>
+    </div>
+
+    @foreach($activeTontines as $tontine)
+    @php
+        $currentCycle = $tontine->currentCycle;
+        $typeColors = [
+            'auction'       => ['bg' => '#f5f3ff', 'border' => '#8b5cf6', 'icon' => '🏷️'],
+            'forced_saving' => ['bg' => '#eff6ff', 'border' => '#3b82f6', 'icon' => '💰'],
+            'ceremonial'    => ['bg' => '#fdf2f8', 'border' => '#ec4899', 'icon' => '🎊'],
+            'default'       => ['bg' => '#f0fdf4', 'border' => '#009639', 'icon' => '🤝'],
+        ];
+        $tc = $typeColors[$tontine->type] ?? $typeColors['default'];
+        $progress = $currentCycle ? $currentCycle->completionRate() : 0;
+    @endphp
+    <a href="{{ route('tontines.show', $tontine) }}" class="tontine-card mb-3 text-decoration-none"
+       style="--tc-bg:{{ $tc['bg'] }};--tc-border:{{ $tc['border'] }};">
+        <div class="tontine-card__top">
+            <div class="tontine-card__avatar">
+                <span>{{ $tc['icon'] }}</span>
             </div>
-            <a href="{{ route('cycles.pay', $nextPayment) }}" class="btn btn-sm btn-primary rounded-pill">
-                Payer
+            <div class="tontine-card__info">
+                <h6 class="tontine-card__name">{{ $tontine->name }}</h6>
+                <p class="tontine-card__meta">
+                    {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA ·
+                    {{ match($tontine->frequency) { 'daily' => 'Quotidienne', 'weekly' => 'Hebdo', 'monthly' => 'Mensuelle', default => $tontine->frequency } }} ·
+                    {{ $tontine->active_members_count }} membre(s)
+                </p>
+            </div>
+            <div class="tontine-card__status">
+                @if($tontine->has_paid_current)
+                    <span class="status-pill status-pill--paid"><i class="fas fa-check me-1"></i>Payé</span>
+                @elseif($tontine->payment_pending)
+                    <span class="status-pill status-pill--pending"><i class="fas fa-clock me-1"></i>En cours</span>
+                @elseif($currentCycle)
+                    <span class="status-pill status-pill--due"><i class="fas fa-circle me-1"></i>À payer</span>
+                @endif
+            </div>
+        </div>
+
+        @if($currentCycle)
+        <div class="tontine-card__bottom">
+            <div class="tontine-card__progress-wrap">
+                <div class="tontine-card__progress-bar" style="width:{{ $progress }}%;background:{{ $tc['border'] }};"></div>
+            </div>
+            <div class="tontine-card__progress-info">
+                <span class="small text-muted">Cycle {{ $currentCycle->cycle_number }} · Échéance {{ $currentCycle->due_date->format('d/m') }}</span>
+                <span class="small fw-semibold" style="color:{{ $tc['border'] }};">{{ $progress }}%</span>
+            </div>
+        </div>
+        @endif
+
+        <div class="tontine-card__footer">
+            <span class="tontine-card__pot">
+                <i class="fas fa-coins me-1"></i>
+                Pot : <strong>{{ number_format($tontine->pot_total, 0, ',', ' ') }} FCFA</strong>
+            </span>
+            @if($tontine->my_position)
+            <span class="tontine-card__position">Position #{{ $tontine->my_position }}</span>
+            @endif
+        </div>
+    </a>
+    @endforeach
+
+    @else
+    {{-- Aucune tontine --}}
+    <div class="empty-state mb-4">
+        <div class="empty-state__icon">🤝</div>
+        <h6 class="empty-state__title">Vous n'avez pas encore de tontine</h6>
+        <p class="empty-state__desc">Créez votre première tontine ou rejoignez un groupe.</p>
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+            <a href="{{ route('tontines.create') }}" class="btn btn-primary rounded-pill">
+                <i class="fas fa-plus me-2"></i>Créer une tontine
+            </a>
+            <a href="{{ route('tontines.join.form') }}" class="btn btn-outline-primary rounded-pill">
+                Rejoindre avec un code
             </a>
         </div>
     </div>
     @endif
 
-    {{-- Mes tontines actives --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold mb-0">Mes tontines</h5>
-        <a href="{{ route('tontines.index') }}" class="text-green small">Voir tout</a>
+    {{-- ── COTISATIONS À VENIR ────────────────────────────────────────── --}}
+    @if($upcomingPayments->isNotEmpty())
+    <div class="section-header mb-3 mt-2">
+        <h5 class="section-header__title">
+            Cotisations à payer
+            <span class="badge bg-danger ms-1" style="font-size:11px;">{{ $upcomingCount }}</span>
+        </h5>
     </div>
-
-    @forelse($activeTontines as $tontine)
-    <div class="card mb-3">
-        <div class="d-flex align-items-center gap-3">
-            <div class="tontine-avatar">{{ strtoupper(substr($tontine->name, 0, 2)) }}</div>
-            <div class="flex-grow-1">
-                <h6 class="fw-semibold mb-0">{{ $tontine->name }}</h6>
-                <small class="text-muted">
-                    {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA · {{ $tontine->frequency_label ?? $tontine->frequency }}
-                </small>
-            </div>
-            <span class="badge badge-{{ $tontine->status === 'active' ? 'success' : 'warning' }}">
-                {{ ucfirst($tontine->status) }}
-            </span>
+    @foreach($upcomingPayments as $cycle)
+    @php $isOverdue = $cycle->isOverdue(); @endphp
+    <div class="pay-row mb-2 {{ $isOverdue ? 'pay-row--overdue' : '' }}">
+        <div class="pay-row__ring">
+            <svg viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="14" fill="none" stroke="var(--gray-border)" stroke-width="3"/>
+                <circle cx="18" cy="18" r="14" fill="none"
+                    stroke="{{ $isOverdue ? 'var(--red)' : 'var(--green)' }}"
+                    stroke-width="3" stroke-linecap="round"
+                    stroke-dasharray="{{ $cycle->completionRate() * 0.88 }}, 88"
+                    transform="rotate(-90 18 18)"/>
+            </svg>
+            <span class="pay-row__pct" style="color:{{ $isOverdue ? 'var(--red)' : 'var(--green)' }};">{{ (int)$cycle->completionRate() }}%</span>
         </div>
-    </div>
-    @empty
-    <div class="text-center py-5">
-        <div class="empty-state-icon">🌱</div>
-        <p class="text-muted">Vous n'avez pas encore de tontine.</p>
-        <a href="{{ route('tontines.create') }}" class="btn btn-primary rounded-pill">
-            <i class="fas fa-plus me-2"></i>Créer une tontine
-        </a>
-    </div>
-    @endforelse
-
-    {{-- Transactions récentes --}}
-    @if($recentTransactions->isNotEmpty())
-    <h5 class="fw-bold mt-4 mb-3">Transactions récentes</h5>
-    @foreach($recentTransactions as $tx)
-    <div class="card mb-2 py-2">
-        <div class="d-flex align-items-center gap-3">
-            <div class="method-icon method-{{ $tx->method }}">
-                <i class="fas fa-{{ $tx->method === 'wave' ? 'wave-square' : ($tx->method === 'cash' ? 'money-bill' : 'mobile-alt') }}"></i>
-            </div>
-            <div class="flex-grow-1">
-                <p class="mb-0 fw-semibold small">{{ $tx->cycle->tontine->name ?? '—' }}</p>
-                <small class="text-muted">{{ $tx->paid_at?->format('d/m/Y H:i') }}</small>
-            </div>
-            <span class="fw-bold text-green">{{ number_format($tx->amount, 0, ',', ' ') }} F</span>
+        <div class="pay-row__info">
+            <p class="pay-row__name">{{ $cycle->tontine->name }}</p>
+            <small class="{{ $isOverdue ? 'text-danger fw-semibold' : 'text-muted' }}">
+                {{ $isOverdue ? 'En retard depuis le' : 'Échéance le' }} {{ $cycle->due_date->format('d/m/Y') }}
+                @if(!$isOverdue) ({{ $cycle->due_date->diffForHumans() }}) @endif
+            </small>
+        </div>
+        <div class="pay-row__right">
+            <span class="pay-row__amount">{{ number_format($cycle->tontine->amount, 0, ',', ' ') }} F</span>
+            <a href="{{ route('cycles.pay', $cycle) }}"
+               class="btn btn-sm {{ $isOverdue ? 'btn-danger' : 'btn-primary' }} rounded-pill mt-1">
+                {{ $isOverdue ? 'Régulariser' : 'Payer' }}
+            </a>
         </div>
     </div>
     @endforeach
     @endif
 
+    {{-- ── SCORE & ACTIVITÉ ───────────────────────────────────────────── --}}
+    <div class="row g-3 mt-1 mb-4">
+        {{-- Score crédit --}}
+        <div class="col-12 col-md-5">
+            <div class="score-panel">
+                <div class="score-panel__left">
+                    <p class="score-panel__label">Score crédit</p>
+                    <h3 class="score-panel__value">{{ $creditScore->score }}<span class="score-panel__max">/10</span></h3>
+                    <span class="badge bg-{{ $creditScore->badgeColor() }}">{{ $creditScore->badgeLabel() }}</span>
+                    @if($creditScore->score == 0)
+                    <p class="score-panel__hint">Effectuez votre premier paiement pour construire votre score.</p>
+                    @endif
+                </div>
+                <div class="score-panel__ring">
+                    <svg viewBox="0 0 36 36" class="score-svg" style="width:72px;height:72px;">
+                        <path class="score-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path class="score-fill" stroke-dasharray="{{ $creditScore->score * 10 }}, 100"
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <text x="18" y="20.35" class="score-text">{{ $creditScore->score }}</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        {{-- Streak + badges --}}
+        <div class="col-6 col-md-4">
+            <div class="streak-panel">
+                <div class="streak-panel__icon">🔥</div>
+                <div class="streak-panel__val">{{ $gamification['payment_streak'] }}</div>
+                <div class="streak-panel__label">Série de paiements</div>
+                <small class="text-muted">Record : {{ $gamification['max_streak'] }}</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="streak-panel streak-panel--purple">
+                <div class="streak-panel__icon">🏅</div>
+                <div class="streak-panel__val">{{ $gamification['total_badges'] }}</div>
+                <div class="streak-panel__label">Badges</div>
+                <small class="text-muted">
+                    @if($gamification['gold_count']) 🥇{{ $gamification['gold_count'] }} @endif
+                    @if($gamification['silver_count']) 🥈{{ $gamification['silver_count'] }} @endif
+                    @if($gamification['bronze_count']) 🥉{{ $gamification['bronze_count'] }} @endif
+                </small>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── GRAPHIQUE ───────────────────────────────────────────────────── --}}
+    @if($chartData['months']->isNotEmpty())
+    <div class="card mb-4">
+        <div class="section-header mb-3">
+            <h6 class="section-header__title mb-0">Mes cotisations (12 mois)</h6>
+            <a href="{{ route('historique.index') }}" class="section-header__link">Historique complet</a>
+        </div>
+        <canvas id="paymentChart" height="160"></canvas>
+    </div>
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('paymentChart');
+        if (!ctx) return;
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: @json($chartData['months']),
+                datasets: [{
+                    data: @json($chartData['payments']),
+                    backgroundColor: 'rgba(0,150,57,0.15)',
+                    borderColor: '#009639',
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    hoverBackgroundColor: 'rgba(0,150,57,0.3)',
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: v => (v/1000).toFixed(0)+'K', color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.08)' } },
+                    x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                }
+            }
+        });
+    });
+    </script>
+    @endpush
+    @endif
+
+    {{-- ── LEADERBOARD ────────────────────────────────────────────────── --}}
+    @if($leaderboard->isNotEmpty())
+    <div class="card mb-4">
+        <div class="section-header mb-3">
+            <h6 class="section-header__title mb-0">🏆 Classement</h6>
+            <small class="text-muted">Top {{ $leaderboard->count() }} de vos tontines</small>
+        </div>
+        @foreach($leaderboard as $i => $member)
+        <div class="leaderboard-row {{ $member->id === $user->id ? 'leaderboard-row--me' : '' }}">
+            <span class="leaderboard-row__rank">
+                @if($i===0)🥇@elseif($i===1)🥈@elseif($i===2)🥉@else {{ $i+1 }}.@endif
+            </span>
+            <div class="leaderboard-row__avatar">{{ strtoupper(substr($member->name, 0, 2)) }}</div>
+            <span class="leaderboard-row__name">{{ $member->name }}@if($member->id === $user->id) <span class="text-muted">(moi)</span>@endif</span>
+            <span class="leaderboard-row__badges">{{ $member->badge_count }} 🏅</span>
+        </div>
+        @endforeach
+    </div>
+    @endif
+
+    {{-- ── TRANSACTIONS RÉCENTES ──────────────────────────────────────── --}}
+    @if($recentTransactions->isNotEmpty())
+    <div class="section-header mb-3">
+        <h6 class="section-header__title mb-0">Transactions récentes</h6>
+        <a href="{{ route('historique.index') }}" class="section-header__link">Voir tout</a>
+    </div>
+    @foreach($recentTransactions as $tx)
+    <div class="tx-row mb-2">
+        <div class="tx-row__icon tx-row__icon--{{ $tx->status }}">
+            <i class="fas fa-{{ $tx->status === 'success' ? 'check' : ($tx->status === 'failed' ? 'times' : 'clock') }}"></i>
+        </div>
+        <div class="tx-row__info">
+            <p class="tx-row__name">{{ $tx->cycle->tontine->name ?? '—' }}</p>
+            <small class="text-muted">{{ $tx->paid_at?->format('d/m/Y') ?? $tx->created_at->format('d/m/Y') }}</small>
+        </div>
+        <span class="tx-row__amount tx-row__amount--{{ $tx->status }}">
+            {{ number_format($tx->amount, 0, ',', ' ') }} F
+        </span>
+    </div>
+    @endforeach
+    @endif
+
 </div>
+
+{{-- FAB paiement --}}
+@if($upcomingPayments->isNotEmpty())
+<a href="{{ route('cycles.pay', $upcomingPayments->first()) }}" class="fab" title="Payer maintenant">
+    <i class="fas fa-credit-card"></i>
+</a>
+@endif
+
 @endsection

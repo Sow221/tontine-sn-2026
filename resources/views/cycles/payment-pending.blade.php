@@ -9,6 +9,9 @@
         {{-- Spinner --}}
         <div id="state-pending">
             <div class="mb-4" style="position:relative; width:80px; height:80px; margin:0 auto;">
+                @if($transaction->method === 'cash')
+                <div style="font-size:64px;">💵</div>
+                @else
                 <svg viewBox="0 0 80 80" style="width:80px;height:80px;">
                     <circle cx="40" cy="40" r="34" fill="none" stroke="#E8F5E9" stroke-width="6"/>
                     <circle cx="40" cy="40" r="34" fill="none" stroke="#009639" stroke-width="6"
@@ -17,10 +20,24 @@
                     </circle>
                 </svg>
                 <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;">💸</div>
+                @endif
             </div>
+
+            @if($transaction->method === 'cash')
+            <h4 class="fw-bold mb-2">Remise en espèces enregistrée</h4>
+            <div class="alert alert-warning text-start mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>En attente de validation</strong> — Votre remise en espèces doit être confirmée
+                par le créateur de la tontine. Vous recevrez une notification dès la validation.
+            </div>
+            <a href="{{ route('tontines.show', $transaction->cycle->tontine) }}" class="btn btn-primary w-100">
+                <i class="fas fa-arrow-left me-2"></i>Retour à la tontine
+            </a>
+            @else
             <h4 class="fw-bold mb-2">Paiement en cours...</h4>
             <p class="text-muted mb-1">Votre paiement est en cours de confirmation.</p>
             <p class="text-muted small">Ne fermez pas cette page.</p>
+            @endif
 
             <div class="card mt-4 text-start">
                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -43,10 +60,13 @@
         {{-- Succès --}}
         <div id="state-success" style="display:none;">
             <div class="mb-4" style="font-size:64px;">✅</div>
-            <h4 class="fw-bold mb-2 text-green">Paiement confirmé !</h4>
-            <p class="text-muted mb-4">Votre cotisation a bien été enregistrée.</p>
+            <h4 class="fw-bold mb-2 text-green">{{ __('member.payment_confirmed') }}</h4>
+            <p class="text-muted mb-3">{{ __('member.cash_recorded') }}</p>
+            <a href="#" id="receipt-link" class="btn btn-outline-success w-100 mb-2 d-none" target="_blank">
+                <i class="fas fa-file-pdf me-2"></i>{{ __('member.download_receipt') }}
+            </a>
             <a href="#" id="success-link" class="btn btn-primary btn-lg w-100">
-                Voir ma tontine <i class="fas fa-arrow-right ms-2"></i>
+                {{ __('member.my_tontines') }} <i class="fas fa-arrow-right ms-2"></i>
             </a>
         </div>
 
@@ -76,6 +96,7 @@
 @endpush
 
 @push('scripts')
+@if($transaction->method !== 'cash')
 <script>
 const statusUrl  = "{{ route('payment.status', $transaction) }}";
 const maxRetries = 20; // 20 × 3s = 60s max
@@ -99,6 +120,11 @@ function checkStatus() {
                 document.getElementById('state-pending').style.display = 'none';
                 document.getElementById('state-success').style.display = 'block';
                 document.getElementById('success-link').href = data.redirect_url;
+                if (data.receipt_url) {
+                    const receipt = document.getElementById('receipt-link');
+                    receipt.href = data.receipt_url;
+                    receipt.classList.remove('d-none');
+                }
                 return;
             }
 
@@ -130,10 +156,20 @@ function checkStatus() {
         });
 }
 
+// Reprendre le polling si la page redevient visible
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible'
+        && document.getElementById('state-pending').style.display !== 'none'
+        && retries < maxRetries) {
+        checkStatus();
+    }
+});
+
 // Démarrer après 3s
 updateCountdown();
 setTimeout(checkStatus, 3000);
 </script>
+@endif
 @endpush
 
 @endsection

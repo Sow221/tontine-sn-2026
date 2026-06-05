@@ -13,11 +13,24 @@
             Aucun montant n'a été débité.
         </p>
 
-        <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg w-100 mb-3">
-            <i class="fas fa-arrow-left me-2"></i>Retour au dashboard
+        @if($cycle)
+        <div class="card mb-4 text-start">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small">Tontine</span>
+                <span class="fw-semibold small">{{ $cycle->tontine->name }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted small">Montant</span>
+                <span class="fw-bold text-danger">{{ number_format($cycle->tontine->amount, 0, ',', ' ') }} FCFA</span>
+            </div>
+        </div>
+        <a href="{{ route('cycles.pay', $cycle) }}" class="btn btn-primary btn-lg w-100 mb-3">
+            <i class="fas fa-redo me-2"></i>Réessayer
         </a>
-        <a href="{{ url()->previous() }}" class="btn btn-outline-secondary w-100">
-            Réessayer
+        @endif
+
+        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary w-100">
+            <i class="fas fa-arrow-left me-2"></i>Retour au dashboard
         </a>
 
     </div>

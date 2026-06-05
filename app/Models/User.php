@@ -4,28 +4,37 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, SoftDeletes;
+    use HasApiTokens, HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'email', 'name', 'avatar',
-        'role', 'preferred_language', 'kyc_verified',
-        'kyc_document', 'is_active', 'last_seen_at',
+        'email', 'name', 'password', 'avatar', 'phone_number',
+        'google_id', 'role', 'kyc_verified',
+        'kyc_document', 'kyc_document_hash', 'is_active', 'last_seen_at', 'email_verified_at',
+        'payment_streak', 'max_streak', 'notification_settings',
+        'preferred_language',
     ];
-
-    protected $hidden = ['remember_token'];
 
     protected $casts = [
-        'kyc_verified' => 'boolean',
-        'is_active'    => 'boolean',
-        'last_seen_at' => 'datetime',
+        'password'          => 'hashed',
+        'kyc_verified'      => 'boolean',
+        'is_active'         => 'boolean',
+        'last_seen_at'      => 'datetime',
+        'email_verified_at' => 'datetime',
+        'payment_streak'        => 'integer',
+        'max_streak'            => 'integer',
+        'notification_settings' => 'array',
     ];
+
+    protected $hidden = ['password', 'remember_token'];
 
     // ── Relations ──────────────────────────────────────────────────────────
 
@@ -51,16 +60,35 @@ class User extends Authenticatable
         return $this->hasOne(CreditScore::class)->latestOfMany('calculated_at');
     }
 
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(\App\Models\ActivityLog::class);
+    }
+
+    public function badges(): BelongsToMany
+    {
+        return $this->belongsToMany(\App\Models\Badge::class, 'user_badges')
+            ->withPivot('earned_at')
+            ->withTimestamps();
+    }
+
+    // ── Scopes ─────────────────────────────────────────────────────────────
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeKycPending(Builder $query): Builder
+    {
+        return $query->where('kyc_verified', false)->whereNotNull('kyc_document');
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────
 
     public function isAdmin(): bool
     {
         return in_array($this->role, ['admin', 'super_admin']);
-    }
-
-    public function isManager(): bool
-    {
-        return in_array($this->role, ['manager', 'admin', 'super_admin']);
     }
 
     public function isSuperAdmin(): bool
