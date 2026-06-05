@@ -3,7 +3,32 @@
 @section('title', 'Créer une tontine')
 
 @section('content')
-<div class="container py-4">
+<div class="container py-4" x-data="{
+    type: '{{ old('type', 'fixed') }}',
+    needsEndDate() { return ['forced_saving', 'ceremonial'].includes(this.type) },
+    endDateLabel() {
+        if (this.type === 'ceremonial')    return 'Date de l\'événement *'
+        if (this.type === 'forced_saving') return 'Date de clôture de l\'épargne *'
+        return 'Date de fin (optionnelle)'
+    },
+    typeDescription() {
+        const d = {
+            fixed:         'Chaque membre cotise le même montant. Le pot tourne selon l\'ordre défini.',
+            auction:       'Les membres enchérissent pour recevoir le pot en premier. Celui qui propose le taux le plus élevé gagne — mais reçoit moins.',
+            forced_saving: 'Chaque membre épargne pour lui-même jusqu\'à la date de clôture. Pas de bénéficiaire rotatif.',
+            ceremonial:    'Tous les membres cotisent pour un événement unique (mariage, baptême...). Le créateur reçoit le pot à la date de l\'événement.'
+        }
+        return d[this.type] || ''
+    }
+}">
+
+    <nav aria-label="breadcrumb" class="mb-3 small">
+        <ol class="breadcrumb bg-transparent p-0 m-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('tontines.index') }}" class="text-green">Mes tontines</a></li>
+            <li class="breadcrumb-item active">Nouvelle tontine</li>
+        </ol>
+    </nav>
 
     <div class="d-flex align-items-center gap-2 mb-4">
         <a href="{{ route('tontines.index') }}" class="btn btn-sm btn-light rounded-circle">
@@ -15,12 +40,12 @@
     <form method="POST" action="{{ route('tontines.store') }}">
         @csrf
 
-        {{-- Informations de base --}}
+        {{-- Informations générales --}}
         <div class="card mb-4">
             <h6 class="fw-semibold text-muted mb-3">Informations générales</h6>
 
             <div class="mb-3">
-                <label class="form-label fw-semibold">Nom de la tontine <span class="text-danger">*</span></label>
+                <label class="form-label fw-semibold">Nom <span class="text-danger">*</span></label>
                 <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
                        value="{{ old('name') }}" placeholder="Ex: Tontine des femmes du marché" required>
                 @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -28,18 +53,20 @@
 
             <div class="mb-3">
                 <label class="form-label fw-semibold">Description</label>
-                <textarea name="description" class="form-control" rows="3"
-                          placeholder="Décrivez l'objectif de cette tontine...">{{ old('description') }}</textarea>
+                <textarea name="description" class="form-control" rows="2"
+                          placeholder="Objectif de cette tontine...">{{ old('description') }}</textarea>
             </div>
 
-            <div class="mb-3">
+            <div class="mb-0">
                 <label class="form-label fw-semibold">Type de tontine <span class="text-danger">*</span></label>
-                <select name="type" class="form-select @error('type') is-invalid @enderror" required>
-                    <option value="fixed" {{ old('type') === 'fixed' ? 'selected' : '' }}>Fixe (montant identique)</option>
-                    <option value="auction" {{ old('type') === 'auction' ? 'selected' : '' }}>Enchères</option>
-                    <option value="forced_saving" {{ old('type') === 'forced_saving' ? 'selected' : '' }}>Épargne forcée</option>
-                    <option value="ceremonial" {{ old('type') === 'ceremonial' ? 'selected' : '' }}>Cérémonielle</option>
+                <select name="type" x-model="type" class="form-select @error('type') is-invalid @enderror" required>
+                    <option value="fixed"         {{ old('type') === 'fixed'         ? 'selected' : '' }}>Fixe — Rotation classique</option>
+                    <option value="auction"       {{ old('type') === 'auction'       ? 'selected' : '' }}>Enchères — Le plus offrant reçoit en premier</option>
+                    <option value="forced_saving" {{ old('type') === 'forced_saving' ? 'selected' : '' }}>Épargne forcée — Chacun épargne pour soi</option>
+                    <option value="ceremonial"    {{ old('type') === 'ceremonial'    ? 'selected' : '' }}>Cérémonielle — Mariage, baptême, funérailles</option>
                 </select>
+                <div class="alert alert-light py-2 mt-2 small" x-text="typeDescription()" x-show="typeDescription()"></div>
+                @error('type') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
         </div>
 
@@ -61,9 +88,9 @@
                 <div class="col-6">
                     <label class="form-label fw-semibold">Fréquence <span class="text-danger">*</span></label>
                     <select name="frequency" class="form-select" required>
-                        <option value="weekly" {{ old('frequency') === 'weekly' ? 'selected' : '' }}>Hebdomadaire</option>
+                        <option value="weekly"  {{ old('frequency') === 'weekly'             ? 'selected' : '' }}>Hebdomadaire</option>
                         <option value="monthly" {{ old('frequency', 'monthly') === 'monthly' ? 'selected' : '' }}>Mensuelle</option>
-                        <option value="daily" {{ old('frequency') === 'daily' ? 'selected' : '' }}>Quotidienne</option>
+                        <option value="daily"   {{ old('frequency') === 'daily'              ? 'selected' : '' }}>Quotidienne</option>
                     </select>
                 </div>
                 <div class="col-6">
@@ -71,6 +98,34 @@
                     <input type="number" name="penalty_rate" class="form-control"
                            value="{{ old('penalty_rate', 0) }}" min="0" max="100" step="0.5">
                 </div>
+            </div>
+        </div>
+
+        {{-- Dates --}}
+        <div class="card mb-4">
+            <h6 class="fw-semibold text-muted mb-3">Dates</h6>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Date de début <span class="text-danger">*</span></label>
+                <input type="date" name="start_date" class="form-control @error('start_date') is-invalid @enderror"
+                       value="{{ old('start_date', now()->addDay()->format('Y-m-d')) }}"
+                       min="{{ now()->format('Y-m-d') }}" required>
+                @error('start_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="mb-0">
+                <label class="form-label fw-semibold" x-text="endDateLabel()"></label>
+                <input type="date" name="end_date"
+                       class="form-control @error('end_date') is-invalid @enderror"
+                       value="{{ old('end_date') }}"
+                       :required="needsEndDate()">
+                @error('end_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                <small class="text-muted" x-show="type === 'ceremonial'">
+                    Date à laquelle le bénéficiaire recevra le pot collecté.
+                </small>
+                <small class="text-muted" x-show="type === 'forced_saving'">
+                    À cette date, chaque membre récupère son épargne personnelle.
+                </small>
             </div>
         </div>
 
@@ -84,21 +139,51 @@
                     <input type="number" name="max_members" class="form-control"
                            value="{{ old('max_members', 10) }}" min="2" max="50" required>
                 </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Méthode tirage <span class="text-danger">*</span></label>
-                    <select name="draw_method" class="form-select" required>
+                <div class="col-6" x-show="!['forced_saving','ceremonial'].includes(type)">
+                    <label class="form-label fw-semibold">Méthode tirage</label>
+                    <select name="draw_method" class="form-select">
                         <option value="sequential" {{ old('draw_method', 'sequential') === 'sequential' ? 'selected' : '' }}>Séquentiel</option>
-                        <option value="random" {{ old('draw_method') === 'random' ? 'selected' : '' }}>Aléatoire</option>
+                        <option value="random"     {{ old('draw_method') === 'random'                   ? 'selected' : '' }}>Aléatoire</option>
                     </select>
+                </div>
+                <div x-show="['forced_saving','ceremonial'].includes(type)">
+                    <input type="hidden" name="draw_method" value="sequential">
                 </div>
             </div>
 
-            <div class="mt-3">
-                <label class="form-label fw-semibold">Date de début <span class="text-danger">*</span></label>
-                <input type="date" name="start_date" class="form-control @error('start_date') is-invalid @enderror"
-                       value="{{ old('start_date', now()->addDay()->format('Y-m-d')) }}"
-                       min="{{ now()->format('Y-m-d') }}" required>
-                @error('start_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            <div class="row g-3 mt-0" x-show="!['forced_saving','ceremonial'].includes(type)">
+                <div class="col-6">
+                    <label class="form-label fw-semibold">Quorum (%)
+                        <span class="text-muted fw-normal" data-bs-toggle="tooltip"
+                              title="% de membres devant avoir payé avant de permettre le tirage">
+                            <i class="fas fa-info-circle"></i>
+                        </span>
+                    </label>
+                    <input type="number" name="quorum" class="form-control"
+                           value="{{ old('quorum') }}" min="1" max="100" placeholder="Ex: 80">
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-semibold">Seuil de véto (%)
+                        <span class="text-muted fw-normal" data-bs-toggle="tooltip"
+                              title="% de membres requis pour annuler un tirage">
+                            <i class="fas fa-info-circle"></i>
+                        </span>
+                    </label>
+                    <input type="number" name="veto_threshold" class="form-control"
+                           value="{{ old('veto_threshold') }}" min="1" max="100" placeholder="Ex: 50">
+                </div>
+            </div>
+
+            <div class="mt-3" x-show="!['forced_saving','ceremonial'].includes(type)">
+                <div class="form-check form-switch">
+                    <input type="checkbox" name="weighted_draw" value="1"
+                           class="form-check-input" id="weighted_draw"
+                           {{ old('weighted_draw') ? 'checked' : '' }}>
+                    <label class="form-check-label fw-semibold" for="weighted_draw">
+                        Tirage pondéré par score crédit
+                    </label>
+                    <small class="d-block text-muted">Les membres avec un meilleur score crédit ont plus de chances d'être tirés.</small>
+                </div>
             </div>
         </div>
 

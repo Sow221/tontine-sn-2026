@@ -10,22 +10,24 @@ use Symfony\Component\HttpFoundation\Response;
 class ActivityLogger
 {
     private static array $sensitiveRoutes = [
-        'auth', 'payment', 'admin', 'cycle.draw',
+        'auth', 'payment', 'admin', 'cycle', 'tontines', 'profil',
     ];
 
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
 
-        if ($request->user() && $this->shouldLog($request)) {
-            \DB::table('activity_logs')->insert([
-                'user_id'    => $request->user()->id,
-                'action'     => $request->method() . ' ' . $request->path(),
-                'ip_address' => $request->ip(),
-                'payload'    => json_encode($this->sanitize($request->all())),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        try {
+            if ($request->user() && $this->shouldLog($request)) {
+                ActivityLog::create([
+                    'user_id'    => $request->user()->id,
+                    'action'     => $request->method() . ' ' . $request->path(),
+                    'ip_address' => $request->ip(),
+                    'payload'    => $this->sanitize($request->all()),
+                ]);
+            }
+        } catch (\Throwable) {
+            // Ne jamais bloquer la réponse à cause du logging
         }
 
         return $response;
@@ -41,6 +43,6 @@ class ActivityLogger
 
     private function sanitize(array $data): array
     {
-        return array_diff_key($data, array_flip(['password', 'code', 'otp', '_token']));
+        return array_diff_key($data, array_flip(['password', 'password_confirmation', 'code', 'otp', '_token']));
     }
 }

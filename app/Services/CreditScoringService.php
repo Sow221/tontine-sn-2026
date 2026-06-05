@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CreditScore;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class CreditScoringService
 {
@@ -18,18 +19,17 @@ class CreditScoringService
     {
         $cfg = config('tontine.credit_score');
 
-        $totalContributed = $user->transactions()
-            ->where('status', 'success')
-            ->sum('amount');
+        $aggregate = $user->transactions()
+            ->where('transactions.status', 'success')
+            ->leftJoin('cycles', 'cycles.id', '=', 'transactions.cycle_id')
+            ->selectRaw('COALESCE(SUM(transactions.amount), 0) as total_contributed')
+            ->selectRaw('COUNT(transactions.id) as total_cycles')
+            ->selectRaw('COALESCE(SUM(CASE WHEN DATE(transactions.paid_at) <= cycles.due_date THEN 1 ELSE 0 END), 0) as on_time')
+            ->first();
 
-        $totalCycles = $user->transactions()
-            ->where('status', 'success')
-            ->count();
-
-        $onTime = $user->transactions()
-            ->where('status', 'success')
-            ->whereHas('cycle', fn($q) => $q->whereColumn('transactions.paid_at', '<=', 'cycles.due_date'))
-            ->count();
+        $totalContributed = (int) $aggregate->total_contributed;
+        $totalCycles      = (int) $aggregate->total_cycles;
+        $onTime           = (int) $aggregate->on_time;
 
         $seniorityMonths = (int) $user->created_at->diffInMonths(now());
 
@@ -44,16 +44,20 @@ class CreditScoringService
 
         $badge = $this->resolveBadge($score);
 
-        return CreditScore::create([
-            'user_id'          => $user->id,
-            'score'            => $score,
-            'total_contributed'=> $totalContributed,
-            'on_time_payments' => $onTime,
-            'total_cycles'     => $totalCycles,
-            'seniority_months' => $seniorityMonths,
-            'badge'            => $badge,
-            'calculated_at'    => now(),
-        ]);
+        return DB::transaction(function () use ($user, $score, $totalContributed, $onTime, $totalCycles, $seniorityMonths, $badge) {
+            return CreditScore::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'score'             => $score,
+                    'total_contributed' => $totalContributed,
+                    'on_time_payments'  => $onTime,
+                    'total_cycles'      => $totalCycles,
+                    'seniority_months'  => $seniorityMonths,
+                    'badge'             => $badge,
+                    'calculated_at'     => now(),
+                ]
+            );
+        });
     }
 
     private function resolveBadge(float $score): string

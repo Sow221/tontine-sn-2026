@@ -5,44 +5,109 @@
 @section('content')
 <div class="container py-4">
 
-    <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('tontines.show', $cycle->tontine) }}" class="btn btn-sm btn-light rounded-circle">
-            <i class="fas fa-arrow-left"></i>
-        </a>
-        <h4 class="fw-bold mb-0">Payer ma cotisation</h4>
-    </div>
+    {{-- Breadcrumbs --}}
+    <nav aria-label="breadcrumb" class="mb-3 small">
+        <ol class="breadcrumb bg-transparent p-0 m-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('tontines.show', $cycle->tontine) }}" class="text-green">{{ $cycle->tontine->name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Paiement</li>
+        </ol>
+    </nav>
+
+    <h4 class="fw-bold mb-4">Payer ma cotisation</h4>
 
     {{-- Récapitulatif --}}
     <div class="card mb-4">
         <div class="text-center py-3">
             <p class="text-muted mb-1">Montant à payer</p>
-            <h2 class="fw-bold text-green">{{ number_format($cycle->tontine->amount, 0, ',', ' ') }} FCFA</h2>
+            <h2 class="fw-bold {{ $penalty > 0 ? 'text-danger' : 'text-green' }}">{{ number_format($totalAmount, 0, ',', ' ') }} FCFA</h2>
             <p class="text-muted small">{{ $cycle->tontine->name }} · Cycle {{ $cycle->cycle_number }}</p>
             <p class="text-muted small">Date limite : {{ $cycle->due_date->format('d/m/Y') }}</p>
+            @if($penalty > 0)
+            <div class="alert alert-warning mt-2 mb-0 text-start">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                <strong>Pénalité de retard incluse :</strong>
+                {{ number_format($cycle->tontine->amount, 0, ',', ' ') }} FCFA
+                + {{ number_format($penalty, 0, ',', ' ') }} FCFA ({{ $cycle->tontine->penalty_rate }}%)
+            </div>
+            @endif
         </div>
     </div>
 
-    {{-- Choix méthode --}}
-    <form method="POST" action="{{ route('cycles.pay.initiate', $cycle) }}" x-data="{ method: 'paytech' }">
+    @error('payment')
+    <div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>{{ $message }}</div>
+    @enderror
+
+    <form method="POST" action="{{ route('cycles.pay.initiate', $cycle) }}" x-data="{ method: 'wave', submitting: false }">
         @csrf
 
         <h6 class="fw-semibold mb-3">Choisir le mode de paiement</h6>
 
-        <div class="payment-methods mb-4">
+        <div class="payment-methods mb-3">
 
-            <label class="payment-option" :class="{ 'selected': method === 'paytech' }">
-                <input type="radio" name="method" value="paytech" x-model="method" class="d-none">
+            {{-- Wave --}}
+            <label class="payment-option" :class="method === 'wave' ? 'payment-wave' : ''">
+                <input type="radio" name="method" value="wave" x-model="method" class="d-none">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="payment-logo" style="background:#009639; color:white; font-weight:800; font-size:11px;">PAY</div>
-                    <div>
-                        <p class="fw-semibold mb-0">Paiement mobile</p>
-                        <small class="text-muted">Wave · Orange Money · Free Money</small>
+                    <div class="payment-logo wave-logo">
+                        <img src="{{ asset('images/logo wave.png') }}" alt="Wave" class="pay-method-icon">
                     </div>
-                    <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'paytech'"></i>
+                    <div>
+                        <p class="fw-semibold mb-0">Wave</p>
+                        <small class="text-muted">Paiement instantané</small>
+                    </div>
+                    <template x-if="method === 'wave'"><span class="badge bg-success ms-auto">Recommandé</span></template>
+                    <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'wave'"></i>
                 </div>
             </label>
 
-            <label class="payment-option" :class="{ 'selected': method === 'cash' }">
+            {{-- Orange Money --}}
+            <label class="payment-option" :class="method === 'orange_money' ? 'payment-orange' : ''">
+                <input type="radio" name="method" value="orange_money" x-model="method" class="d-none">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="payment-logo om-logo">
+                        <img src="{{ asset('images/logo orange money.png') }}" alt="Orange Money" class="pay-method-icon">
+                    </div>
+                    <div>
+                        <p class="fw-semibold mb-0">Orange Money</p>
+                        <small class="text-muted">Paiement mobile</small>
+                    </div>
+                    <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'orange_money'"></i>
+                </div>
+            </label>
+
+            {{-- Carte bancaire --}}
+            <label class="payment-option" :class="method === 'card' ? 'payment-card' : ''">
+                <input type="radio" name="method" value="card" x-model="method" class="d-none">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="payment-logo card-logo">
+                        <img src="{{ asset('images/carte bancaire.png') }}" alt="Carte" class="pay-method-icon">
+                    </div>
+                    <div>
+                        <p class="fw-semibold mb-0">Carte bancaire</p>
+                        <small class="text-muted">Visa / Mastercard</small>
+                    </div>
+                    <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'card'"></i>
+                </div>
+            </label>
+
+            {{-- Free Money --}}
+            <label class="payment-option" :class="method === 'free_money' ? 'payment-free' : ''">
+                <input type="radio" name="method" value="free_money" x-model="method" class="d-none">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="payment-logo" style="background:#E8F5E9;border:1.5px solid #E2E8F0;">
+                        <span class="fw-bold text-green" style="font-size:11px;">FREE</span>
+                    </div>
+                    <div>
+                        <p class="fw-semibold mb-0">Free Money</p>
+                        <small class="text-muted">Paiement mobile Free Sénégal</small>
+                    </div>
+                    <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'free_money'"></i>
+                </div>
+            </label>
+
+            {{-- Espèces --}}
+            <label class="payment-option" :class="method === 'cash' ? 'payment-cash' : ''">
                 <input type="radio" name="method" value="cash" x-model="method" class="d-none">
                 <div class="d-flex align-items-center gap-3">
                     <div class="payment-logo cash-logo"><i class="fas fa-money-bill"></i></div>
@@ -56,14 +121,69 @@
 
         </div>
 
-        <button type="submit" class="btn btn-primary btn-lg w-100">
-            <i class="fas fa-lock me-2"></i>Confirmer le paiement
+        {{-- Note PayTech --}}
+        <div class="alert alert-light d-flex gap-2 align-items-start mb-4" x-show="method !== 'cash'">
+            <i class="fas fa-info-circle text-muted mt-1"></i>
+            <small class="text-muted">
+                Wave, Orange Money et carte bancaire sont traités via
+                <strong>PayTech</strong> — plateforme de paiement sécurisée.
+                Vous serez redirigé vers leur page de paiement.
+            </small>
+        </div>
+
+        {{-- Confirmation modal --}}
+        <div class="modal fade" id="paymentConfirmModal" tabindex="-1" x-ref="confirmModal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="fw-bold">Confirmer le paiement</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center py-4">
+                        <div class="fs-1 mb-3">
+                            <i class="fas fa-shield-alt text-green"></i>
+                        </div>
+                        <p class="fw-semibold mb-1">Vous allez payer</p>
+                        <h3 class="fw-bold text-green mb-2">{{ number_format($totalAmount, 0, ',', ' ') }} FCFA</h3>
+                        <p class="text-muted small mb-0" x-text="{ wave: 'Via Wave', orange_money: 'Via Orange Money', free_money: 'Via Free Money', card: 'Via carte bancaire', cash: 'En espèces' }[method] || method"></p>
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center gap-2">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary px-5"
+                                :disabled="submitting"
+                                @click="submitting = true; $el.closest('form').submit()">
+                            <span x-show="!submitting">Confirmer</span>
+                            <span x-show="submitting">
+                                <span class="spinner-border spinner-border-sm me-2"></span>Traitement...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-lg w-100" data-bs-toggle="modal" data-bs-target="#paymentConfirmModal">
+            <i class="fas fa-lock me-2"></i>Payer {{ number_format($totalAmount, 0, ',', ' ') }} FCFA
         </button>
 
         <p class="text-center text-muted small mt-3">
-            <i class="fas fa-shield-alt me-1"></i>Paiement sécurisé via PayTech · TLS 1.3
+            <i class="fas fa-shield-alt me-1"></i>Paiement sécurisé · TLS 1.3
         </p>
     </form>
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('paymentConfirmModal');
+    if (modal) {
+        modal.addEventListener('shown.bs.modal', function () {
+            const btn = this.querySelector('button[type="submit"]');
+            if (btn) btn.disabled = false;
+        });
+    }
+});
+</script>
+@endpush

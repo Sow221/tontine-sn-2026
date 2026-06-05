@@ -11,15 +11,22 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email'],
+            'name'         => ['required', 'string', 'max:100'],
+            'email'        => ['required', 'email', 'unique:users,email'],
+            'phone_number' => ['nullable', 'string', 'max:25'],
+            'password'     => ['required', 'min:8', 'confirmed'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'email.required' => 'L\'adresse email est obligatoire.',
-            'email.email'    => 'Format d\'email invalide.',
+            'name.required'      => 'Le nom est obligatoire.',
+            'email.required'     => "L'email est obligatoire.",
+            'email.unique'       => 'Cet email est déjà utilisé.',
+            'password.required'  => 'Le mot de passe est obligatoire.',
+            'password.min'       => 'Le mot de passe doit contenir au moins 8 caractères.',
+            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
         ];
     }
 }

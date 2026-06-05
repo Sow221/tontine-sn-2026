@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('cycle_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->unsignedBigInteger('amount');
-            $table->enum('method', ['wave', 'orange_money', 'cash'])->default('wave');
+            $table->enum('method', ['wave', 'orange_money', 'card', 'cash', 'paytech'])->default('wave');
             $table->string('external_reference')->nullable()->unique();
             $table->enum('status', ['pending', 'success', 'failed', 'reversed'])->default('pending');
             $table->string('failure_reason')->nullable();

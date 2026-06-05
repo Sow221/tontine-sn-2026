@@ -1,0 +1,309 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TontineSN API",
+    "description": "API publique de gestion de tontines — S\u00e9n\u00e9gal",
+    "version": "1.0.0",
+    "contact": {
+      "email": "awas28948@gmail.com"
+    }
+  },
+  "servers": [
+    { "url": "/api", "description": "API locale" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string", "enum": ["member", "manager", "admin", "super_admin"] }
+        }
+      },
+      "Tontine": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "amount": { "type": "integer", "description": "Montant en FCFA" },
+          "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly"] },
+          "type": { "type": "string", "enum": ["fixed", "auction", "forced_saving", "ceremonial"] },
+          "status": { "type": "string", "enum": ["pending", "active", "completed"] },
+          "max_members": { "type": "integer" },
+          "draw_method": { "type": "string", "enum": ["sequential", "random"] },
+          "weighted_draw": { "type": "boolean" },
+          "veto_threshold": { "type": "integer", "nullable": true },
+          "quorum": { "type": "integer" },
+          "code": { "type": "string" }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "amount": { "type": "integer" },
+          "method": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "success", "failed"] },
+          "paid_at": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "CreditScore": {
+        "type": "object",
+        "properties": {
+          "score": { "type": "number", "format": "float" },
+          "badge": { "type": "string", "enum": ["none", "bronze", "silver", "gold"] },
+          "total_contributed": { "type": "integer" },
+          "calculated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "errors": { "type": "object" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentification"],
+        "summary": "Inscription",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Utilisateur cr\u00e9\u00e9" },
+          "422": { "description": "Donn\u00e9es invalides" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentification"],
+        "summary": "Connexion",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Token retourn\u00e9" },
+          "401": { "description": "Identifiants incorrects" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Authentification"],
+        "summary": "D\u00e9connexion",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "D\u00e9connect\u00e9" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Authentification"],
+        "summary": "Profil utilisateur connect\u00e9",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Profil retourn\u00e9", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/User"}}} }
+        }
+      }
+    },
+    "/tontines": {
+      "get": {
+        "tags": ["Tontines"],
+        "summary": "Lister mes tontines",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Liste des tontines" }
+        }
+      },
+      "post": {
+        "tags": ["Tontines"],
+        "summary": "Cr\u00e9er une tontine",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "amount", "frequency", "type", "start_date", "max_members", "draw_method"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "amount": { "type": "integer" },
+                  "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly"] },
+                  "type": { "type": "string", "enum": ["fixed", "auction", "forced_saving", "ceremonial"] },
+                  "start_date": { "type": "string", "format": "date" },
+                  "max_members": { "type": "integer" },
+                  "draw_method": { "type": "string", "enum": ["sequential", "random"] },
+                  "weighted_draw": { "type": "boolean" },
+                  "veto_threshold": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Tontine cr\u00e9\u00e9e", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Tontine"}}} }
+        }
+      }
+    },
+    "/tontines/{id}": {
+      "get": {
+        "tags": ["Tontines"],
+        "summary": "D\u00e9tails d'une tontine",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Tontine retourn\u00e9e" },
+          "404": { "description": "Tontine introuvable" }
+        }
+      }
+    },
+    "/tontines/join": {
+      "post": {
+        "tags": ["Tontines"],
+        "summary": "Rejoindre avec un code",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["code"],
+                "properties": {
+                  "code": { "type": "string", "minLength": 6, "maxLength": 6 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Adh\u00e9sion envoy\u00e9e / d\u00e9j\u00e0 membre" }
+        }
+      }
+    },
+    "/tontines/{id}/activate": {
+      "post": {
+        "tags": ["Tontines"],
+        "summary": "Activer une tontine",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Tontine activ\u00e9e" }
+        }
+      }
+    },
+    "/cycles/{id}/pay": {
+      "post": {
+        "tags": ["Paiements"],
+        "summary": "Initier un paiement PayTech",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "URL de paiement retourn\u00e9e" }
+        }
+      }
+    },
+    "/transactions": {
+      "get": {
+        "tags": ["Paiements"],
+        "summary": "Historique des transactions",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Liste des transactions" }
+        }
+      }
+    },
+    "/transactions/{id}": {
+      "get": {
+        "tags": ["Paiements"],
+        "summary": "Statut d'un paiement",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Transaction retourn\u00e9e" }
+        }
+      }
+    },
+    "/credit-score": {
+      "get": {
+        "tags": ["Cr\u00e9dit"],
+        "summary": "Mon score de cr\u00e9dit",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Score retourn\u00e9", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CreditScore"}}} }
+        }
+      }
+    },
+    "/credit-score/refresh": {
+      "post": {
+        "tags": ["Cr\u00e9dit"],
+        "summary": "Recalculer mon score",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": { "description": "Score recalcul\u00e9" }
+        }
+      }
+    }
+  }
+}

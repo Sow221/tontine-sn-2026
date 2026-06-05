@@ -67,6 +67,47 @@ class TontineTest extends TestCase
              ->assertSessionHasErrors('code');
     }
 
+    public function test_user_can_join_active_tontine_when_not_full(): void
+    {
+        $owner   = User::factory()->create();
+        $member  = User::factory()->create();
+        $tontine = Tontine::factory()->create([
+            'created_by'  => $owner->id,
+            'status'      => 'active',
+            'max_members' => 10,
+        ]);
+        $tontine->members()->attach($owner->id, ['status' => 'active', 'position' => 1]);
+
+        $this->actingAs($member)
+             ->post('/tontines/join', ['code' => $tontine->code])
+             ->assertRedirect();
+
+        $this->assertDatabaseHas('tontine_members', [
+            'tontine_id' => $tontine->id,
+            'user_id'    => $member->id,
+            'status'     => 'pending',
+        ]);
+    }
+
+    public function test_user_cannot_join_when_tontine_is_full(): void
+    {
+        $owner   = User::factory()->create();
+        $member  = User::factory()->create();
+        $tontine = Tontine::factory()->create([
+            'created_by'  => $owner->id,
+            'status'      => 'active',
+            'max_members' => 2,
+        ]);
+        $tontine->members()->attach($owner->id, ['status' => 'active', 'position' => 1]);
+        $other = User::factory()->create();
+        $tontine->members()->attach($other->id, ['status' => 'active', 'position' => 2]);
+
+        $this->actingAs($member)
+             ->post('/tontines/join', ['code' => $tontine->code])
+             ->assertRedirect()
+             ->assertSessionHasErrors('code');
+    }
+
     // ── 3. Supprimer une tontine ───────────────────────────────────────────
 
     public function test_creator_can_delete_pending_tontine(): void

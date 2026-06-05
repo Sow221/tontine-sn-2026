@@ -4,14 +4,19 @@ namespace App\Policies;
 
 use App\Models\Tontine;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 class TontinePolicy
 {
     public function view(User $user, Tontine $tontine): bool
     {
-        return $user->isAdmin()
-            || $tontine->created_by === $user->id
-            || $tontine->members()->where('users.id', $user->id)->exists();
+        if ($user->isAdmin() || $tontine->created_by === $user->id) return true;
+
+        return Cache::remember(
+            "tontine_member_{$tontine->id}_{$user->id}",
+            now()->addMinutes(5),
+            fn() => $tontine->members()->where('users.id', $user->id)->exists()
+        );
     }
 
     public function update(User $user, Tontine $tontine): bool

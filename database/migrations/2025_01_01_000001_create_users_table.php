@@ -11,7 +11,9 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('email')->unique();
+            $table->string('password')->nullable();
             $table->string('name', 100)->nullable();
+            $table->string('google_id')->nullable()->unique();
             $table->string('avatar')->nullable();
             $table->enum('role', ['member', 'manager', 'admin', 'super_admin'])->default('member');
             $table->enum('preferred_language', ['fr', 'wo', 'en'])->default('fr');

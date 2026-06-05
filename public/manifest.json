@@ -1,0 +1,91 @@
+{
+  "name": "TontineSN",
+  "short_name": "TontineSN",
+  "description": "Gérez vos tontines en ligne — cotisations, paiements, score crédit.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#ffffff",
+  "theme_color": "#009639",
+  "lang": "fr",
+  "dir": "ltr",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "social"],
+  "icons": [
+    {
+      "src": "/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mon tableau de bord",
+      "short_name": "Accueil",
+      "description": "Voir mes tontines et cotisations",
+      "url": "/dashboard",
+      "icons": [{ "src": "/images/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mes tontines",
+      "short_name": "Tontines",
+      "description": "Gérer mes tontines",
+      "url": "/tontines",
+      "icons": [{ "src": "/images/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Payer une cotisation",
+      "short_name": "Payer",
+      "description": "Accéder rapidement au paiement",
+      "url": "/tontines",
+      "icons": [{ "src": "/images/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "share_target": {
+    "action": "/tontines/join",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "code"
+    }
+  },
+  "screenshots": [
+    {
+      "src": "/images/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dashboard TontineSN"
+    },
+    {
+      "src": "/images/screenshot-desktop.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Vue desktop TontineSN"
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": []
+}

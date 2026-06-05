@@ -1,6 +1,26 @@
 # 🌿 TontineSN — Application Laravel de Gestion de Tontines
 
+[![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php&logoColor=white)]()
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?logo=laravel&logoColor=white)]()
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)]()
+[![License](https://img.shields.io/badge/License-MIT-green)]()
+[![Tests](https://img.shields.io/badge/tests-84%20passing-brightgreen)]()
+
 Projet académique · Master Développement Web · Sénégal
+
+---
+
+## Table des matières
+
+- [Stack technique](#stack-technique)
+- [Installation](#installation)
+- [Comptes de test](#comptes-de-test-après-seeding)
+- [Architecture](#architecture)
+- [Modules implémentés](#modules-implémentés)
+- [Algorithme de crédit scoring](#algorithme-de-crédit-scoring)
+- [Sécurité](#sécurité)
+- [Gamification](#gamification)
+- [Contribuer](#contribuer)
 
 ---
 
@@ -134,3 +154,32 @@ Badges : Bronze ≥ 4.0 | Argent ≥ 6.5 | Or ≥ 8.5
 - Protection CSRF sur tous les formulaires
 - Policies Laravel (TontinePolicy) sur toutes les actions sensibles
 - lockForUpdate() sur join() pour éviter les race conditions
+
+---
+
+## Gamification
+
+| Fonctionnalité          | Détails                                               |
+|-------------------------|-------------------------------------------------------|
+| Badges                  | 10 badges déblocables (bronze, silver, gold)          |
+| Séries de paiement      | Suivi des paiements consécutifs à temps               |
+| Classement              | Leaderboard global ou par tontine                     |
+| Notification badges     | Alertes en temps réel sur le dashboard                |
+
+Déclenché automatiquement à chaque paiement confirmé via `GamificationService`.
+
+---
+
+## Contribuer
+
+1. `git checkout -b feature/ma-branche`
+2. `composer install && npm install`
+3. `cp .env.example .env && php artisan key:generate`
+4. `php artisan migrate --seed`
+5. `php artisan test` (vérifier qu'aucune régression)
+6. Ouvrir une Pull Request
+
+```bash
+# Lancer les tests en parallèle
+composer test:parallel
+```
