@@ -35,6 +35,7 @@ class TontineApiController extends Controller
 
     public function store(Request $request)
     {
+        $type = $request->input('type');
         $data = $request->validate([
             'name'         => ['required', 'string', 'max:255'],
             'description'  => ['nullable', 'string', 'max:1000'],
@@ -42,7 +43,9 @@ class TontineApiController extends Controller
             'frequency'    => ['required', 'in:daily,weekly,monthly'],
             'type'         => ['required', 'in:fixed,auction,forced_saving,ceremonial'],
             'start_date'   => ['required', 'date', 'after_or_equal:today'],
-            'end_date'     => ['nullable', 'date', 'after:start_date'],
+            'end_date'     => in_array($type, ['forced_saving', 'ceremonial'])
+                ? ['required', 'date', 'after:start_date']
+                : ['nullable', 'date', 'after:start_date'],
             'max_members'  => ['required', 'integer', 'min:2', 'max:50'],
             'penalty_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'draw_method'  => ['required', 'in:random,sequential'],

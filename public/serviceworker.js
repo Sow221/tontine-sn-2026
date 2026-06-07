@@ -1,6 +1,7 @@
 /**
  * TontineSN Service Worker v3
  * Stratégies : cache-first pour assets, network-first pour pages
+ * Supporte FCM (Firebase Cloud Messaging)
  */
 
 const APP_VERSION   = 'v3';
@@ -99,9 +100,15 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// ── PUSH NOTIFICATIONS ─────────────────────────────────────────
+// ── PUSH NOTIFICATIONS — Web Push API ──────────────────────────
 self.addEventListener('push', (event) => {
-  let data = { title: 'TontineSN', body: 'Nouvelle notification', icon: '/images/icon-192.png', badge: '/images/icon-192.png', url: '/dashboard' };
+  let data = { 
+    title: 'TontineSN', 
+    body: 'Nouvelle notification', 
+    icon: '/images/icon-192.png', 
+    badge: '/images/icon-192.png', 
+    url: '/dashboard' 
+  };
 
   try {
     if (event.data) {
@@ -125,6 +132,44 @@ self.addEventListener('push', (event) => {
   );
 });
 
+// ── FCM MESSAGES (Firebase Cloud Messaging) ────────────────────
+self.addEventListener('message', (event) => {
+  if (!event.data) return;
+
+  // Support pour SKIP_WAITING (force la mise à jour)
+  if (event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
+
+  // Support pour messages FCM depuis Firebase Messaging
+  if (event.data.firebaseMessaging) {
+    // Les données FCM sont traitées par le SDK Firebase
+    // Mais on peut aussi les afficher manuellement si nécessaire
+    const { notification, data } = event.data.firebaseMessaging;
+    
+    if (notification) {
+      const notificationOptions = {
+        body: notification.body,
+        icon: notification.icon || '/images/icon-192.png',
+        badge: '/images/icon-192.png',
+        vibrate: [200, 100, 200],
+        requireInteraction: false,
+        tag: 'tontinesn-fcm',
+        renotify: true,
+      };
+
+      if (data?.url) {
+        notificationOptions.data = { url: data.url };
+      }
+
+      event.waitUntil(
+        self.registration.showNotification(notification.title || 'TontineSN', notificationOptions)
+      );
+    }
+  }
+});
+
 // ── NOTIFICATION CLICK ─────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
@@ -143,9 +188,3 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// ── MESSAGE — forcer la mise à jour depuis le client ──────────
-self.addEventListener('message', (event) => {
-  if (event.data?.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});

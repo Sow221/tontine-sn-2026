@@ -27,10 +27,9 @@ class TontineService
 
         $user  = User::find($userId);
         $score = $user?->creditScore?->score ?? 0;
-        $kycThreshold    = config('tontine.transaction.kyc_threshold', 500_000);
+        $kycThreshold    = config('tontine.transaction.kyc_threshold', 300_000);
         $kycDocThreshold = config('tontine.transaction.kyc_doc_threshold', 50_000);
 
-        // Palier 1 : doc soumis requis (>= 50 000 FCFA)
         if ($tontine->amount >= $kycDocThreshold && !$user?->kyc_document) {
             return [
                 'ok'        => false,
@@ -40,7 +39,6 @@ class TontineService
             ];
         }
 
-        // Palier 2 : KYC vérifié requis (>= 500 000 FCFA)
         if ($tontine->amount >= $kycThreshold && !$user?->kyc_verified) {
             return [
                 'ok'        => false,
@@ -50,7 +48,6 @@ class TontineService
             ];
         }
 
-        // Bloquer si score insuffisant (uniquement pour les utilisateurs ayant déjà un historique)
         $hasHistory = $user?->transactions()->where('status', 'success')->exists();
         if ($hasHistory && $score < 2 && $tontine->amount > 50_000) {
             return [
@@ -61,9 +58,18 @@ class TontineService
             ];
         }
 
+        // Déterminer le cycle de départ si la tontine est déjà active
+        $startCycleNumber = null;
+        if ($tontine->status === 'active') {
+            $currentCycleNumber = $tontine->cycles()
+                ->whereIn('status', ['pending', 'partial', 'overdue'])
+                ->min('cycle_number');
+            $startCycleNumber = $currentCycleNumber ?? 1;
+        }
+
         $result = ['ok' => false, 'message' => ''];
 
-        DB::transaction(function () use ($tontine, $userId, &$result) {
+        DB::transaction(function () use ($tontine, $userId, $startCycleNumber, &$result) {
             $locked = Tontine::lockForUpdate()->find($tontine->id);
 
             if ($locked->isFull()) {
@@ -73,13 +79,19 @@ class TontineService
 
             $locked->members()->syncWithoutDetaching([
                 $userId => [
-                    'status'    => 'pending',
-                    'position'  => $locked->members()->count() + 1,
-                    'joined_at' => now(),
+                    'status'            => 'pending',
+                    'position'          => $locked->activeMembers()->count() + 1,
+                    'joined_at'         => now(),
+                    'start_cycle_number'=> $startCycleNumber,
                 ],
             ]);
 
-            $result = ['ok' => true, 'message' => 'Demande d\'adhésion envoyée. En attente d\'approbation.'];
+            $message = 'Demande d\'adhésion envoyée. En attente d\'approbation.';
+            if ($startCycleNumber && $startCycleNumber > 1) {
+                $message .= ' Vous commencerez à cotiser à partir du cycle ' . $startCycleNumber . '.';
+            }
+
+            $result = ['ok' => true, 'message' => $message];
         });
 
         return $result;

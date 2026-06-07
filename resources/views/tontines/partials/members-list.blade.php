@@ -55,6 +55,15 @@
             <span class="badge badge-success"><i class="fas fa-check me-1"></i>Payé</span>
         @else
             <span class="badge badge-warning">En attente</span>
+            @if($isCreator && $member->id !== auth()->id())
+            <form method="POST" action="{{ route('tontines.members.remind', [$tontine, $member]) }}" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill" title="Envoyer un rappel"
+                        onclick="return confirm('Envoyer un rappel de paiement \u00e0 {{ addslashes($member->name ?? $member->phone_number) }} ?')">
+                    <i class="fas fa-bell"></i>
+                </button>
+            </form>
+            @endif
         @endif
     </div>
     @endforeach
@@ -81,6 +90,13 @@
 @endif
 
 <h6 class="fw-semibold mb-3">Membres actifs ({{ $membersList->count() }})</h6>
+@php
+    function memberMeta($member) {
+        $pos = $member->pivot->position ?? '—';
+        $start = $member->pivot->start_cycle_number ?? 1;
+        return 'Position ' . $pos . ($start > 1 ? ' · Dès cycle ' . $start : '');
+    }
+@endphp
 <div id="members-limited">
 @foreach($visibleMembers as $member)
 <div class="card mb-2 py-2">
@@ -95,7 +111,12 @@
                     <span class="badge badge-info ms-1">Créateur</span>
                 @endif
             </p>
-            <small class="text-muted">Position {{ $member->pivot->position ?? '—' }}</small>
+            <small class="text-muted">
+                Position {{ $member->pivot->position ?? '—' }}
+                @if(($member->pivot->start_cycle_number ?? 1) > 1)
+                    · <span class="text-warning fw-semibold">Dès cycle {{ $member->pivot->start_cycle_number }}</span>
+                @endif
+            </small>
         </div>
         <span class="badge badge-success">Actif</span>
     </div>
@@ -117,7 +138,12 @@
                     <span class="badge badge-info ms-1">Créateur</span>
                 @endif
             </p>
-            <small class="text-muted">Position {{ $member->pivot->position ?? '—' }}</small>
+            <small class="text-muted">
+                Position {{ $member->pivot->position ?? '—' }}
+                @if(($member->pivot->start_cycle_number ?? 1) > 1)
+                    · <span class="text-warning fw-semibold">Dès cycle {{ $member->pivot->start_cycle_number }}</span>
+                @endif
+            </small>
         </div>
         <span class="badge badge-success">Actif</span>
     </div>

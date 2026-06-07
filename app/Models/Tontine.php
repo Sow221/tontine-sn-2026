@@ -39,7 +39,7 @@ class Tontine extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'tontine_members')
-                    ->withPivot('status', 'position', 'joined_at')
+                    ->withPivot('status', 'position', 'joined_at', 'start_cycle_number')
                     ->withTimestamps();
     }
 
@@ -91,6 +91,11 @@ class Tontine extends Model
     {
         if (in_array($this->type, ['forced_saving', 'ceremonial'], true)) {
             return null;
+        }
+
+        // Charger la relation si absente pour éviter les requêtes implicites multiples
+        if (!$this->relationLoaded('members')) {
+            $this->load('members');
         }
 
         $winnersIds = $this->relationLoaded('cycles')

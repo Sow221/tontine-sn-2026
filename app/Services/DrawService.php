@@ -8,6 +8,7 @@ use App\Models\AuctionBid;
 use App\Models\CreditScore;
 use App\Models\Cycle;
 use App\Models\CycleVeto;
+use App\Models\Transaction;
 
 class DrawService
 {
@@ -19,22 +20,25 @@ class DrawService
 
         $tontine = $cycle->tontine;
 
-        if ($tontine->quorum > 1) {
-            $paidCount = $cycle->successfulTransactions()->count();
-            $memberCount = $tontine->activeMembers()->count();
-            $required = (int) ceil($memberCount * $tontine->quorum / 100);
-
-            if ($paidCount < $required) {
-                return 'Quorum non atteint : ' . $paidCount . '/' . $required . ' paiements requis.';
-            }
-        }
-
         if ($tontine->type === 'auction') {
             if ($cycle->auctionBids()->count() === 0) {
                 return 'Aucune enchère soumise pour ce cycle.';
             }
-        } elseif ($cycle->completionRate() < 100) {
-            return 'Tirage impossible : ' . $cycle->completionRate() . '% collecté seulement.';
+        } else {
+            // Pour les types non-auction : vérifier d'abord le quorum, puis le taux de complétion
+            if ($tontine->quorum > 1) {
+                $paidCount = $cycle->successfulTransactions()->count();
+                $memberCount = $tontine->activeMembers()->count();
+                $required = (int) ceil($memberCount * $tontine->quorum / 100);
+
+                if ($paidCount < $required) {
+                    return 'Quorum non atteint : ' . $paidCount . '/' . $required . ' paiements requis.';
+                }
+            }
+
+            if ($cycle->completionRate() < 100) {
+                return 'Tirage impossible : ' . $cycle->completionRate() . '% collecté seulement.';
+            }
         }
 
         return null;
@@ -87,6 +91,24 @@ class DrawService
         $cycle->update(['beneficiary_id' => null, 'draw_hash' => null, 'drawn_at' => null]);
         CycleVeto::where('cycle_id', $cycle->id)->delete();
 
+        // Vérifier qu'il reste des membres éligibles avant le re-tirage
+        $tontine    = $cycle->tontine;
+        $alreadyWon = Cycle::where('tontine_id', $tontine->id)
+            ->whereNotNull('beneficiary_id')
+            ->pluck('beneficiary_id');
+        $eligible = $tontine->activeMembers()->whereNotIn('users.id', $alreadyWon)->count();
+
+        if ($eligible === 0) {
+            // Aucun membre éligible : marquer le cycle comme bloqué via un statut
+            // On laisse beneficiary_id null et on notifie le créateur
+            app(\App\Services\NotificationService::class)->send(
+                $tontine->creator,
+                'general',
+                "⚠️ Tous les membres ont déjà reçu le pot dans la tontine \u00ab {$tontine->name} \u00bb. Le tirage ne peut pas être rellancé. Contactez les membres."
+            );
+            return true;
+        }
+
         // Re-tirer immédiatement un nouveau bénéficiaire
         $this->drawBeneficiary($cycle);
 
@@ -97,6 +119,8 @@ class DrawService
     {
         $tontine = $cycle->tontine;
         if (!$tontine->veto_threshold) return false;
+
+        if ($cycle->beneficiary_id === $userId) return false;
 
         $member = $tontine->members()
             ->where('users.id', $userId)
@@ -141,6 +165,7 @@ class DrawService
         ]);
 
         $totalWeight = $weights->sum();
+        if ($totalWeight <= 0) return $eligible->first();
         $rand = random_int(1, $totalWeight);
         $cumulative = 0;
 
@@ -170,8 +195,8 @@ class DrawService
         $pot       = $cycle->tontine->amount * $eligible->count();
 
         if ($winnerBid) {
-            $netAmount      = (int) round($pot * (1 - $winnerBid->bid_rate / 100));
-            $totalInterest  = $pot - $netAmount;
+            $netAmount     = (int) round($pot * (1 - $winnerBid->bid_rate / 100));
+            $totalInterest = $pot - $netAmount;
 
             $cycle->update([
                 'bid_amount'      => $netAmount,
@@ -179,18 +204,31 @@ class DrawService
             ]);
 
             $others = $eligible->where('id', '!=', $winner->id);
-            if ($others->count() > 0 && $totalInterest > 0) {
-                $sharePerMember = (int) floor($totalInterest / $others->count());
+            $othersCount = $others->count();
+
+            if ($othersCount > 0 && $totalInterest > 0) {
+                $sharePerMember = (int) floor($totalInterest / $othersCount);
+                // Le reste est attribué au premier membre pour ne rien perdre
+                $remainder = $totalInterest - ($sharePerMember * $othersCount);
+                $first = true;
+
                 foreach ($others as $member) {
-                    Transaction::create([
-                        'cycle_id'           => $cycle->id,
-                        'user_id'            => $member->id,
-                        'amount'             => $sharePerMember,
-                        'method'             => 'cash',
-                        'status'             => 'success',
-                        'external_reference' => 'redistribution-' . $cycle->id . '-' . $member->id,
-                        'paid_at'            => now(),
-                    ]);
+                    $amount = $first ? $sharePerMember + $remainder : $sharePerMember;
+                    $first  = false;
+
+                    Transaction::updateOrCreate(
+                        [
+                            'cycle_id'           => $cycle->id,
+                            'user_id'            => $member->id,
+                            'external_reference' => 'redistribution-' . $cycle->id . '-' . $member->id,
+                        ],
+                        [
+                            'amount'  => $amount,
+                            'method'  => 'cash',
+                            'status'  => 'success',
+                            'paid_at' => now(),
+                        ]
+                    );
                 }
             }
         }

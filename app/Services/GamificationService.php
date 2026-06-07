@@ -17,15 +17,18 @@ class GamificationService
     public function checkAndAwardBadges(User $user): Collection
     {
         $existing = $user->badges()->pluck('slug');
-        $earned = collect();
+        $earned   = collect();
 
         foreach ($this->qualifyingBadges($user) as $badge) {
             if ($existing->contains($badge->slug)) continue;
 
-            DB::table('user_badges')->insert([
+            // Ignorer le doublon en cas de race condition (double visite simultanée)
+            DB::table('user_badges')->insertOrIgnore([
                 'user_id'   => $user->id,
                 'badge_id'  => $badge->id,
                 'earned_at' => now(),
+                'created_at'=> now(),
+                'updated_at'=> now(),
             ]);
 
             $earned->push($badge);
@@ -63,9 +66,9 @@ class GamificationService
         }
 
         return $query
-            ->orderByDesc('badge_count')
             ->orderByDesc('credit_score')
             ->orderByDesc('max_streak')
+            ->orderByDesc('badge_count')
             ->limit($limit)
             ->get();
     }
@@ -76,19 +79,23 @@ class GamificationService
 
         if ($tontineIds->isEmpty()) return collect();
 
-        return User::query()
-            ->select('users.id', 'users.name', 'users.avatar')
-            ->selectRaw('(SELECT COUNT(*) FROM user_badges WHERE user_badges.user_id = users.id) as badge_count')
-            ->selectRaw('COALESCE((SELECT score FROM credit_scores WHERE credit_scores.user_id = users.id ORDER BY calculated_at DESC LIMIT 1), 0) as credit_score')
-            ->selectRaw('users.max_streak')
-            ->where('is_active', true)
-            ->where('role', 'member')
-            ->whereHas('memberships', fn($q) => $q->whereIn('tontine_id', $tontineIds)->where('tontine_members.status', 'active'))
-            ->orderByDesc('badge_count')
-            ->orderByDesc('credit_score')
-            ->orderByDesc('max_streak')
-            ->limit($limit)
-            ->get();
+        $cacheKey = 'leaderboard.user.' . $user->id;
+
+        return Cache::remember($cacheKey, 300, function () use ($tontineIds, $limit) {
+            return User::query()
+                ->select('users.id', 'users.name', 'users.avatar')
+                ->selectRaw('(SELECT COUNT(*) FROM user_badges WHERE user_badges.user_id = users.id) as badge_count')
+                ->selectRaw('COALESCE((SELECT score FROM credit_scores WHERE credit_scores.user_id = users.id ORDER BY calculated_at DESC LIMIT 1), 0) as credit_score')
+                ->selectRaw('users.max_streak')
+                ->where('is_active', true)
+                ->where('role', 'member')
+                ->whereHas('memberships', fn($q) => $q->whereIn('tontine_id', $tontineIds)->where('tontine_members.status', 'active'))
+                ->orderByDesc('credit_score')
+                ->orderByDesc('max_streak')
+                ->orderByDesc('badge_count')
+                ->limit($limit)
+                ->get();
+        });
     }
 
     public function getUserStats(User $user): array
@@ -112,6 +119,7 @@ class GamificationService
     {
         $stats = $this->computeStats($user);
 
+        // Cache des badges par utilisateur (1h) pour éviter des requêtes répétées
         $badges = Cache::remember('badges.all', 3600, fn() => Badge::all());
 
         return $badges->filter(function (Badge $badge) use ($stats): bool {
@@ -132,6 +140,7 @@ class GamificationService
             'on_time_months'    => $this->getOnTimeMonths($user),
             'tontine_completed' => (int) $user->memberships()->wherePivot('status', 'completed')->count(),
             'invited_members'   => $this->getInvitedCount($user),
+            'referrals_count'   => (int) $user->referrals()->count(),
         ];
     }
 
@@ -144,11 +153,15 @@ class GamificationService
 
         if (!$hasRecentPayments) return 0;
 
+        // Compatible MySQL et SQLite
+        $driver = config('database.default');
+        $dateCast = $driver === 'sqlite' ? 'DATE(transactions.paid_at)' : 'DATE(transactions.paid_at)';
+
         $latePaymentExists = $user->transactions()
             ->where('transactions.status', 'success')
-            ->whereColumn('DATE(transactions.paid_at)', '>', 'cycles.due_date')
             ->join('cycles', 'cycles.id', '=', 'transactions.cycle_id')
             ->where('transactions.paid_at', '>=', now()->subMonths(3))
+            ->whereRaw("{$dateCast} > DATE(cycles.due_date)")
             ->exists();
 
         return $latePaymentExists ? 0 : 3;

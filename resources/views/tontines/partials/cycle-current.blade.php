@@ -8,9 +8,22 @@
         @endif
     </h6>
 
-    <div class="progress mb-2" style="height:8px;" role="progressbar"
-         aria-valuenow="{{ $currentCycle->completionRate() }}" aria-valuemin="0" aria-valuemax="100">
-        <div class="progress-bar bg-green" style="width:{{ $currentCycle->completionRate() }}%"></div>
+    {{-- Bannière bénéficiaire prominent --}}
+    @if($currentCycle->beneficiary_id === auth()->id())
+    <div class="your-turn-banner" role="status" aria-live="polite">
+        <div class="your-turn-banner__icon">🎉</div>
+        <div>
+            <div class="your-turn-banner__amount">{{ number_format($tontine->pot_total ?? ($tontine->amount * $tontine->active_members_count), 0, ',', ' ') }} FCFA</div>
+            <div class="your-turn-banner__label">C'est votre tour de recevoir le pot !</div>
+        </div>
+    </div>
+    @endif
+
+    <div class="cycle-progress-bar mb-2" role="progressbar"
+         aria-valuenow="{{ $currentCycle->completionRate() }}" aria-valuemin="0" aria-valuemax="100"
+         aria-label="Progression du cycle : {{ $currentCycle->completionRate() }}%">
+        <div class="cycle-progress-bar__fill {{ $currentCycle->isOverdue() ? 'cycle-progress-bar__fill--overdue' : '' }}"
+             style="width:{{ $currentCycle->completionRate() }}%"></div>
     </div>
     <div class="d-flex justify-content-between small text-muted mb-3">
         <span>{{ number_format($currentCycle->total_collected, 0, ',', ' ') }} FCFA collectés</span>
@@ -40,20 +53,32 @@
             @endif
         </p>
         @if(!$bidDeadlinePassed)
-        @php $myBid = $currentCycle->myBid(auth()->id()); @endphp
+        @php
+            $myBid = $currentCycle->myBid(auth()->id());
+            $potTotal = $tontine->amount * $tontine->active_members_count;
+        @endphp
         @if($myBid)
         <div class="alert alert-success py-2 mb-2">
             <i class="fas fa-check-circle me-1"></i>Votre enchère : <strong>{{ $myBid->bid_rate }}%</strong>
+            — vous recevrez environ <strong>{{ number_format($potTotal * (1 - $myBid->bid_rate / 100), 0, ',', ' ') }} FCFA</strong>
         </div>
         @endif
-        <form method="POST" action="{{ route('cycles.bid', $currentCycle) }}" class="d-flex gap-2">
+        <form method="POST" action="{{ route('cycles.bid', $currentCycle) }}"
+              x-data="{ rate: {{ $myBid?->bid_rate ?? 0 }}, pot: {{ $potTotal }} }">
             @csrf
-            <div class="input-group">
+            <div class="input-group mb-2">
                 <input type="number" name="bid_rate" class="form-control" step="0.5" min="0.5" max="30"
+                       x-model="rate"
                        value="{{ $myBid?->bid_rate ?? '' }}" placeholder="Ex: 5.0">
                 <span class="input-group-text">%</span>
             </div>
-            <button type="submit" class="btn btn-warning px-3">Enchérir</button>
+            <template x-if="rate > 0">
+                <p class="text-muted small mb-2">
+                    💰 Vous recevrez environ
+                    <strong x-text="Math.round(pot * (1 - rate / 100)).toLocaleString('fr-FR') + ' FCFA'"></strong>
+                </p>
+            </template>
+            <button type="submit" class="btn btn-warning w-100">Enchérir</button>
         </form>
         @endif
         @if($currentCycle->auctionBids->count() > 0)
@@ -132,6 +157,25 @@
             @endif
         </div>
     </div>
+    @endif
+
+    {{-- CYCLE BLOQUÉ : véto appliqué, aucun membre éligible restant --}}
+    @if(!$currentCycle->beneficiary_id && $tontine->status === 'active'
+        && !in_array($tontine->type, ['forced_saving', 'ceremonial'])
+        && $currentCycle->completionRate() >= 100)
+    @php
+        $allWon = $tontine->cycles->whereNotNull('beneficiary_id')->pluck('beneficiary_id')->unique();
+        $eligible = $tontine->members->where('pivot.status', 'active')->whereNotIn('id', $allWon->toArray());
+    @endphp
+    @if($eligible->isEmpty())
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+        <i class="fas fa-exclamation-triangle flex-shrink-0"></i>
+        <div>
+            <strong>Cycle bloqué</strong> — Tous les membres actifs ont déjà reçu le pot.
+            Le créateur de la tontine a été notifié. Contactez le groupe pour décider de la suite.
+        </div>
+    </div>
+    @endif
     @endif
 
     {{-- CASH EN ATTENTE : validation par le créateur --}}

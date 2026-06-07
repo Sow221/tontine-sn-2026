@@ -29,9 +29,12 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <a href="{{ route('home') }}" style="font-weight:700;color:#009639;text-decoration:none;font-size:1.1rem;">TontineSN</a>
             @auth
-            <a href="{{ route('tontines.join.form') }}?code={{ $tontine->code }}" class="btn btn-success rounded-pill">Rejoindre</a>
+            <a href="{{ route('tontines.join.form', ['code' => $tontine->code]) }}" class="btn btn-success rounded-pill">Rejoindre</a>
             @else
-            <a href="{{ route('auth.login') }}" class="btn btn-outline-secondary btn-sm rounded-pill">Se connecter</a>
+            <div class="d-flex gap-2">
+                <a href="{{ route('auth.login') }}" class="btn btn-outline-secondary btn-sm rounded-pill">Se connecter</a>
+                <a href="{{ route('auth.register') }}" class="btn btn-success btn-sm rounded-pill">S'inscrire</a>
+            </div>
             @endauth
         </div>
         <div class="d-flex justify-content-between align-items-start mb-4 flex-column flex-md-row gap-3">

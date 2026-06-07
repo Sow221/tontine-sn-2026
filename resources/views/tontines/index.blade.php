@@ -111,7 +111,8 @@
                 @endif
             </div>
             <div class="text-end flex-shrink-0">
-                <span class="badge badge-{{ match($tontine->status) { 'active' => 'success', 'completed' => 'secondary', 'suspended' => 'danger', default => 'warning' } }}">
+                <span class="badge badge-{{ match($tontine->status) { 'active' => 'success', 'completed' => 'secondary', 'suspended' => 'danger', default => 'warning' } }}"
+                      role="status" aria-label="Statut : {{ match($tontine->status) { 'active' => 'Active', 'completed' => 'Terminée', 'pending' => 'En attente', 'suspended' => 'Suspendue', default => ucfirst($tontine->status) } }}">
                     {{ match($tontine->status) { 'active' => 'Active', 'completed' => 'Terminée', 'pending' => 'En attente', 'suspended' => 'Suspendue', default => ucfirst($tontine->status) } }}
                 </span>
                 <div class="small text-muted mt-1">{{ $tontine->active_members_count }} membre(s)</div>

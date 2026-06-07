@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegisterRequest;
+use App\Jobs\RecalculateCreditScore;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -15,6 +17,7 @@ use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
+    public function __construct(private NotificationService $notifier) {}
     public function showLogin()
     {
         return view('auth.login');
@@ -49,6 +52,10 @@ class AuthController extends Controller
                 return redirect()->route('admin.dashboard');
             }
 
+            if ($inviteCode = session()->pull('invite_code')) {
+                return redirect()->route('tontines.join.form', ['code' => $inviteCode]);
+            }
+
             return redirect()->intended(route('dashboard'));
         } catch (\Throwable $e) {
             Log::error('Erreur connexion', ['error' => $e->getMessage(), 'class' => get_class($e)]);
@@ -56,26 +63,40 @@ class AuthController extends Controller
         }
     }
 
-    public function showRegister()
+    public function showRegister(Request $request)
     {
+        // Stocker le code de parrainage en session pour le retrouver après inscription
+        if ($request->filled('ref')) {
+            session(['referral_code' => strtoupper($request->ref)]);
+        }
         return view('auth.register');
     }
 
     public function register(RegisterRequest $request)
     {
         try {
+            $refCode  = session()->pull('referral_code') ?? strtoupper($request->input('ref', ''));
+            $referrer = $refCode ? User::where('referral_code', $refCode)->first() : null;
+
             $user = User::create([
                 'name'         => $request->name,
                 'email'        => $request->email,
                 'phone_number' => $request->phone_number,
                 'password'     => Hash::make($request->password),
                 'role'         => 'member',
+                'referred_by'  => $referrer?->id,
             ]);
 
             Auth::login($user);
             $user->update(['last_seen_at' => now()]);
 
-            return redirect()->route('dashboard');
+            // Notifier le parrain + recalculer son score
+            if ($referrer) {
+                $this->notifier->notifyReferralJoined($referrer, $user);
+                RecalculateCreditScore::dispatch($referrer->id)->afterResponse();
+            }
+
+            return redirect()->route('dashboard')->with('success', 'Bienvenue sur TontineSN ! Créez votre première tontine ou rejoignez un groupe avec un code.');
         } catch (\Throwable $e) {
             Log::error('Erreur inscription', ['error' => $e->getMessage(), 'class' => get_class($e)]);
             return back()->withErrors(['email' => 'Erreur lors de l\'inscription. Veuillez réessayer.'])->withInput();
@@ -133,8 +154,12 @@ class AuthController extends Controller
         }
     }
 
-    public function redirectToGoogle()
+    public function redirectToGoogle(Request $request)
     {
+        // Préserver le code de parrainage avant redirect OAuth
+        if ($request->filled('ref')) {
+            session(['referral_code' => strtoupper($request->ref)]);
+        }
         return Socialite::driver('google')->redirect();
     }
 
@@ -148,14 +173,19 @@ class AuthController extends Controller
         }
 
         try {
+            $isNew    = !User::where('email', $googleUser->getEmail())->exists();
+            $refCode  = $isNew ? (session()->pull('referral_code') ?? '') : '';
+            $referrer = $refCode ? User::where('referral_code', strtoupper($refCode))->first() : null;
+
             $user = User::firstOrCreate(
                 ['email' => $googleUser->getEmail()],
                 [
-                    'name'      => $googleUser->getName(),
-                    'avatar'    => $googleUser->getAvatar(),
-                    'google_id' => $googleUser->getId(),
-                    'password'  => Str::random(32),
-                    'role'      => 'member',
+                    'name'        => $googleUser->getName(),
+                    'avatar'      => $googleUser->getAvatar(),
+                    'google_id'   => $googleUser->getId(),
+                    'password'    => Str::random(32),
+                    'role'        => 'member',
+                    'referred_by' => $referrer?->id,
                 ]
             );
 
@@ -164,15 +194,28 @@ class AuthController extends Controller
                     ->withErrors(['email' => 'Votre compte a été désactivé. Contactez l\'administrateur.']);
             }
 
-            if (!$user->google_id) $user->update(['google_id' => $googleUser->getId()]);
-            if (!$user->name)      $user->update(['name'      => $googleUser->getName()]);
-            if (!$user->avatar)    $user->update(['avatar'    => $googleUser->getAvatar()]);
+            $patch = array_filter([
+                'google_id' => !$user->google_id ? $googleUser->getId() : null,
+                'name'      => !$user->name      ? $googleUser->getName() : null,
+                'avatar'    => !$user->avatar    ? $googleUser->getAvatar() : null,
+            ]);
+            if (!empty($patch)) $user->update($patch);
 
             Auth::login($user);
             $user->update(['last_seen_at' => now()]);
 
+            // Notifier le parrain + recalculer son score (nouveaux inscrits via Google)
+            if ($isNew && $referrer) {
+                $this->notifier->notifyReferralJoined($referrer, $user);
+                RecalculateCreditScore::dispatch($referrer->id)->afterResponse();
+            }
+
             if ($user->isAdmin()) {
                 return redirect()->route('admin.dashboard');
+            }
+
+            if ($inviteCode = session()->pull('invite_code')) {
+                return redirect()->route('tontines.join.form', ['code' => $inviteCode]);
             }
 
             return redirect()->intended(route('dashboard'));

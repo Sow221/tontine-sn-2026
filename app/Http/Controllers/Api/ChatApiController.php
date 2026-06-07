@@ -25,6 +25,30 @@ class ChatApiController extends Controller
         return response()->json($messages);
     }
 
+    public function poll(Request $request, Tontine $tontine): JsonResponse
+    {
+        $this->authorizeAccess($tontine);
+
+        $after = (int) $request->query('after', 0);
+
+        $messages = ChatMessage::where('tontine_id', $tontine->id)
+            ->where('id', '>', $after)
+            ->with('user:id,name,avatar')
+            ->orderBy('id')
+            ->limit(50)
+            ->get()
+            ->map(fn($m) => [
+                'id'         => $m->id,
+                'user_id'    => $m->user_id,
+                'name'       => $m->user?->name,
+                'avatar'     => $m->user?->avatar,
+                'message'    => $m->message,
+                'created_at' => $m->created_at->toIso8601String(),
+            ]);
+
+        return response()->json(['messages' => $messages]);
+    }
+
     public function send(Request $request, Tontine $tontine, NotificationService $notifier): JsonResponse
     {
         $this->authorizeAccess($tontine);

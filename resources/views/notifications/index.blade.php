@@ -38,7 +38,19 @@
                 </p>
                 <small class="text-muted">{{ $notification->created_at->isoFormat('D MMMM YYYY à HH:mm') }}</small>
                 @if($notification->event)
-                <span class="badge bg-light text-dark ms-2">{{ $notification->event }}</span>
+                <span class="badge bg-light text-dark ms-2" style="font-size:10px;">
+                    {{ match($notification->event) {
+                        'beneficiary_notification' => '🎉 Bénéficiaire',
+                        'payment_confirmed'        => '✅ Paiement',
+                        'member_approved'          => '👋 Adhésion',
+                        'payment_reminder'         => '🔔 Rappel',
+                        'cycle_start'              => '📅 Nouveau cycle',
+                        'savings_withdrawal'       => '💰 Retrait épargne',
+                        'kyc_approved'             => '🛡️ KYC approuvé',
+                        'kyc_rejected'             => '❌ KYC refusé',
+                        default                    => $notification->event,
+                    } }}
+                </span>
                 @endif
             </div>
             <span class="badge badge-{{ $notification->status === 'sent' ? 'success' : ($notification->status === 'failed' ? 'danger' : 'warning') }}">

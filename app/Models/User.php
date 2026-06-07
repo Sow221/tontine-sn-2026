@@ -17,10 +17,11 @@ class User extends Authenticatable
 
     protected $fillable = [
         'email', 'name', 'password', 'avatar', 'phone_number',
-        'google_id', 'role', 'kyc_verified',
+        'google_id', 'role', 'kyc_verified', 'kyc_status', 'kyc_rejected_reason',
         'kyc_document', 'kyc_document_hash', 'is_active', 'last_seen_at', 'email_verified_at',
         'payment_streak', 'max_streak', 'notification_settings',
-        'preferred_language',
+        'preferred_language', 'onboarding_completed',
+        'referral_code', 'referred_by',
     ];
 
     protected $casts = [
@@ -46,7 +47,7 @@ class User extends Authenticatable
     public function memberships(): BelongsToMany
     {
         return $this->belongsToMany(Tontine::class, 'tontine_members')
-                    ->withPivot('status', 'position', 'joined_at')
+                    ->withPivot('status', 'position', 'joined_at', 'start_cycle_number')
                     ->withTimestamps();
     }
 
@@ -57,7 +58,12 @@ class User extends Authenticatable
 
     public function creditScore(): HasOne
     {
-        return $this->hasOne(CreditScore::class)->latestOfMany('calculated_at');
+        return $this->hasOne(CreditScore::class);
+    }
+
+    public function twoFactorSecret(): HasOne
+    {
+        return $this->hasOne(TwoFactorSecret::class);
     }
 
     public function activityLogs(): HasMany
@@ -72,6 +78,16 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function referrer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referred_by');
+    }
+
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(User::class, 'referred_by');
+    }
+
     // ── Scopes ─────────────────────────────────────────────────────────────
 
     public function scopeActive(Builder $query): Builder
@@ -81,7 +97,7 @@ class User extends Authenticatable
 
     public function scopeKycPending(Builder $query): Builder
     {
-        return $query->where('kyc_verified', false)->whereNotNull('kyc_document');
+        return $query->where('kyc_status', 'pending');
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
@@ -94,5 +110,21 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->role === 'super_admin';
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->twoFactorSecret?->isEnabled() ?? false;
+    }
+
+    // ── Hooks ──────────────────────────────────────────────────────────────
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (empty($user->referral_code)) {
+                $user->referral_code = strtoupper(\Illuminate\Support\Str::random(8));
+            }
+        });
     }
 }

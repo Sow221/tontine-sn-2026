@@ -14,6 +14,7 @@ use App\Services\DrawService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\TontineService;
+use App\Services\WebhookOutboundService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -27,6 +28,7 @@ class TontineController extends Controller
         private PaymentService $paymentService,
         private NotificationService $notifier,
         private DrawService $drawService,
+        private WebhookOutboundService $webhookOutbound,
     ) {}
 
     public function index(Request $request)
@@ -89,7 +91,14 @@ class TontineController extends Controller
         $this->authorize('view', $tontine);
 
         try {
-            $tontine->load(['members', 'cycles.beneficiary', 'cycles.transactions', 'currentCycle.transactions', 'currentCycle.auctionBids']);
+            // Chargement unique et complet — évite le double load et les N+1
+            $tontine->load([
+                'members',
+                'cycles' => fn($q) => $q->select('id','tontine_id','cycle_number','due_date','status','total_collected','beneficiary_id','drawn_at','bid_amount')->orderBy('cycle_number'),
+                'currentCycle.transactions',
+                'currentCycle.auctionBids',
+                'currentCycle.beneficiary',
+            ]);
             $currentCycle = $tontine->currentCycle;
             $user         = Auth::user();
             $userId       = $user->id;
@@ -246,11 +255,13 @@ class TontineController extends Controller
             $tontine = Tontine::where('code', strtoupper($code))->first();
             if (!$tontine) abort(404);
 
+            // Stocker le code en session pour redirection post-auth
+            session(['invite_code' => strtoupper($code)]);
+
             $inviteUrl = route('tontines.join.form', ['code' => $tontine->code]);
             $ogImage   = route('tontines.og', ['code' => $tontine->code]);
             $excerpt   = $tontine->description ?: "Rejoignez cette tontine avec le code {$tontine->code}.";
-
-            $title = $tontine->name;
+            $title     = $tontine->name;
 
             return view('tontines.invite', compact('tontine', 'inviteUrl', 'ogImage', 'excerpt', 'title'));
         } catch (\Throwable $e) {
@@ -315,13 +326,21 @@ SVG;
                 return back()->withErrors(['code' => $result['message']]);
             }
 
+            // Webhook sortant : membre ayant rejoint
+            if ($tontine) {
+                $this->webhookOutbound->dispatch('member.joined', [
+                    'tontine_id' => $tontine->id,
+                    'user_id'    => Auth::id(),
+                    'status'     => 'pending',
+                ]);
+            }
+
             return redirect()->route('tontines.show', $tontine)->with('success', $result['message']);
         } catch (\Throwable $e) {
             Log::error('Erreur adhésion tontine', ['error' => $e->getMessage(), 'class' => get_class($e)]);
             return back()->withErrors(['code' => 'Erreur lors de l\'adhésion.']);
         }
     }
-
     public function confirmCashPayment(Tontine $tontine, Transaction $transaction)
     {
         $this->authorize('update', $tontine);
@@ -341,6 +360,38 @@ SVG;
         } catch (\Throwable $e) {
             Log::error('Erreur confirmation cash', ['tx' => $transaction->id, 'error' => $e->getMessage()]);
             return back()->withErrors(['error' => 'Erreur lors de la confirmation.']);
+        }
+    }
+
+    public function remindMember(Tontine $tontine, \App\Models\User $user)
+    {
+        $this->authorize('update', $tontine);
+
+        $currentCycle = $tontine->currentCycle;
+        if (!$currentCycle) {
+            return back()->withErrors(['error' => 'Aucun cycle actif pour cette tontine.']);
+        }
+
+        $alreadyPaid = Transaction::success()
+            ->forCycle($currentCycle->id)
+            ->forUser($user->id)
+            ->exists();
+
+        if ($alreadyPaid) {
+            return back()->withErrors(['error' => $user->name . ' a déjà payé ce cycle.']);
+        }
+
+        try {
+            $this->notifier->notifyPaymentReminder(
+                $user,
+                $tontine->name,
+                $tontine->amount,
+                max(0, now()->diffInDays($currentCycle->due_date, false))
+            );
+            return back()->with('success', 'Rappel envoyé à ' . $user->name . '.');
+        } catch (\Throwable $e) {
+            Log::error('Erreur relance membre', ['tontine' => $tontine->id, 'user' => $user->id, 'error' => $e->getMessage()]);
+            return back()->withErrors(['error' => 'Erreur lors de l\'envoi du rappel.']);
         }
     }
 
@@ -420,12 +471,61 @@ SVG;
         }
     }
 
+    public function transferOwnership(Request $request, Tontine $tontine)
+    {
+        $this->authorize('update', $tontine);
+
+        $request->validate([
+            'new_owner_id' => ['required', 'exists:users,id'],
+        ], [
+            'new_owner_id.required' => 'Veuillez sélectionner un nouveau propriétaire.',
+            'new_owner_id.exists'   => 'Membre introuvable.',
+        ]);
+
+        $newOwnerId = (int) $request->new_owner_id;
+
+        if ($newOwnerId === Auth::id()) {
+            return back()->withErrors(['new_owner_id' => 'Vous êtes déjà le propriétaire.']);
+        }
+
+        $isMember = $tontine->members()
+            ->where('users.id', $newOwnerId)
+            ->wherePivot('status', 'active')
+            ->exists();
+
+        if (!$isMember) {
+            return back()->withErrors(['new_owner_id' => 'Le membre sélectionné n\'est pas un membre actif de cette tontine.']);
+        }
+
+        try {
+            $tontine->update(['created_by' => $newOwnerId]);
+            $newOwner = \App\Models\User::find($newOwnerId);
+            $this->notifier->send(
+                $newOwner,
+                'general',
+                "Vous êtes maintenant propriétaire de la tontine \u00ab\ {$tontine->name}\ \u00bb. Bonne gestion !"
+            );
+            return back()->with('success', 'Propriété transférée à ' . ($newOwner?->name ?? 'ce membre') . '.');
+        } catch (\Throwable $e) {
+            Log::error('Erreur transfert propriété', ['tontine' => $tontine->id, 'error' => $e->getMessage()]);
+            return back()->withErrors(['error' => 'Erreur lors du transfert.']);
+        }
+    }
+
     public function leave(Tontine $tontine)
     {
         $user = Auth::user();
 
         try {
-            if ($tontine->status === 'active') {
+            $memberStatus = $tontine->members()
+                ->where('users.id', $user->id)
+                ->first()?->pivot?->status;
+
+            if (!$memberStatus) {
+                return back()->withErrors(['leave' => 'Vous n\'êtes pas membre de cette tontine.']);
+            }
+
+            if ($tontine->status === 'active' && $memberStatus === 'active') {
                 $hasTurn = $tontine->cycles()->where('beneficiary_id', $user->id)->exists();
                 if ($hasTurn) {
                     return back()->withErrors(['leave' => 'Vous ne pouvez pas quitter une tontine active dans laquelle vous avez un tour assigné.']);
@@ -433,7 +533,7 @@ SVG;
             }
 
             if ($tontine->created_by === $user->id) {
-                return back()->withErrors(['leave' => 'Le créateur ne peut pas quitter sa propre tontine. Supprimez-la ou transférez-la.']);
+                return back()->withErrors(['leave' => 'Le créateur ne peut pas quitter sa propre tontine. Transférez la propriété à un autre membre actif avant de quitter.']);
             }
 
             $tontine->members()->detach($user->id);

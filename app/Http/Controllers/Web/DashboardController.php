@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\RecalculateCreditScore;
 use App\Models\CreditScore;
 use App\Models\Cycle;
 use App\Models\Transaction;
@@ -42,11 +43,11 @@ class DashboardController extends Controller
             $pendingMemberships = $user->memberships()->wherePivot('status', 'pending')->get();
 
             $creditScore = $user->creditScore;
+            $scoreCalculating = false;
 
             if (!$creditScore) {
-                dispatch(function () use ($user) {
-                    $this->scorer->calculate($user);
-                })->afterResponse();
+                $scoreCalculating = true;
+                RecalculateCreditScore::dispatch($user->id)->afterResponse();
 
                 $creditScore = new CreditScore(['score' => 0, 'badge' => 'none']);
             }
@@ -76,7 +77,7 @@ class DashboardController extends Controller
                 'user', 'activeTontines', 'upcomingPayments', 'overduePayments',
                 'pendingMemberships', 'creditScore', 'recentTransactions',
                 'beneficiaireCycles', 'newBadges', 'gamification', 'leaderboard',
-                'chartData',
+                'chartData', 'scoreCalculating',
             ));
         } catch (\Throwable $e) {
             Log::error('Erreur dashboard', ['user_id' => Auth::id(), 'error' => $e->getMessage(), 'class' => get_class($e)]);
@@ -89,6 +90,7 @@ class DashboardController extends Controller
                 'gamification' => ['total_badges' => 0, 'bronze_count' => 0, 'silver_count' => 0, 'gold_count' => 0, 'payment_streak' => 0, 'max_streak' => 0, 'badges' => collect()],
                 'leaderboard' => collect(),
                 'chartData' => ['months' => collect(), 'payments' => collect()],
+                'scoreCalculating' => false,
             ]);
         }
     }
@@ -134,10 +136,18 @@ class DashboardController extends Controller
 
     private function upcomingPayments(Collection $activeTontines, $user): Collection
     {
-        return $activeTontines
-            ->map(fn($t) => $t->currentCycle)
-            ->filter()
-            ->reject(fn($c) => Transaction::success()->forCycle($c->id)->forUser($user->id)->exists())
+        // Batch la vérification des paiements pour éviter le N+1
+        $cycles = $activeTontines->map(fn($t) => $t->currentCycle)->filter();
+        $cycleIds = $cycles->pluck('id')->values();
+
+        $alreadyPaidIds = Transaction::success()
+            ->whereIn('cycle_id', $cycleIds)
+            ->forUser($user->id)
+            ->pluck('cycle_id')
+            ->flip();
+
+        return $cycles
+            ->reject(fn($c) => $alreadyPaidIds->has($c->id))
             ->sortBy('due_date')
             ->values();
     }
@@ -154,9 +164,15 @@ class DashboardController extends Controller
 
     private function chartData($user): array
     {
+        // DATE_FORMAT est MySQL-specific — utilisation de strftime pour SQLite en test, DATE_FORMAT en prod
+        $driver   = config('database.default');
+        $dateFmt  = $driver === 'sqlite'
+            ? "strftime('%Y-%m', paid_at) as month"
+            : "DATE_FORMAT(paid_at, '%Y-%m') as month";
+
         $chartRaw = Transaction::success()->forUser($user->id)
             ->where('paid_at', '>=', now()->subMonths(12)->startOfMonth())
-            ->selectRaw("DATE_FORMAT(paid_at, '%Y-%m') as month, SUM(amount) as total")
+            ->selectRaw("{$dateFmt}, SUM(amount) as total")
             ->groupBy('month')
             ->pluck('total', 'month');
 

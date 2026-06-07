@@ -1,15 +1,18 @@
 <?php
 
+use App\Http\Controllers\Web\WebhookController;
 use App\Http\Controllers\Api\AuthApiController;
 use App\Http\Controllers\Api\ChatApiController;
+use App\Http\Controllers\Api\NotificationApiController;
 use App\Http\Controllers\Api\TontineApiController;
 use App\Http\Controllers\Api\PaymentApiController;
 use App\Http\Controllers\Api\CreditScoreApiController;
-use App\Http\Controllers\Web\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 // ── Webhook PayTech (pas d'auth, vérification interne par re-call API) ────
-Route::post('/webhooks/paytech', [PaymentController::class, 'paytechWebhook'])->name('webhooks.paytech');
+Route::post('/webhooks/paytech', [WebhookController::class, 'paytech'])
+    ->name('webhooks.paytech')
+    ->middleware('throttle:60,1');
 
 // ── API v1 ─────────────────────────────────────────────────────────────────
 Route::prefix('v1')->group(function () {
@@ -49,7 +52,13 @@ Route::prefix('v1')->group(function () {
         Route::post('/credit-score/refresh',[CreditScoreApiController::class, 'refresh']);
 
         // Chat
-        Route::get('/tontines/{tontine}/chat',  [ChatApiController::class, 'index']);
-        Route::post('/tontines/{tontine}/chat', [ChatApiController::class, 'send']);
+        Route::get('/tontines/{tontine}/chat',        [ChatApiController::class, 'index']);
+        Route::post('/tontines/{tontine}/chat',       [ChatApiController::class, 'send']);
+        Route::get('/tontines/{tontine}/chat/poll',   [ChatApiController::class, 'poll']);
     });
+});
+
+// ── FCM Notifications (authentifiées mais hors du groupe v1) ────
+Route::middleware(['auth:sanctum', 'check.user.active'])->group(function () {
+    Route::post('/fcm-token', [NotificationApiController::class, 'registerFcmToken']);
 });

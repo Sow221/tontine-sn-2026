@@ -33,16 +33,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    @stack('head-scripts')
     <link href="{{ asset('css/tontine.css') }}" rel="stylesheet">
     @stack('styles')
 </head>
-<body class="bg-off-white {{ session('theme') === 'dark' ? 'dark-mode' : '' }}" x-data="{ dark: localStorage.getItem('tontine-theme') === 'dark' || {{ session('theme') === 'dark' ? 'true' : 'false' }} }" :class="{ 'dark-mode': dark }">
+<body class="bg-off-white" x-data="{ dark: localStorage.getItem('tontine-theme') === 'dark' || (!localStorage.getItem('tontine-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches) }" :class="{ 'dark-mode': dark }">
 
     <a href="#main-content" class="skip-link">Aller au contenu principal</a>
 
     <noscript>
-        <div style="background: var(--red); color: white; text-align: center; padding: 12px; font-weight: 600;">
+        <div role="alert" style="background: var(--red); color: white; text-align: center; padding: 12px; font-weight: 600;">
             JavaScript est requis pour utiliser TontineSN. Veuillez l'activer dans votre navigateur.
         </div>
     </noscript>
@@ -58,7 +58,7 @@
 
     {{-- Sidebar --}}
     <aside class="app-sidebar" :class="{ 'open': sidebarOpen }" role="navigation" aria-label="Navigation principale"
-           :aria-hidden="!sidebarOpen">
+           x-trap.noscroll="sidebarOpen">
         <a href="{{ route('dashboard') }}" class="sidebar-logo" aria-label="Retour au tableau de bord">
             <img src="{{ asset('images/element-logo.png') }}" alt="TontineSN" width="36" height="36">
             <span class="sidebar-logo-text">TontineSN</span>
@@ -93,6 +93,11 @@
                 </a>
                 <a href="{{ route('admin.api.docs') }}" class="sidebar-link {{ request()->routeIs('admin.api.docs') ? 'active' : '' }}">
                     <i class="fas fa-code"></i> API Docs
+                </a>
+                <div class="sidebar-divider"></div>
+                <span class="sidebar-section-label">Contenu</span>
+                <a href="{{ route('admin.posts') }}" class="sidebar-link {{ request()->routeIs('admin.posts*') ? 'active' : '' }}">
+                    <i class="fas fa-newspaper"></i> Actualités
                 </a>
             @else
                 {{-- Navigation MEMBRE --}}
@@ -141,7 +146,6 @@
                         @click.prevent="
                             dark = !dark;
                             localStorage.setItem('tontine-theme', dark ? 'dark' : 'light');
-                            fetch('{{ route('theme.toggle') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } });
                         ">
                     <i class="fas me-2" :class="dark ? 'fa-sun' : 'fa-moon'"></i>
                     <span x-text="dark ? 'Mode clair' : 'Mode sombre'"></span>
@@ -157,7 +161,7 @@
     </aside>
 
     {{-- Contenu principal --}}
-    <div class="app-main" :aria-hidden="sidebarOpen ? 'true' : 'false'" id="main-content">
+    <div class="app-main" id="main-content">
 
         {{-- Topbar --}}
         <header class="app-topbar">
@@ -168,7 +172,17 @@
                 </button>
                 <span class="topbar-title">@yield('title', 'Tableau de bord')</span>
             </div>
-            <div class="topbar-actions">
+            <div class="topbar-actions d-flex align-items-center gap-2">
+                @if(auth()->user()->isAdmin())
+                <span class="badge bg-danger d-none d-sm-inline">{{ auth()->user()->role === 'super_admin' ? 'Super Admin' : 'Admin' }}</span>
+                @else
+                <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-light position-relative" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    @if(($unreadNotificationsCount ?? 0) > 0)
+                    <span class="badge bg-danger position-absolute" style="top:2px;right:2px;font-size:9px;min-width:15px;height:15px;line-height:9px;padding:3px;">{{ ($unreadNotificationsCount ?? 0) > 9 ? '9+' : $unreadNotificationsCount }}</span>
+                    @endif
+                </a>
+                @endif
                 <span class="text-muted small d-none d-md-inline">
                     {{ now()->isoFormat('dddd D MMMM YYYY') }}
                 </span>
@@ -220,7 +234,9 @@
                 <a href="{{ route('cgu') }}" class="text-muted text-decoration-none">CGU</a>
                 <a href="{{ route('mentions') }}" class="text-muted text-decoration-none">Mentions légales</a>
                 <a href="{{ route('privacy') }}" class="text-muted text-decoration-none">Confidentialité</a>
+                @if(!auth()->user()->isAdmin())
                 <a href="{{ route('faq.index') }}" class="text-muted text-decoration-none">FAQ</a>
+                @endif
             </div>
             &copy; {{ date('Y') }} TontineSN. Tous droits réservés.
         </footer>
@@ -239,8 +255,8 @@
             <a href="{{ route('admin.tontines') }}" class="bottom-nav-link {{ request()->routeIs('admin.tontines*') ? 'active' : '' }}">
                 <i class="fas fa-layer-group"></i><span>Tontines</span>
             </a>
-            <a href="{{ route('admin.transactions') }}" class="bottom-nav-link {{ request()->routeIs('admin.transactions*') ? 'active' : '' }}">
-                <i class="fas fa-exchange-alt"></i><span>Transactions</span>
+            <a href="{{ route('admin.posts') }}" class="bottom-nav-link {{ request()->routeIs('admin.posts*') ? 'active' : '' }}">
+                <i class="fas fa-newspaper"></i><span>Posts</span>
             </a>
             <a href="{{ route('admin.stats') }}" class="bottom-nav-link {{ request()->routeIs('admin.stats') ? 'active' : '' }}">
                 <i class="fas fa-chart-line"></i><span>Stats</span>
@@ -255,11 +271,8 @@
             <a href="{{ route('chat.index') }}" class="bottom-nav-link {{ request()->routeIs('chat.*') ? 'active' : '' }}">
                 <i class="fas fa-comments"></i><span>Messages</span>
             </a>
-            <a href="{{ route('notifications.index') }}" class="bottom-nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
-                <i class="fas fa-bell"></i><span>Notifications</span>
-                @if(($unreadNotificationsCount ?? 0) > 0)
-                <span class="badge bg-danger position-absolute" style="top:4px;right:50%;font-size:9px;min-width:16px;height:16px;line-height:10px;transform:translateX(18px);">{{ $unreadNotificationsCount > 9 ? '9+' : $unreadNotificationsCount }}</span>
-                @endif
+            <a href="{{ route('historique.index') }}" class="bottom-nav-link {{ request()->routeIs('historique.*') ? 'active' : '' }}">
+                <i class="fas fa-history"></i><span>Historique</span>
             </a>
             <a href="{{ route('profile.show') }}" class="bottom-nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                 <i class="fas fa-user"></i><span>Profil</span>
@@ -293,8 +306,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
 <script src="{{ asset('js/tontine.js') }}"></script>
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/serviceworker.js', { scope: '/' })

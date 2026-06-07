@@ -13,7 +13,7 @@ class RegisterRequest extends FormRequest
         return [
             'name'         => ['required', 'string', 'max:100'],
             'email'        => ['required', 'email', 'unique:users,email'],
-            'phone_number' => ['nullable', 'string', 'max:25'],
+            'phone_number' => ['nullable', 'string', 'regex:/^\+?[0-9\s\-]{7,20}$/'],
             'password'     => ['required', 'min:8', 'confirmed'],
         ];
     }
@@ -21,12 +21,13 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required'      => 'Le nom est obligatoire.',
-            'email.required'     => "L'email est obligatoire.",
-            'email.unique'       => 'Cet email est déjà utilisé.',
-            'password.required'  => 'Le mot de passe est obligatoire.',
-            'password.min'       => 'Le mot de passe doit contenir au moins 8 caractères.',
-            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
+            'name.required'       => 'Le nom est obligatoire.',
+            'email.required'      => "L'email est obligatoire.",
+            'email.unique'        => 'Cet email est déjà utilisé.',
+            'password.required'   => 'Le mot de passe est obligatoire.',
+            'password.min'        => 'Le mot de passe doit contenir au moins 8 caractères.',
+            'password.confirmed'  => 'Les mots de passe ne correspondent pas.',
+            'phone_number.regex'  => 'Format de téléphone invalide (ex: +221 77 000 00 00).',
         ];
     }
 }

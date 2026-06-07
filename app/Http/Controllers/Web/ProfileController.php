@@ -14,7 +14,10 @@ class ProfileController extends Controller
 {
     public function show()
     {
-        return view('profile.show', ['user' => Auth::user()->load('creditScore')]);
+        $user = Auth::user()->load('creditScore', 'badges');
+        $referralLink = route('auth.register', ['ref' => $user->referral_code]);
+        $referralsCount = $user->referrals()->count();
+        return view('profile.show', compact('user', 'referralLink', 'referralsCount'));
     }
 
     public function update(Request $request)
@@ -24,23 +27,22 @@ class ProfileController extends Controller
         $request->validate([
             'name'         => ['required', 'string', 'max:100'],
             'email'        => ['required', 'email', 'unique:users,email,' . $user->id],
-            'phone_number' => ['nullable', 'string', 'max:25'],
+            'phone_number' => ['nullable', 'string', 'regex:/^\+?[0-9\s\-]{7,20}$/'],
             'avatar'       => ['nullable', 'image', 'max:2048'],
-            'preferred_language' => ['nullable', 'in:fr,en'],
         ], [
-            'name.required'  => 'Le nom est obligatoire.',
-            'email.required' => "L'email est obligatoire.",
-            'email.unique'   => 'Cet email est déjà utilisé.',
-            'avatar.image'   => 'Le fichier doit être une image.',
-            'avatar.max'     => "L'image ne doit pas dépasser 2 Mo.",
+            'name.required'       => 'Le nom est obligatoire.',
+            'email.required'      => "L'email est obligatoire.",
+            'email.unique'        => 'Cet email est déjà utilisé.',
+            'avatar.image'        => 'Le fichier doit être une image.',
+            'avatar.max'          => "L'image ne doit pas dépasser 2 Mo.",
+            'phone_number.regex'  => 'Format de téléphone invalide (ex: +221 77 000 00 00).',
         ]);
 
         try {
             $data = [
-                'name'              => $request->name,
-                'email'             => $request->email,
-                'phone_number'      => $request->phone_number,
-                'preferred_language'=> $request->preferred_language ?? 'fr',
+                'name'         => $request->name,
+                'email'        => $request->email,
+                'phone_number' => $request->phone_number,
             ];
 
             if ($request->hasFile('avatar')) {
@@ -126,6 +128,9 @@ class ProfileController extends Controller
                 'google_id'         => null,
                 'password'          => \Illuminate\Support\Str::random(64),
             ]);
+
+            // Révoquer tous les tokens API avant suppression
+            $user->tokens()->delete();
 
             Auth::logout();
             $request->session()->invalidate();
@@ -219,7 +224,13 @@ class ProfileController extends Controller
 
             // Stockage privé (non accessible publiquement)
             $path = $request->file('kyc_document')->store('kyc', 'local');
-            $user->update(['kyc_document' => $path, 'kyc_verified' => false, 'kyc_document_hash' => $hash]);
+            $user->update([
+                'kyc_document'      => $path,
+                'kyc_verified'      => false,
+                'kyc_status'        => 'pending',
+                'kyc_rejected_reason' => null,
+                'kyc_document_hash' => $hash,
+            ]);
 
             return back()->with('success', 'Document soumis. Votre identité sera vérifiée sous 24-48h.');
         } catch (\Throwable $e) {
@@ -230,17 +241,19 @@ class ProfileController extends Controller
 
     public function exportData()
     {
-        $user = Auth::user()->load('creditScore', 'badges', 'transactions');
+        $user = Auth::user()->load('creditScore', 'badges', 'transactions.cycle.tontine', 'memberships', 'referrals');
 
         $data = [
             'exported_at'  => now()->toIso8601String(),
             'profile'      => [
-                'name'         => $user->name,
-                'email'        => $user->email,
-                'phone_number' => $user->phone_number,
-                'role'         => $user->role,
-                'kyc_verified' => $user->kyc_verified,
-                'created_at'   => $user->created_at->toIso8601String(),
+                'name'          => $user->name,
+                'email'         => $user->email,
+                'phone_number'  => $user->phone_number,
+                'role'          => $user->role,
+                'kyc_verified'  => $user->kyc_verified,
+                'referral_code' => $user->referral_code,
+                'referrals'     => $user->referrals->count(),
+                'created_at'    => $user->created_at->toIso8601String(),
             ],
             'credit_score' => $user->creditScore ? [
                 'score'            => $user->creditScore->score,
@@ -249,10 +262,24 @@ class ProfileController extends Controller
                 'total_cycles'     => $user->creditScore->total_cycles,
             ] : null,
             'transactions' => $user->transactions->map(fn($tx) => [
-                'amount'     => $tx->amount,
-                'method'     => $tx->method,
-                'status'     => $tx->status,
-                'created_at' => $tx->created_at->toIso8601String(),
+                'amount'      => $tx->amount,
+                'method'      => $tx->method,
+                'status'      => $tx->status,
+                'tontine'     => $tx->cycle?->tontine?->name,
+                'cycle'       => $tx->cycle?->cycle_number,
+                'created_at'  => $tx->created_at->toIso8601String(),
+            ]),
+            'tontines'     => $user->memberships->map(fn($t) => [
+                'name'      => $t->name,
+                'code'      => $t->code,
+                'status'    => $t->status,
+                'role'      => $t->pivot->status,
+                'joined_at' => $t->pivot->joined_at,
+            ]),
+            'badges'       => $user->badges->map(fn($b) => [
+                'name'      => $b->name,
+                'tier'      => $b->tier,
+                'earned_at' => $b->pivot->earned_at,
             ]),
         ];
 

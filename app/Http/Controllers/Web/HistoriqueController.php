@@ -48,20 +48,8 @@ class HistoriqueController extends Controller
                         $tx->cycle->tontine->name ?? '—',
                         'Cycle ' . ($tx->cycle->cycle_number ?? '—'),
                         $tx->amount,
-                        match($tx->method) {
-                            'wave'         => 'Wave',
-                            'orange_money' => 'Orange Money',
-                            'free_money'   => 'Free Money',
-                            'card'         => 'Carte bancaire',
-                            'cash'         => 'Espèces',
-                            default        => ucfirst($tx->method),
-                        },
-                        match($tx->status) {
-                            'success' => 'Payé',
-                            'pending' => 'En attente',
-                            'failed'  => 'Échoué',
-                            default   => ucfirst($tx->status),
-                        },
+                        $tx->method_label,
+                        $tx->status_label,
                     ], ';');
                 }
                 fclose($file);

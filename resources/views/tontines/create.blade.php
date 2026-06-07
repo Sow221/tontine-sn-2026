@@ -93,11 +93,6 @@
                         <option value="daily"   {{ old('frequency') === 'daily'              ? 'selected' : '' }}>Quotidienne</option>
                     </select>
                 </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Pénalité retard (%)</label>
-                    <input type="number" name="penalty_rate" class="form-control"
-                           value="{{ old('penalty_rate', 0) }}" min="0" max="100" step="0.5">
-                </div>
             </div>
         </div>
 
@@ -131,59 +126,80 @@
 
         {{-- Membres & Tirage --}}
         <div class="card mb-4">
-            <h6 class="fw-semibold text-muted mb-3">Membres & Tirage</h6>
+            <h6 class="fw-semibold text-muted mb-3">Membres</h6>
+            <div class="mb-0">
+                <label class="form-label fw-semibold">Nombre maximum de membres <span class="text-danger">*</span></label>
+                <input type="number" name="max_members" class="form-control"
+                       value="{{ old('max_members', 10) }}" min="2" max="50" required>
+            </div>
+        </div>
 
-            <div class="row g-3">
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Nb. max membres <span class="text-danger">*</span></label>
-                    <input type="number" name="max_members" class="form-control"
-                           value="{{ old('max_members', 10) }}" min="2" max="50" required>
+        {{-- Options avancées --}}
+        <div class="mb-4" x-data="{ open: {{ $errors->hasAny(['quorum','veto_threshold','weighted_draw','draw_method','penalty_rate']) ? 'true' : 'false' }} }">
+            <button type="button" class="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-between"
+                    @click="open = !open">
+                <span><i class="fas fa-sliders-h me-2"></i>Options avancées (quorum, véto, tirage pondéré…)</span>
+                <i class="fas fa-chevron-down" :style="open ? 'transform:rotate(180deg)' : ''" style="transition:transform 0.2s;"></i>
+            </button>
+            <div x-show="open" x-collapse class="card mt-2">
+
+                <div class="row g-3 mb-3" x-show="!['forced_saving','ceremonial'].includes(type)">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold">Méthode tirage</label>
+                        <select name="draw_method" class="form-select">
+                            <option value="sequential" {{ old('draw_method', 'sequential') === 'sequential' ? 'selected' : '' }}>Séquentiel</option>
+                            <option value="random"     {{ old('draw_method') === 'random'                   ? 'selected' : '' }}>Aléatoire</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold">Pénalité retard (%)</label>
+                        <input type="number" name="penalty_rate" class="form-control"
+                               value="{{ old('penalty_rate', 0) }}" min="0" max="100" step="0.5">
+                    </div>
                 </div>
-                <div class="col-6" x-show="!['forced_saving','ceremonial'].includes(type)">
-                    <label class="form-label fw-semibold">Méthode tirage</label>
-                    <select name="draw_method" class="form-select">
-                        <option value="sequential" {{ old('draw_method', 'sequential') === 'sequential' ? 'selected' : '' }}>Séquentiel</option>
-                        <option value="random"     {{ old('draw_method') === 'random'                   ? 'selected' : '' }}>Aléatoire</option>
-                    </select>
+
+                <div class="row g-3 mb-3" x-show="!['forced_saving','ceremonial'].includes(type)">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold d-flex align-items-center gap-1">
+                            Quorum (%)
+                            <span class="tooltip-icon" data-bs-toggle="tooltip" title="% membres devant avoir payé avant que le tirage soit possible.">
+                                <i class="fas fa-question-circle text-muted" style="font-size:13px;"></i>
+                            </span>
+                        </label>
+                        <input type="number" name="quorum" class="form-control"
+                               value="{{ old('quorum') }}" min="1" max="100" placeholder="Ex: 80">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold d-flex align-items-center gap-1">
+                            Seuil de véto (%)
+                            <span class="tooltip-icon" data-bs-toggle="tooltip" title="% membres requis pour annuler un tirage contesté.">
+                                <i class="fas fa-question-circle text-muted" style="font-size:13px;"></i>
+                            </span>
+                        </label>
+                        <input type="number" name="veto_threshold" class="form-control"
+                               value="{{ old('veto_threshold') }}" min="1" max="100" placeholder="Ex: 50">
+                    </div>
                 </div>
+
+                <div x-show="!['forced_saving','ceremonial'].includes(type)">
+                    <div class="form-check form-switch">
+                        <input type="checkbox" name="weighted_draw" value="1"
+                               class="form-check-input" id="weighted_draw"
+                               {{ old('weighted_draw') ? 'checked' : '' }}>
+                        <label class="form-check-label fw-semibold d-flex align-items-center gap-1" for="weighted_draw">
+                            Tirage pondéré par score crédit
+                            <span class="tooltip-icon" data-bs-toggle="tooltip" title="Les membres ponctuels ont plus de chances de recevoir le pot en premier.">
+                                <i class="fas fa-question-circle text-muted" style="font-size:13px;"></i>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                {{-- champs cachés pour forced_saving/ceremonial --}}
                 <div x-show="['forced_saving','ceremonial'].includes(type)">
                     <input type="hidden" name="draw_method" value="sequential">
                 </div>
-            </div>
 
-            <div class="row g-3 mt-0" x-show="!['forced_saving','ceremonial'].includes(type)">
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Quorum (%)
-                        <span class="text-muted fw-normal" data-bs-toggle="tooltip"
-                              title="% de membres devant avoir payé avant de permettre le tirage">
-                            <i class="fas fa-info-circle"></i>
-                        </span>
-                    </label>
-                    <input type="number" name="quorum" class="form-control"
-                           value="{{ old('quorum') }}" min="1" max="100" placeholder="Ex: 80">
-                </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Seuil de véto (%)
-                        <span class="text-muted fw-normal" data-bs-toggle="tooltip"
-                              title="% de membres requis pour annuler un tirage">
-                            <i class="fas fa-info-circle"></i>
-                        </span>
-                    </label>
-                    <input type="number" name="veto_threshold" class="form-control"
-                           value="{{ old('veto_threshold') }}" min="1" max="100" placeholder="Ex: 50">
-                </div>
-            </div>
-
-            <div class="mt-3" x-show="!['forced_saving','ceremonial'].includes(type)">
-                <div class="form-check form-switch">
-                    <input type="checkbox" name="weighted_draw" value="1"
-                           class="form-check-input" id="weighted_draw"
-                           {{ old('weighted_draw') ? 'checked' : '' }}>
-                    <label class="form-check-label fw-semibold" for="weighted_draw">
-                        Tirage pondéré par score crédit
-                    </label>
-                    <small class="d-block text-muted">Les membres avec un meilleur score crédit ont plus de chances d'être tirés.</small>
-                </div>
             </div>
         </div>
 
@@ -193,4 +209,7 @@
     </form>
 
 </div>
+@push('scripts')
+<script>document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));</script>
+@endpush
 @endsection

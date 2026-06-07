@@ -27,71 +27,82 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('auth.register.post') }}">
+        <form method="POST" action="{{ route('auth.register.post') }}" autocomplete="on">
             @csrf
 
             <div class="mb-3">
-                <label class="form-label fw-semibold">Nom complet</label>
+                <label class="form-label fw-semibold" for="name">Nom complet</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="fas fa-user text-muted"></i></span>
-                    <input type="text" name="name"
+                    <span class="input-group-text bg-white" aria-hidden="true"><i class="fas fa-user text-muted"></i></span>
+                    <input type="text" name="name" id="name"
                            class="form-control form-control-lg @error('name') is-invalid @enderror"
                            placeholder="Votre nom complet"
-                           value="{{ old('name') }}" required autofocus>
+                           value="{{ old('name') }}"
+                           autocomplete="name" required autofocus>
+                    @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-semibold">Téléphone <span class="text-muted fw-normal small">(Wave, Orange Money…)</span></label>
+                <label class="form-label fw-semibold" for="phone_number">Téléphone <span class="text-muted fw-normal small">(Wave, Orange Money…)</span></label>
                 <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="fas fa-phone text-muted"></i></span>
-                    <input type="tel" name="phone_number"
+                    <span class="input-group-text bg-white" aria-hidden="true"><i class="fas fa-phone text-muted"></i></span>
+                    <input type="tel" name="phone_number" id="phone_number"
                            class="form-control form-control-lg"
                            placeholder="+221 77 000 00 00"
-                           value="{{ old('phone_number') }}">
+                           value="{{ old('phone_number') }}"
+                           autocomplete="tel">
                 </div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-semibold">Adresse email</label>
+                <label class="form-label fw-semibold" for="email">Adresse email</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="fas fa-envelope text-muted"></i></span>
-                    <input type="email" name="email"
+                    <span class="input-group-text bg-white" aria-hidden="true"><i class="fas fa-envelope text-muted"></i></span>
+                    <input type="email" name="email" id="email"
                            class="form-control form-control-lg @error('email') is-invalid @enderror"
                            placeholder="vous@exemple.com"
-                           value="{{ old('email') }}" required>
+                           value="{{ old('email') }}"
+                           autocomplete="email" required>
+                    @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-semibold">Mot de passe</label>
+                <label class="form-label fw-semibold" for="password">Mot de passe</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="fas fa-lock text-muted"></i></span>
+                    <span class="input-group-text bg-white" aria-hidden="true"><i class="fas fa-lock text-muted"></i></span>
                     <input type="password" name="password" id="password"
                            class="form-control form-control-lg @error('password') is-invalid @enderror"
-                           placeholder="8 caractères minimum" minlength="8" required>
-                    <button type="button" class="btn btn-outline-secondary" onclick="togglePwd('password', this)">
-                        <i class="fas fa-eye"></i>
+                           placeholder="8 caractères minimum" minlength="8"
+                           autocomplete="new-password" required>
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="togglePwd('password', this)"
+                            aria-label="Afficher le mot de passe">
+                        <i class="fas fa-eye" aria-hidden="true"></i>
                     </button>
                 </div>
-                <div class="mt-1" style="height:4px;border-radius:2px;background:#e9ecef;overflow:hidden;">
+                <div class="mt-1" style="height:4px;border-radius:2px;background:#e9ecef;overflow:hidden;" role="progressbar" aria-label="Force du mot de passe" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="strength-bar-wrap">
                     <div id="strength-bar" style="height:100%;width:0;transition:all .3s;border-radius:2px;"></div>
                 </div>
-                <small id="strength-text" class="text-muted"></small>
+                <small id="strength-text" class="text-muted" aria-live="polite"></small>
             </div>
 
             <div class="mb-4">
-                <label class="form-label fw-semibold">Confirmer le mot de passe</label>
+                <label class="form-label fw-semibold" for="password_confirmation">Confirmer le mot de passe</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="fas fa-lock text-muted"></i></span>
+                    <span class="input-group-text bg-white" aria-hidden="true"><i class="fas fa-lock text-muted"></i></span>
                     <input type="password" name="password_confirmation" id="password_confirmation"
                            class="form-control form-control-lg"
-                           placeholder="••••••••" required>
-                    <button type="button" class="btn btn-outline-secondary" onclick="togglePwd('password_confirmation', this)">
-                        <i class="fas fa-eye"></i>
+                           placeholder="••••••••"
+                           autocomplete="new-password" required>
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="togglePwd('password_confirmation', this)"
+                            aria-label="Afficher la confirmation">
+                        <i class="fas fa-eye" aria-hidden="true"></i>
                     </button>
                 </div>
-                <small id="match-text"></small>
+                <small id="match-text" aria-live="polite"></small>
             </div>
 
             <button type="submit" class="btn btn-primary btn-lg w-100">

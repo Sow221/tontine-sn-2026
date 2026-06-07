@@ -22,9 +22,11 @@
             </div>
         @endif
         <h4 class="fw-bold mt-3 mb-1">{{ $user->name }}</h4>
-        <span class="badge badge-{{ match($user->role) { 'super_admin' => 'danger', 'admin' => 'warning', default => 'secondary' } }} fs-6">
-            {{ match($user->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => 'Membre' } }}
+        @if($user->creditScore)
+        <span class="badge bg-{{ $user->creditScore->badgeColor() }}">
+            ★ {{ $user->creditScore->badgeLabel() }}
         </span>
+        @endif
         <p class="text-muted small mt-2">Membre depuis {{ $user->created_at->isoFormat('MMMM YYYY') }}</p>
     </div>
 

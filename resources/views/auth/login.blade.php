@@ -33,33 +33,37 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('auth.login.post') }}">
+        <form method="POST" action="{{ route('auth.login.post') }}" autocomplete="on">
             @csrf
 
             <div class="mb-3">
-                <label class="form-label fw-semibold">Adresse email</label>
+                <label class="form-label fw-semibold" for="email">Adresse email</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-white">
+                    <span class="input-group-text bg-white" aria-hidden="true">
                         <i class="fas fa-envelope text-muted"></i>
                     </span>
-                    <input type="email" name="email"
+                    <input type="email" name="email" id="email"
                            class="form-control form-control-lg @error('email') is-invalid @enderror"
                            placeholder="vous@exemple.com"
                            value="{{ old('email') }}"
+                           autocomplete="email"
                            required autofocus>
+                    @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-semibold">Mot de passe</label>
+                <label class="form-label fw-semibold" for="password">Mot de passe</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-white">
+                    <span class="input-group-text bg-white" aria-hidden="true">
                         <i class="fas fa-lock text-muted"></i>
                     </span>
-                    <input type="password" name="password"
+                    <input type="password" name="password" id="password"
                            class="form-control form-control-lg @error('password') is-invalid @enderror"
                            placeholder="••••••••"
+                           autocomplete="current-password"
                            required>
+                    @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
 

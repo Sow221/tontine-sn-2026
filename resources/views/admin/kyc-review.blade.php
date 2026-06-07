@@ -98,22 +98,26 @@
             {{-- Actions --}}
             <div class="card">
                 <h6 class="fw-semibold mb-3"><i class="fas fa-gavel me-2 text-danger"></i>Décision</h6>
-                <div class="d-flex gap-2">
-                    <form method="POST" action="{{ route('admin.users.kyc.approve', $user) }}" class="flex-grow-1">
-                        @csrf
-                        <button type="submit" class="btn btn-success w-100 rounded-pill"
-                                onclick="return confirm('Approuver le KYC de {{ $user->name }} ? Le fichier sera supprimé.')">
-                            <i class="fas fa-check me-1"></i>Approuver
-                        </button>
-                    </form>
-                    <form method="POST" action="{{ route('admin.users.kyc.reject', $user) }}" class="flex-grow-1">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-danger w-100 rounded-pill"
-                                onclick="return confirm('Rejeter le KYC de {{ $user->name }} ?')">
-                            <i class="fas fa-times me-1"></i>Rejeter
-                        </button>
-                    </form>
-                </div>
+                <form method="POST" action="{{ route('admin.users.kyc.approve', $user) }}" class="mb-2">
+                    @csrf
+                    <button type="submit" class="btn btn-success w-100 rounded-pill"
+                            onclick="return confirm('Approuver le KYC de {{ $user->name }} ? Le fichier sera supprimé.')">
+                        <i class="fas fa-check me-1"></i>Approuver
+                    </button>
+                </form>
+                <form method="POST" action="{{ route('admin.users.kyc.reject', $user) }}">
+                    @csrf
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small">Motif du refus</label>
+                        <input type="text" name="reason" class="form-control form-control-sm"
+                               placeholder="Ex: Document illisible, identité non conforme..."
+                               value="Document non valide ou illisible.">
+                    </div>
+                    <button type="submit" class="btn btn-outline-danger w-100 rounded-pill"
+                            onclick="return confirm('Rejeter le KYC de {{ $user->name }} ?')">
+                        <i class="fas fa-times me-1"></i>Rejeter
+                    </button>
+                </form>
             </div>
 
         </div>

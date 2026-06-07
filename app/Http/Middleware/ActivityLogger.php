@@ -43,6 +43,12 @@ class ActivityLogger
 
     private function sanitize(array $data): array
     {
-        return array_diff_key($data, array_flip(['password', 'password_confirmation', 'code', 'otp', '_token']));
+        $sensitive = [
+            'password', 'password_confirmation', 'current_password',
+            'code', 'otp', '_token', 'confirm_delete',
+            'kyc_consent', 'bid_rate', 'amount',
+            'new_owner_id', 'beneficiary_id',
+        ];
+        return array_diff_key($data, array_flip($sensitive));
     }
 }

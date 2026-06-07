@@ -42,9 +42,14 @@ return [
     ],
 
     'twilio' => [
-        'sid'          => env('TWILIO_SID'),
-        'token'        => env('TWILIO_TOKEN'),
-        'whatsapp_from'=> env('TWILIO_WHATSAPP_FROM', '+14155238886'),
+        'sid'           => env('TWILIO_SID'),
+        'token'         => env('TWILIO_TOKEN'),
+        'whatsapp_from' => env('TWILIO_WHATSAPP_FROM', '+14155238886'),
+    ],
+
+    'webhook_outbound' => [
+        'url'    => env('WEBHOOK_OUTBOUND_URL'),
+        'secret' => env('WEBHOOK_OUTBOUND_SECRET'),
     ],
 
 ];

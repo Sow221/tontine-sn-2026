@@ -19,12 +19,17 @@ class CreditScoringService
     {
         $cfg = config('tontine.credit_score');
 
+        $driver = config('database.default');
+        $onTimeExpr = $driver === 'sqlite'
+            ? 'CASE WHEN DATE(transactions.paid_at) <= DATE(cycles.due_date) THEN 1 ELSE 0 END'
+            : 'CASE WHEN DATE(transactions.paid_at) <= cycles.due_date THEN 1 ELSE 0 END';
+
         $aggregate = $user->transactions()
             ->where('transactions.status', 'success')
             ->leftJoin('cycles', 'cycles.id', '=', 'transactions.cycle_id')
             ->selectRaw('COALESCE(SUM(transactions.amount), 0) as total_contributed')
             ->selectRaw('COUNT(transactions.id) as total_cycles')
-            ->selectRaw('COALESCE(SUM(CASE WHEN DATE(transactions.paid_at) <= cycles.due_date THEN 1 ELSE 0 END), 0) as on_time')
+            ->selectRaw("COALESCE(SUM({$onTimeExpr}), 0) as on_time")
             ->first();
 
         $totalContributed = (int) $aggregate->total_contributed;
@@ -33,13 +38,16 @@ class CreditScoringService
 
         $seniorityMonths = (int) $user->created_at->diffInMonths(now());
 
+        // Bonus parrainage : +0.1 par filleul actif, plafonné à 0.5
+        $referralBonus = min($user->referrals()->count() * 0.1, 0.5);
+
         $scoreAmount      = min(($totalContributed / $cfg['base_amount']) * $cfg['weight_amount'], $cfg['weight_amount']);
         $scorePunctuality = $totalCycles > 0
             ? ($onTime / $totalCycles) * $cfg['weight_punctuality']
             : 0;
         $scoreSeniority   = min(($seniorityMonths / $cfg['seniority_base']) * $cfg['weight_seniority'], $cfg['weight_seniority']);
 
-        $score = round(($scoreAmount + $scorePunctuality + $scoreSeniority) * 10, 2);
+        $score = round(($scoreAmount + $scorePunctuality + $scoreSeniority + $referralBonus) * 10, 2);
         $score = min(max($score, 0), 10);
 
         $badge = $this->resolveBadge($score);

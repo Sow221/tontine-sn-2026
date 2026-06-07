@@ -67,14 +67,6 @@
                 <div class="form-text">JPG, PNG. Max 2 Mo.</div>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label fw-semibold small">Langue préférée</label>
-                <select name="preferred_language" class="form-select">
-                    <option value="fr" {{ old('preferred_language', $user->preferred_language ?? 'fr') === 'fr' ? 'selected' : '' }}>Français</option>
-                    <option value="en" {{ old('preferred_language', $user->preferred_language ?? 'fr') === 'en' ? 'selected' : '' }}>English</option>
-                </select>
-            </div>
-
             <button type="submit" class="btn btn-primary w-100">
                 <i class="fas fa-save me-2"></i>Enregistrer les modifications
             </button>
@@ -171,6 +163,36 @@
         </div>
     </div>
 
+    {{-- Parrainage --}}
+    <div class="card mb-4">
+        <h6 class="fw-semibold mb-1"><i class="fas fa-share-alt me-2 text-green"></i>Parrainez vos proches</h6>
+        <p class="text-muted small mb-3">
+            Invitez vos amis et famille à rejoindre TontineSN. Votre lien de parrainage est unique.
+            @if($referralsCount > 0)
+                <strong class="text-green">{{ $referralsCount }} personne(s) inscrite(s) via votre lien.</strong>
+            @endif
+        </p>
+        <div class="bg-light rounded-3 p-3 mb-3">
+            <div class="small text-muted mb-1">Votre lien de parrainage</div>
+            <div class="d-flex align-items-center gap-2">
+                <code class="flex-grow-1 small text-break">{{ $referralLink }}</code>
+                <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" onclick="copyToClipboard('{{ $referralLink }}')"
+                        aria-label="Copier le lien">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="https://wa.me/?text={{ urlencode('Rejoins TontineSN, la tontine numérique du Sénégal 🇸🇳 ! Crée ton compte gratuitement : '.$referralLink) }}"
+               target="_blank" rel="noreferrer" class="btn btn-sm btn-success">
+                <i class="fab fa-whatsapp me-1"></i>Partager sur WhatsApp
+            </a>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('{{ $referralLink }}')">
+                <i class="fas fa-link me-1"></i>Copier le lien
+            </button>
+        </div>
+    </div>
+
     {{-- Score crédit --}}
     @if($user->creditScore)
     <div class="card mb-4">
@@ -236,6 +258,55 @@
         </form>
     </div>
     @endif
+
+    {{-- 2FA --}}
+    <div class="card mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h6 class="fw-semibold mb-0">Authentification à deux facteurs (2FA)</h6>
+                <small class="text-muted">Protégez votre compte avec un code TOTP en plus de votre mot de passe</small>
+            </div>
+            @if($user->hasTwoFactorEnabled())
+                <span class="badge badge-success"><i class="fas fa-shield-alt me-1"></i>Activé</span>
+            @else
+                <span class="badge badge-secondary">Désactivé</span>
+            @endif
+        </div>
+
+        @if(session('backup_codes'))
+        <div class="alert alert-warning mb-3">
+            <p class="fw-semibold mb-2"><i class="fas fa-exclamation-triangle me-1"></i>Sauvegardez ces codes de secours — ils ne seront affichés qu'une seule fois :</p>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach(session('backup_codes') as $code)
+                <code class="bg-light px-2 py-1 rounded fw-bold" style="font-size:13px;">{{ $code }}</code>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        @if($user->hasTwoFactorEnabled())
+            <form method="POST" action="{{ route('2fa.disable') }}"
+                  onsubmit="return confirm('Désactiver le 2FA ? Votre compte sera moins sécurisé.')">
+                @csrf
+                @error('code') <div class="alert alert-danger py-2 mb-2 small">{{ $message }}</div> @enderror
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Code de vérification ou code de secours</label>
+                    <input type="text" name="code" class="form-control" placeholder="Code à 6 chiffres"
+                           inputmode="numeric" maxlength="10" required autocomplete="one-time-code">
+                </div>
+                <button type="submit" class="btn btn-outline-danger w-100 rounded-pill">
+                    <i class="fas fa-lock-open me-2"></i>Désactiver le 2FA
+                </button>
+            </form>
+        @else
+            <p class="text-muted small mb-3">
+                Une fois activé, vous devrez saisir un code depuis votre application d'authentification à chaque connexion.
+            </p>
+            <a href="{{ route('2fa.setup') }}" class="btn btn-primary w-100 rounded-pill">
+                <i class="fas fa-shield-alt me-2"></i>Configurer le 2FA
+            </a>
+        @endif
+    </div>
 
     {{-- Supprimer mon compte --}}
     <div class="card mb-4 border-danger">

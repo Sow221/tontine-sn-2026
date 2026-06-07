@@ -1,0 +1,78 @@
+1. Architecture générale
+Tu es sur quel framework exact côté backend ? (Laravel version ?)
+Tu as séparé ton code en quels couches ?
+Controllers
+Services
+Repositories (ou pas)
+Tu utilises quels patterns ?
+MVC simple
+Service Layer
+Event / Listener
+Repository pattern ?
+Tu as une API REST ou c’est full Blade / Inertia / Livewire ?
+🟢 2. Authentification & sécurité
+Tu utilises quoi pour auth ?
+Sanctum / Passport / session Laravel classique ?
+Tu as le 2FA réel ou juste “implicite email” ?
+KYC : c’est juste upload ou validation admin aussi ?
+Tu as des policies Laravel (ex: TontinePolicy) pour toutes les actions critiques ?
+🟡 3. Gestion des tontines
+Comment est structuré une tontine dans la DB ? (tables principales)
+Les 4 types de tontines :
+c’est une colonne type ?
+ou polymorphisme (classes différentes) ?
+Le cycle de tontine :
+automatique (cron/job) ou manuel ?
+Comment tu gères l’ordre de passage ?
+file FIFO ?
+random ?
+score-based ?
+🔴 4. Paiements
+PayTech :
+webhook utilisé ou polling ?
+Les paiements sont :
+validés automatiquement ?
+ou validés par admin/créateur ?
+Paiement cash :
+comment tu évites la fraude ?
+Transactions :
+table unique transactions ou plusieurs tables ?
+🟣 5. Scoring & gamification
+Comment est calculé le score de crédit ?
+formule exacte ?
+Il est recalculé :
+à chaque action ?
+ou batch cron ?
+Les badges :
+statiques ou dynamiques ?
+Streak :
+basé sur quoi exactement ?
+🟠 6. Notifications & chat
+Notifications :
+email / WhatsApp / push : lesquels sont vraiment actifs en prod ?
+Tu utilises :
+Laravel Notification system ?
+ou service custom ?
+Chat :
+websocket (Pusher / Soketi / Laravel Reverb) ?
+ou polling AJAX ?
+🟤 7. Performance & scaling
+Tu utilises queues Laravel ?
+Redis / database queue ?
+Tu as du caching ?
+Redis / file cache ?
+Tu as déjà testé avec combien d’utilisateurs ?
+⚫ 8. UX / frontend
+Frontend :
+Blade ?
+Vue ?
+React ?
+Alpine ?
+Tu as PWA :
+service worker actif ?
+offline mode réel ou partiel ?
+Charts :
+Chart.js uniquement ?
+🟢 9. Point critique (très important)
+Si 10 000 utilisateurs se connectent en même temps :
+qu’est-ce qui casse en premier selon toi ?

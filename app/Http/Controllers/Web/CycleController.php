@@ -11,6 +11,7 @@ use App\Services\DrawService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CycleController extends Controller
@@ -111,19 +112,16 @@ class CycleController extends Controller
                 'user_id'  => Auth::id(),
             ]);
 
-            $tontine    = $cycle->tontine;
-            $totalVetos = $this->drawService->vetoCount($cycle);
-            $required   = (int) ceil($tontine->activeMembers()->count() * $tontine->veto_threshold / 100);
-            $remaining  = max(0, $required - $totalVetos);
-
-            if ($remaining === 0) {
-                // Annule le tirage ET lance un nouveau immédiatement
+            if ($this->drawService->isVetoed($cycle)) {
                 $this->drawService->applyVetoIfThresholdReached($cycle);
                 $cycle->refresh();
-
                 $newBeneficiary = $cycle->beneficiary?->name ?? 'inconnu';
                 return back()->with('success', "Véto activé ! Nouveau bénéficiaire tiré : {$newBeneficiary}.");
             }
+
+            $tontine   = $cycle->tontine;
+            $required  = (int) ceil($tontine->activeMembers()->count() * $tontine->veto_threshold / 100);
+            $remaining = max(0, $required - $this->drawService->vetoCount($cycle));
 
             return back()->with('success', "Vote de véto enregistré. Encore {$remaining} vote(s) requis pour annuler le tirage.");
         } catch (\Throwable $e) {

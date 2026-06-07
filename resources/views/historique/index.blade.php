@@ -65,9 +65,14 @@
             </div>
         </div>
         @if(request()->hasAny(['tontine_id', 'status', 'periode']))
-        <a href="{{ route('historique.index') }}" class="text-muted small mt-2 d-inline-block">
-            <i class="fas fa-times me-1"></i>Effacer les filtres
-        </a>
+        <div class="d-flex align-items-center gap-2 mt-2">
+            <span class="filter-active-badge">
+                <i class="fas fa-filter" aria-hidden="true"></i>Filtres actifs
+            </span>
+            <a href="{{ route('historique.index') }}" class="filter-clear-link">
+                <i class="fas fa-times" aria-hidden="true"></i>Effacer
+            </a>
+        </div>
         @endif
     </form>
 

@@ -2,6 +2,9 @@
 @section('title', 'Statistiques')
 
 @section('content')
+@push('head-scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+@endpush
 <div class="container py-4">
 
     <div class="d-flex align-items-center gap-2 mb-4">
@@ -16,13 +19,17 @@
         <div class="col-12 col-md-6">
             <div class="card">
                 <h6 class="fw-semibold mb-3">Inscriptions (6 mois)</h6>
-                <canvas id="regChart" height="200"></canvas>
+                <div style="position:relative;height:200px;">
+                    <canvas id="regChart"></canvas>
+                </div>
             </div>
         </div>
         <div class="col-12 col-md-6">
             <div class="card">
                 <h6 class="fw-semibold mb-3">Transactions réussies (6 mois)</h6>
-                <canvas id="txChart" height="200"></canvas>
+                <div style="position:relative;height:200px;">
+                    <canvas id="txChart"></canvas>
+                </div>
             </div>
         </div>
     </div>

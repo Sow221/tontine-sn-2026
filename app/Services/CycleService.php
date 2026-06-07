@@ -42,14 +42,22 @@ class CycleService
     private function createRotatingCycles(Tontine $tontine, int $members): void
     {
         $date = $tontine->start_date->copy();
+        $cycles = [];
+        
         for ($i = 1; $i <= $members; $i++) {
-            Cycle::create([
+            $cycles[] = [
                 'tontine_id'   => $tontine->id,
                 'cycle_number' => $i,
                 'due_date'     => $date->copy(),
                 'status'       => 'pending',
-            ]);
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ];
             $date = $this->nextDate($date, $tontine->frequency);
+        }
+        
+        if (!empty($cycles)) {
+            Cycle::insert($cycles);
         }
     }
 
@@ -62,16 +70,24 @@ class CycleService
 
         $date  = $start->copy();
         $cycle = 1;
-
+        $cycles = [];
+        
+        // Limite à 120 cycles : 10 ans hebdo ou ~10 ans mensuel — protège contre boucle infinie
         while ($date->lte($end) && $cycle <= 120) {
-            Cycle::create([
+            $cycles[] = [
                 'tontine_id'   => $tontine->id,
                 'cycle_number' => $cycle,
                 'due_date'     => $date->copy(),
                 'status'       => 'pending',
-            ]);
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ];
             $date = $this->nextDate($date, $tontine->frequency);
             $cycle++;
+        }
+        
+        if (!empty($cycles)) {
+            Cycle::insert($cycles);
         }
     }
 
@@ -140,15 +156,23 @@ class CycleService
             $tontine->update(['status' => 'completed']);
         });
 
+        // Webhook sortant : tontine complétée
+        app(\App\Services\WebhookOutboundService::class)->dispatch('tontine.completed', [
+            'tontine_id' => $tontine->id,
+            'type'       => $tontine->type,
+            'members'    => count($withdrawals),
+        ]);
+
         return $withdrawals;
     }
 
     private function nextDate(\Carbon\Carbon $date, string $frequency): \Carbon\Carbon
     {
         return match($frequency) {
-            'daily'   => $date->addDay(),
-            'weekly'  => $date->addWeek(),
-            'monthly' => $date->addMonth(),
+            'daily'   => $date->copy()->addDay(),
+            'weekly'  => $date->copy()->addWeek(),
+            'monthly' => $date->copy()->addMonth(),
+            default   => $date->copy()->addMonth(),
         };
     }
 }

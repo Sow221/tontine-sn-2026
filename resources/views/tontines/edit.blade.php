@@ -114,8 +114,7 @@
             </div>
         </div>
 
-        {{-- Membres & Tirage --}}
-        <div class="card mb-4">
+        <div class="card mb-4" x-data="{ weightedDraw: {{ old('weighted_draw', $tontine->weighted_draw) ? 'true' : 'false' }} }">
             <h6 class="fw-semibold text-muted mb-3">Membres & Tirage</h6>
 
             <div class="row g-3">
@@ -128,7 +127,10 @@
                     <label class="form-label fw-semibold">Méthode tirage
                         @if($tontine->status !== 'active') <span class="text-danger">*</span> @endif
                     </label>
-                    <select name="draw_method" class="form-select" {{ $tontine->status === 'active' ? 'disabled' : 'required' }}>
+                    <select name="draw_method" class="form-select"
+                            {{ $tontine->status === 'active' ? 'disabled' : '' }}
+                            x-bind:disabled="weightedDraw"
+                            x-effect="if (weightedDraw) $el.value = 'random'">
                         <option value="sequential" {{ old('draw_method', $tontine->draw_method) === 'sequential' ? 'selected' : '' }}>Séquentiel</option>
                         <option value="random"     {{ old('draw_method', $tontine->draw_method) === 'random'     ? 'selected' : '' }}>Aléatoire</option>
                     </select>
@@ -163,11 +165,12 @@
                 <div class="form-check form-switch">
                     <input type="checkbox" name="weighted_draw" value="1"
                            class="form-check-input" id="weighted_draw"
-                           {{ old('weighted_draw', $tontine->weighted_draw) ? 'checked' : '' }}>
+                           {{ old('weighted_draw', $tontine->weighted_draw) ? 'checked' : '' }}
+                           x-model="weightedDraw">
                     <label class="form-check-label fw-semibold" for="weighted_draw">
                         Tirage pondéré par score crédit
                     </label>
-                    <small class="d-block text-muted">Les membres avec un meilleur score ont plus de chances d'être tirés.</small>
+                    <small class="d-block text-muted">Si activé, la méthode devient automatiquement aléatoire (pondérée). Le séquentiel est désactivé.</small>
                 </div>
             </div>
         </div>

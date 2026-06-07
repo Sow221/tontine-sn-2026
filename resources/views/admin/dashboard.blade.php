@@ -2,6 +2,9 @@
 @section('title', 'Administration')
 
 @section('content')
+@push('head-scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+@endpush
 <div class="container py-4">
 
     <div class="d-flex align-items-center justify-content-between mb-4">
@@ -86,8 +89,33 @@
     {{-- Chart transactions --}}
     <div class="card mb-4">
         <h6 class="fw-semibold mb-3">Transactions (6 derniers mois)</h6>
-        <canvas id="adminChart" height="160"></canvas>
+        <div style="position:relative;height:160px;">
+            <canvas id="adminChart"></canvas>
+        </div>
     </div>
+
+    {{-- Tontines bloquées (cycle overdue > 7 jours) — alerte proactive --}}
+    @if(isset($blockedTontines) && $blockedTontines->isNotEmpty())
+    <div class="card mb-4 border-danger">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h6 class="fw-semibold mb-0 text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Tontines bloquées ({{ $blockedTontines->count() }})</h6>
+            <a href="{{ route('admin.tontines', ['status' => 'active']) }}" class="text-muted small">Voir tout</a>
+        </div>
+        <p class="text-muted small mb-3">Ces tontines ont un cycle en retard depuis plus de 7 jours sans résolution.</p>
+        @foreach($blockedTontines as $t)
+        <div class="d-flex align-items-center gap-3 mb-2 pb-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+            <div class="member-avatar avatar-sm bg-danger text-white">{{ strtoupper(substr($t->name, 0, 2)) }}</div>
+            <div class="flex-grow-1">
+                <p class="mb-0 fw-semibold small">{{ $t->name }}</p>
+                <small class="text-muted">Créateur : {{ $t->creator->name ?? '—' }}</small>
+            </div>
+            <a href="{{ route('admin.tontines.show', $t) }}" class="btn btn-sm btn-outline-danger rounded-pill">
+                <i class="fas fa-eye me-1"></i>Voir
+            </a>
+        </div>
+        @endforeach
+    </div>
+    @endif
 
     {{-- KYC en attente — actionnables --}}
     @if($pendingKycUsers->isNotEmpty())
@@ -103,16 +131,9 @@
                 <p class="mb-0 fw-semibold small">{{ $u->name ?? $u->email }}</p>
                 <small class="text-muted">{{ $u->email }}</small>
             </div>
-            <div class="d-flex gap-1">
-                <form method="POST" action="{{ route('admin.users.kyc.approve', $u) }}">
-                    @csrf
-                    <button type="submit" class="btn btn-sm btn-success rounded-pill">✓ Approuver</button>
-                </form>
-                <form method="POST" action="{{ route('admin.users.kyc.reject', $u) }}">
-                    @csrf
-                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">✗ Refuser</button>
-                </form>
-            </div>
+            <a href="{{ route('admin.users.kyc.review', $u) }}" class="btn btn-sm btn-warning rounded-pill">
+                <i class="fas fa-search me-1"></i>Vérifier
+            </a>
         </div>
         @endforeach
     </div>

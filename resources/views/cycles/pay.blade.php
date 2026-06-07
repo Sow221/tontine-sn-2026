@@ -20,12 +20,17 @@
     <div class="card mb-4">
         <div class="text-center py-3">
             <p class="text-muted mb-1">Montant à payer</p>
-            <h2 class="fw-bold {{ $penalty > 0 ? 'text-danger' : 'text-green' }}">{{ number_format($totalAmount, 0, ',', ' ') }} FCFA</h2>
-            <p class="text-muted small">{{ $cycle->tontine->name }} · Cycle {{ $cycle->cycle_number }}</p>
-            <p class="text-muted small">Date limite : {{ $cycle->due_date->format('d/m/Y') }}</p>
+            <div class="mb-2">
+                <span class="pot-highlight">
+                    <i class="fas fa-coins" aria-hidden="true"></i>
+                    {{ number_format($totalAmount, 0, ',', ' ') }} FCFA
+                </span>
+            </div>
+            <p class="text-muted small mb-1">{{ $cycle->tontine->name }} · Cycle {{ $cycle->cycle_number }}</p>
+            <p class="text-muted small mb-0">Date limite : <strong>{{ $cycle->due_date->format('d/m/Y') }}</strong></p>
             @if($penalty > 0)
-            <div class="alert alert-warning mt-2 mb-0 text-start">
-                <i class="fas fa-exclamation-triangle me-1"></i>
+            <div class="alert alert-warning mt-3 mb-0 text-start">
+                <i class="fas fa-exclamation-triangle me-1" aria-hidden="true"></i>
                 <strong>Pénalité de retard incluse :</strong>
                 {{ number_format($cycle->tontine->amount, 0, ',', ' ') }} FCFA
                 + {{ number_format($penalty, 0, ',', ' ') }} FCFA ({{ $cycle->tontine->penalty_rate }}%)
@@ -132,11 +137,11 @@
         </div>
 
         {{-- Confirmation modal --}}
-        <div class="modal fade" id="paymentConfirmModal" tabindex="-1" x-ref="confirmModal">
+        <div class="modal fade" id="paymentConfirmModal" tabindex="-1" aria-labelledby="paymentConfirmTitle" x-ref="confirmModal">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header border-0 pb-0">
-                        <h5 class="fw-bold">Confirmer le paiement</h5>
+                        <h5 class="fw-bold" id="paymentConfirmTitle">Confirmer le paiement</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body text-center py-4">

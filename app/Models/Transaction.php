@@ -17,6 +17,7 @@ class Transaction extends Model
         'cycle_id', 'user_id', 'amount', 'method',
         'external_reference', 'status', 'failure_reason',
         'receipt_url', 'paid_at',
+        'type', 'description', 'metadata',
     ];
 
     protected $casts = [
@@ -81,13 +82,42 @@ class Transaction extends Model
 
     public function isReversible(): bool
     {
-        return $this->status === 'success'
-            && $this->paid_at
-            && $this->paid_at->diffInHours(now()) <= config('tontine.transaction.reverse_window_h');
+        $fresh = $this->fresh();
+        return $fresh
+            && $fresh->status === 'success'
+            && $fresh->paid_at
+            && $fresh->paid_at->diffInHours(now()) <= config('tontine.transaction.reverse_window_h', 24);
     }
 
     public function isPendingOrSuccess(): bool
     {
         return in_array($this->status, ['pending', 'success'], true);
+    }
+
+    // ── Label helpers (centralisés — évite la duplication dans controllers/exports) ──
+
+    public function getMethodLabelAttribute(): string
+    {
+        return match($this->method) {
+            'wave'            => 'Wave',
+            'orange_money'    => 'Orange Money',
+            'free_money'      => 'Free Money',
+            'card'            => 'Carte bancaire',
+            'cash'            => 'Espèces',
+            'direct_transfer' => 'Transfert P2P',
+            default           => ucfirst($this->method),
+        };
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match($this->status) {
+            'success'   => 'Payé',
+            'pending'   => 'En attente',
+            'failed'    => 'Échoué',
+            'reversed'  => 'Remboursé',
+            'cancelled' => 'Annulé',
+            default     => ucfirst((string) $this->status),
+        };
     }
 }

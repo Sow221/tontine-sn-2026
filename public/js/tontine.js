@@ -6,6 +6,27 @@ setTimeout(() => {
     });
 }, 8000);
 
+// ── Protection double-soumission sur tous les formulaires POST ──
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('form[method="POST"], form[method="post"]').forEach(form => {
+        // Exclure les formulaires AJAX (chat, onboarding) qui gèrent leur propre état
+        if (form.id === 'chat-form') return;
+
+        form.addEventListener('submit', function () {
+            const btn = this.querySelector('button[type="submit"]:not([data-no-disable])');
+            if (!btn || btn.disabled) return;
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>' + original;
+            // Réactiver après 15s en cas de timeout réseau
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = original;
+            }, 15000);
+        });
+    });
+});
+
 // ── Avatar preview ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     const avatarInput = document.getElementById('avatarInput');

@@ -18,50 +18,71 @@
         <form method="POST" action="{{ route('profile.notifications.update') }}">
             @csrf @method('PUT')
 
-            @php
-                $settings = $user->notification_settings ?? [];
-            @endphp
+            @php $s = $user->notification_settings ?? []; @endphp
 
-            <div class="mb-3">
-                <label class="fw-semibold small d-block mb-2">Rappels de paiement</label>
-                <div class="form-check mb-2">
-                    <input type="checkbox" name="settings[payment_reminder_email]" class="form-check-input" value="1"
-                        {{ ($settings['payment_reminder_email'] ?? true) ? 'checked' : '' }} id="pref_email">
-                    <label class="form-check-label small" for="pref_email">Recevoir un rappel par email</label>
-                </div>
-                <div class="form-check mb-2">
-                    <input type="checkbox" name="settings[payment_reminder_sms]" class="form-check-input" value="1"
-                        {{ ($settings['payment_reminder_sms'] ?? false) ? 'checked' : '' }} id="pref_sms">
-                    <label class="form-check-label small" for="pref_sms">Recevoir un rappel par SMS</label>
-                </div>
+            {{-- Bénéficiaire --}}
+            <p class="fw-semibold small mb-2">🎉 Quand c'est votre tour de recevoir</p>
+            <div class="form-check mb-1">
+                <input type="checkbox" name="settings[beneficiary_email]" class="form-check-input" value="1"
+                    {{ ($s['beneficiary_email'] ?? true) ? 'checked' : '' }} id="ben_email">
+                <label class="form-check-label small" for="ben_email">Email</label>
+            </div>
+            <div class="form-check mb-3">
+                <input type="checkbox" name="settings[beneficiary_whatsapp]" class="form-check-input" value="1"
+                    {{ ($s['beneficiary_whatsapp'] ?? true) ? 'checked' : '' }} id="ben_wa">
+                <label class="form-check-label small" for="ben_wa">WhatsApp</label>
             </div>
 
-            <div class="mb-3">
-                <label class="fw-semibold small d-block mb-2">Nouveaux messages dans le chat</label>
-                <div class="form-check mb-2">
-                    <input type="checkbox" name="settings[chat_email]" class="form-check-input" value="1"
-                        {{ ($settings['chat_email'] ?? true) ? 'checked' : '' }} id="pref_chat">
-                    <label class="form-check-label small" for="pref_chat">Être notifié des nouveaux messages par email</label>
-                </div>
+            {{-- Paiement confirmé --}}
+            <p class="fw-semibold small mb-2">✅ Confirmation de paiement</p>
+            <div class="form-check mb-1">
+                <input type="checkbox" name="settings[payment_email]" class="form-check-input" value="1"
+                    {{ ($s['payment_email'] ?? true) ? 'checked' : '' }} id="pay_email">
+                <label class="form-check-label small" for="pay_email">Email</label>
+            </div>
+            <div class="form-check mb-3">
+                <input type="checkbox" name="settings[payment_whatsapp]" class="form-check-input" value="1"
+                    {{ ($s['payment_whatsapp'] ?? true) ? 'checked' : '' }} id="pay_wa">
+                <label class="form-check-label small" for="pay_wa">WhatsApp</label>
             </div>
 
-            <div class="mb-3">
-                <label class="fw-semibold small d-block mb-2">Activité des tontines</label>
-                <div class="form-check mb-2">
-                    <input type="checkbox" name="settings[member_joined]" class="form-check-input" value="1"
-                        {{ ($settings['member_joined'] ?? true) ? 'checked' : '' }} id="pref_joined">
-                    <label class="form-check-label small" for="pref_joined">Un nouveau membre rejoint une tontine</label>
-                </div>
-                <div class="form-check mb-2">
-                    <input type="checkbox" name="settings[cycle_draw]" class="form-check-input" value="1"
-                        {{ ($settings['cycle_draw'] ?? true) ? 'checked' : '' }} id="pref_draw">
-                    <label class="form-check-label small" for="pref_draw">Résultat du tirage au sort</label>
-                </div>
-                <div class="form-check mb-2">
-                    <input type="checkbox" name="settings[payment_confirmation]" class="form-check-input" value="1"
-                        {{ ($settings['payment_confirmation'] ?? true) ? 'checked' : '' }} id="pref_payment">
-                    <label class="form-check-label small" for="pref_payment">Confirmation de paiement</label>
-                </div>
+            {{-- Rappels --}}
+            <p class="fw-semibold small mb-2">🔔 Rappels avant échéance</p>
+            <div class="form-check mb-1">
+                <input type="checkbox" name="settings[reminder_email]" class="form-check-input" value="1"
+                    {{ ($s['reminder_email'] ?? true) ? 'checked' : '' }} id="rem_email">
+                <label class="form-check-label small" for="rem_email">Email</label>
+            </div>
+            <div class="form-check mb-3">
+                <input type="checkbox" name="settings[reminder_whatsapp]" class="form-check-input" value="1"
+                    {{ ($s['reminder_whatsapp'] ?? true) ? 'checked' : '' }} id="rem_wa">
+                <label class="form-check-label small" for="rem_wa">WhatsApp</label>
+            </div>
+
+            {{-- Nouveau cycle --}}
+            <p class="fw-semibold small mb-2">📅 Démarrage d'un nouveau cycle</p>
+            <div class="form-check mb-1">
+                <input type="checkbox" name="settings[cycle_email]" class="form-check-input" value="1"
+                    {{ ($s['cycle_email'] ?? true) ? 'checked' : '' }} id="cyc_email">
+                <label class="form-check-label small" for="cyc_email">Email</label>
+            </div>
+            <div class="form-check mb-3">
+                <input type="checkbox" name="settings[cycle_whatsapp]" class="form-check-input" value="1"
+                    {{ ($s['cycle_whatsapp'] ?? true) ? 'checked' : '' }} id="cyc_wa">
+                <label class="form-check-label small" for="cyc_wa">WhatsApp</label>
+            </div>
+
+            {{-- Adhésion approuvée --}}
+            <p class="fw-semibold small mb-2">👋 Approbation de membre</p>
+            <div class="form-check mb-1">
+                <input type="checkbox" name="settings[member_email]" class="form-check-input" value="1"
+                    {{ ($s['member_email'] ?? true) ? 'checked' : '' }} id="mem_email">
+                <label class="form-check-label small" for="mem_email">Email</label>
+            </div>
+            <div class="form-check mb-4">
+                <input type="checkbox" name="settings[member_whatsapp]" class="form-check-input" value="1"
+                    {{ ($s['member_whatsapp'] ?? true) ? 'checked' : '' }} id="mem_wa">
+                <label class="form-check-label small" for="mem_wa">WhatsApp</label>
             </div>
 
             <button type="submit" class="btn btn-primary w-100">

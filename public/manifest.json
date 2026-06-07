@@ -64,28 +64,13 @@
   "share_target": {
     "action": "/tontines/join",
     "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
     "params": {
       "title": "title",
       "text": "text",
       "url": "code"
     }
   },
-  "screenshots": [
-    {
-      "src": "/images/screenshot-mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Dashboard TontineSN"
-    },
-    {
-      "src": "/images/screenshot-desktop.png",
-      "sizes": "1280x800",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Vue desktop TontineSN"
-    }
-  ],
   "prefer_related_applications": false,
   "related_applications": []
 }

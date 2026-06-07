@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Jobs\RecalculateCreditScore;
 use App\Models\Cycle;
 use App\Models\SavingsWithdrawal;
 use App\Models\Transaction;
+use App\Services\CreditScoringService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -17,6 +19,8 @@ class PaymentService
         private DrawService $drawService,
         private NotificationService $notifier,
         private GamificationService $gamification,
+        private CreditScoringService $scorer,
+        private \App\Services\WebhookOutboundService $webhookOutbound,
     ) {}
 
     public function hasActivePayment(Cycle $cycle, int $userId): bool
@@ -29,6 +33,17 @@ class PaymentService
     public function recordPayment(Cycle $cycle, int $userId, int $amount, string $method, ?string $ref = null): Transaction
     {
         return DB::transaction(function () use ($cycle, $userId, $amount, $method, $ref) {
+            // Vérification atomique avec verrouillage pour éviter les doublons (race condition B2)
+            $exists = Transaction::lockForUpdate()
+                ->forCycle($cycle->id)
+                ->forUser($userId)
+                ->whereIn('status', ['success', 'pending'])
+                ->exists();
+
+            if ($exists) {
+                throw new \RuntimeException('Vous avez déjà un paiement en cours ou effectué pour ce cycle.');
+            }
+
             $finalAmount = $amount;
 
             if ($cycle->isOverdue() && $cycle->tontine->penalty_rate > 0) {
@@ -46,15 +61,14 @@ class PaymentService
                 'paid_at'            => null,
             ]);
 
-            // cash reste pending jusqu'à confirmation manuelle du gérant
-
             return $transaction;
         });
     }
 
     public function confirmPayment(Transaction $transaction, ?int $verifiedAmount = null): void
     {
-        if ($transaction->status === 'success') return;
+        $transaction = $transaction->fresh();
+        if (!$transaction || $transaction->status === 'success') return;
 
         if ($verifiedAmount !== null && $verifiedAmount !== $transaction->amount) {
             Log::warning('Montant vérifié différent du montant attendu', [
@@ -64,52 +78,77 @@ class PaymentService
             ]);
         }
 
+        // Minimal scope: only update status
         DB::transaction(function () use ($transaction) {
             $transaction->update(['status' => 'success', 'paid_at' => now()]);
+        });
 
-            $cycle = $transaction->cycle;
-            $this->cycleService->updateCycleTotal($cycle);
-            $this->gamification->updatePaymentStreak($transaction->user, $cycle, !$cycle->isOverdue());
+        // Webhook sortant : paiement confirmé
+        $this->webhookOutbound->dispatch('payment.confirmed', [
+            'transaction_id' => $transaction->id,
+            'user_id'        => $transaction->user_id,
+            'amount'         => $transaction->amount,
+            'method'         => $transaction->method,
+            'cycle_id'       => $transaction->cycle_id,
+        ]);
 
+        // Dispatch jobs outside transaction to avoid locks
+        $transaction->load('cycle.tontine', 'user');
+        if ($transaction->user) {
+            RecalculateCreditScore::dispatch($transaction->user->id);
+            $this->gamification->updatePaymentStreak($transaction->user, $transaction->cycle, !$transaction->cycle->isOverdue());
+        }
+
+        // Update cycle total (should be fast, no complex operations)
+        $this->cycleService->updateCycleTotal($transaction->cycle);
+
+        // Refresh cycle + tontine pour éviter données périmées
+        $cycle = $transaction->cycle->fresh();
+        $cycle->load('tontine');
+        $cycleWasPaid = $cycle->status === 'paid';
+
+        if (
+            $cycleWasPaid
+            && !$cycle->beneficiary_id
+            && !in_array($cycle->tontine->type, ['forced_saving', 'ceremonial'])
+        ) {
+            $this->drawService->drawBeneficiary($cycle);
             $cycle->refresh();
-            $cycleWasPaid = $cycle->status === 'paid';
 
-            if (
-                $cycleWasPaid
-                && !$cycle->beneficiary_id
-                && !in_array($cycle->tontine->type, ['forced_saving', 'ceremonial'])
-            ) {
-                $this->drawService->drawBeneficiary($cycle);
+            if ($cycle->beneficiary_id) {
+                $amount = $cycle->tontine->amount * $cycle->tontine->activeMembers()->count();
+                $this->notifier->notifyBeneficiary(
+                    $cycle->beneficiary,
+                    $cycle->tontine->name,
+                    $amount
+                );
+                // Webhook sortant : bénéficiaire tiré
+                $this->webhookOutbound->dispatch('cycle.beneficiary_drawn', [
+                    'cycle_id'       => $cycle->id,
+                    'tontine_id'     => $cycle->tontine_id,
+                    'beneficiary_id' => $cycle->beneficiary_id,
+                    'amount'         => $amount,
+                ]);
+            }
+        }
 
-                $cycle->refresh();
-                if ($cycle->beneficiary_id) {
-                    $amount = $cycle->tontine->amount * $cycle->tontine->activeMembers()->count();
-                    $this->notifier->notifyBeneficiary(
-                        $cycle->beneficiary,
-                        $cycle->tontine->name,
-                        $amount
+        if ($cycleWasPaid) {
+            $tontine = $cycle->tontine;
+            $nextCycle = $tontine->currentCycle;
+
+            if ($nextCycle && $nextCycle->id !== $cycle->id) {
+                $dueDate = $nextCycle->due_date->isoFormat('D MMMM YYYY');
+                $members = $tontine->activeMembers;
+
+                foreach ($members as $member) {
+                    $this->notifier->notifyCycleStart(
+                        $member,
+                        $tontine->name,
+                        $dueDate
                     );
                 }
             }
-
-            if ($cycleWasPaid) {
-                $tontine = $cycle->tontine;
-                $nextCycle = $tontine->currentCycle;
-
-                if ($nextCycle && $nextCycle->id !== $cycle->id) {
-                    $dueDate = $nextCycle->due_date->isoFormat('D MMMM YYYY');
-                    $members = $tontine->activeMembers;
-
-                    foreach ($members as $member) {
-                        $this->notifier->notifyCycleStart(
-                            $member,
-                            $tontine->name,
-                            $dueDate
-                        );
-                    }
-                }
-            }
-        });
+        }
     }
 
     public function confirmWithdrawal(SavingsWithdrawal $withdrawal): void

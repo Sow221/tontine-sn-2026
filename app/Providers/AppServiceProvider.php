@@ -30,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(DrawService::class);
         $this->app->singleton(PaymentService::class);
         $this->app->singleton(GamificationService::class);
+        $this->app->singleton(\App\Services\WebhookOutboundService::class);
     }
 
     public function boot(): void
@@ -43,6 +44,8 @@ class AppServiceProvider extends ServiceProvider
                 ? NotificationLog::where('user_id', Auth::id())->unread()->count()
                 : 0;
             $view->with('unreadNotificationsCount', $unreadCount);
+            // Expose le nonce CSP généré par SecurityHeaders middleware
+            $view->with('cspNonce', request()->attributes->get('csp_nonce', ''));
         });
     }
 }

@@ -11,14 +11,7 @@ class SetLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = 'fr';
-
-        if ($user = $request->user()) {
-            $locale = $user->preferred_language ?? 'fr';
-        }
-
-        App::setLocale($locale);
-
+        App::setLocale('fr');
         return $next($request);
     }
 }

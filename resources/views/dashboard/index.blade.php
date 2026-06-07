@@ -2,8 +2,11 @@
 @section('title', 'Accueil')
 
 @section('content')
+@push('head-scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+@endpush
 @php
-    $h = (int) now()->format('H');
+    $h = now()->hour;
     $greeting = $h < 6 || $h >= 18 ? __('member.greeting_evening') : ($h < 13 ? __('member.greeting_morning') : __('member.greeting_afternoon'));
     $totalCotise = $recentTransactions->where('status', 'success')->sum('amount');
     $activeTontinesCount = $activeTontines->count();
@@ -12,6 +15,22 @@
 @endphp
 
 <div class="container py-4">
+
+    {{-- ── NAVIGATION ONGLETS DASHBOARD ───────────────────────────── --}}
+    @php
+        $hasOverdue   = $overduePayments->isNotEmpty();
+        $hasUpcoming  = $upcomingPayments->isNotEmpty();
+        $pendingCount = $overduePayments->count() + $upcomingPayments->count();
+    @endphp
+    <nav class="dash-nav-tabs" aria-label="Sections du tableau de bord">
+        <a href="#section-tontines" class="dash-nav-tab"><i class="fas fa-users"></i>Tontines</a>
+        <a href="#section-paiements" class="dash-nav-tab">
+            <i class="fas fa-credit-card"></i>Paiements
+            @if($pendingCount > 0)<span class="tab-badge">{{ $pendingCount }}</span>@endif
+        </a>
+        <a href="#section-gamification" class="dash-nav-tab"><i class="fas fa-trophy"></i>Score</a>
+        <a href="#section-transactions" class="dash-nav-tab"><i class="fas fa-history"></i>Historique</a>
+    </nav>
 
     {{-- ── HERO RÉSUMÉ ──────────────────────────────────────────────── --}}
     <div class="dash-hero mb-4">
@@ -93,11 +112,18 @@
             <strong>Adhésion en attente</strong>
             <p class="mb-0 small text-muted">{{ $tontine->name }} — En attente d'approbation du créateur</p>
         </div>
-        <a href="{{ route('tontines.show', $tontine) }}" class="btn btn-sm btn-outline-warning rounded-pill flex-shrink-0">Voir</a>
+        <div class="d-flex gap-2 flex-shrink-0">
+            <a href="{{ route('tontines.show', $tontine) }}" class="btn btn-sm btn-outline-warning rounded-pill">Voir</a>
+            <form method="POST" action="{{ route('tontines.leave', $tontine) }}" onsubmit="return confirm('Annuler votre demande d\'adhésion ?')">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"><i class="fas fa-times"></i> Annuler</button>
+            </form>
+        </div>
     </div>
     @endforeach
 
     {{-- ── MES TONTINES ACTIVES ──────────────────────────────────────── --}}
+    <div class="section-divider" id="section-tontines"></div>
     @if($activeTontines->isNotEmpty())
     <div class="section-header mb-3">
         <h5 class="section-header__title">Mes tontines actives</h5>
@@ -189,6 +215,7 @@
 
     {{-- ── COTISATIONS À VENIR ────────────────────────────────────────── --}}
     @if($upcomingPayments->isNotEmpty())
+    <div class="section-divider" id="section-paiements"></div>
     <div class="section-header mb-3 mt-2">
         <h5 class="section-header__title">
             Cotisations à payer
@@ -227,8 +254,41 @@
     @endforeach
     @endif
 
-    {{-- ── SCORE & ACTIVITÉ ───────────────────────────────────────────── --}}
-    <div class="row g-3 mt-1 mb-4">
+    {{-- ── CALENDRIER ÉCHÉANCES ─────────────────────────────────────────── --}}
+    @if($upcomingPayments->isNotEmpty() || $overduePayments->isNotEmpty())
+    <div class="section-divider"></div>
+    <div class="section-header mb-2">
+        <h5 class="section-header__title">Calendrier des échéances</h5>
+    </div>
+    <div class="calendar-strip mb-4" role="list" aria-label="Échéances à venir">
+        @foreach($overduePayments as $cycle)
+        <div class="calendar-day calendar-day--due" role="listitem"
+             title="{{ $cycle->tontine->name }} — En retard">
+            <div class="calendar-day__num">{{ $cycle->due_date->format('d') }}</div>
+            <div class="calendar-day__month">{{ $cycle->due_date->isoFormat('MMM') }}</div>
+            <div class="calendar-day__dot"></div>
+        </div>
+        @endforeach
+        @foreach($upcomingPayments->whereNotIn('id', $overduePayments->pluck('id')) as $cycle)
+        <div class="calendar-day calendar-day--upcoming" role="listitem"
+             title="{{ $cycle->tontine->name }}">
+            <div class="calendar-day__num">{{ $cycle->due_date->format('d') }}</div>
+            <div class="calendar-day__month">{{ $cycle->due_date->isoFormat('MMM') }}</div>
+            <div class="calendar-day__dot"></div>
+        </div>
+        @endforeach
+    </div>
+    @endif
+
+    {{-- ── GAMIFICATION (score, streak, badges, leaderboard) ─────────── --}}
+    <div class="section-divider" id="section-gamification"></div>
+    <div class="gamif-panel" x-data="{ open: false }">
+        <button type="button" class="gamif-panel__toggle" @click="open = !open" :aria-expanded="open">
+            <span><i class="fas fa-trophy me-2 text-warning"></i>Score, badges &amp; classement</span>
+            <i class="fas fa-chevron-down gamif-panel__toggle-arrow"></i>
+        </button>
+        <div class="gamif-panel__body" x-show="open" x-collapse>
+    <div class="row g-3 mb-4">
         {{-- Score crédit --}}
         <div class="col-12 col-md-5">
             <div class="score-panel">
@@ -236,7 +296,9 @@
                     <p class="score-panel__label">Score crédit</p>
                     <h3 class="score-panel__value">{{ $creditScore->score }}<span class="score-panel__max">/10</span></h3>
                     <span class="badge bg-{{ $creditScore->badgeColor() }}">{{ $creditScore->badgeLabel() }}</span>
-                    @if($creditScore->score == 0)
+                    @if($scoreCalculating ?? false)
+                    <p class="score-panel__hint"><i class="fas fa-spinner fa-spin me-1"></i>Score en cours de calcul…</p>
+                    @elseif($creditScore->score == 0)
                     <p class="score-panel__hint">Effectuez votre premier paiement pour construire votre score.</p>
                     @endif
                 </div>
@@ -274,18 +336,25 @@
         </div>
     </div>
 
+        </div>{{-- /gamif-panel__body --}}
+    </div>{{-- /gamif-panel --}}
+
     {{-- ── GRAPHIQUE ───────────────────────────────────────────────────── --}}
     @if($chartData['months']->isNotEmpty())
+    <div class="section-divider"></div>
     <div class="card mb-4">
         <div class="section-header mb-3">
             <h6 class="section-header__title mb-0">Mes cotisations (12 mois)</h6>
             <a href="{{ route('historique.index') }}" class="section-header__link">Historique complet</a>
         </div>
-        <canvas id="paymentChart" height="160"></canvas>
+        <div style="position:relative;height:160px;">
+            <canvas id="paymentChart"></canvas>
+        </div>
     </div>
     @push('scripts')
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        if (typeof Chart === 'undefined') return;
         const ctx = document.getElementById('paymentChart');
         if (!ctx) return;
         new Chart(ctx, {
@@ -329,7 +398,12 @@
             </span>
             <div class="leaderboard-row__avatar">{{ strtoupper(substr($member->name, 0, 2)) }}</div>
             <span class="leaderboard-row__name">{{ $member->name }}@if($member->id === $user->id) <span class="text-muted">(moi)</span>@endif</span>
-            <span class="leaderboard-row__badges">{{ $member->badge_count }} 🏅</span>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                @if($member->credit_score > 0)
+                <span class="badge bg-success" style="font-size:10px;">★ {{ $member->credit_score }}/10</span>
+                @endif
+                <span class="leaderboard-row__badges">{{ $member->badge_count }} 🏅</span>
+            </div>
         </div>
         @endforeach
     </div>
@@ -337,6 +411,7 @@
 
     {{-- ── TRANSACTIONS RÉCENTES ──────────────────────────────────────── --}}
     @if($recentTransactions->isNotEmpty())
+    <div class="section-divider" id="section-transactions"></div>
     <div class="section-header mb-3">
         <h6 class="section-header__title mb-0">Transactions récentes</h6>
         <a href="{{ route('historique.index') }}" class="section-header__link">Voir tout</a>
@@ -359,11 +434,52 @@
 
 </div>
 
-{{-- FAB paiement --}}
+    {{-- FAB paiement --}}
 @if($upcomingPayments->isNotEmpty())
 <a href="{{ route('cycles.pay', $upcomingPayments->first()) }}" class="fab" title="Payer maintenant">
     <i class="fas fa-credit-card"></i>
 </a>
 @endif
 
+{{-- FAB partage WhatsApp (si pas de paiement urgent) --}}
+@if($upcomingPayments->isEmpty() && $activeTontines->isNotEmpty())
+@php $firstTontine = $activeTontines->first(); @endphp
+<a href="https://wa.me/?text={{ urlencode('Rejoins ma tontine «'.$firstTontine->name.'» sur TontineSN ! Code : '.$firstTontine->code.' — '.route('tontines.join.form', ['code' => $firstTontine->code])) }}"
+   target="_blank" rel="noreferrer"
+   class="fab fab--whatsapp" title="Inviter un membre sur WhatsApp" aria-label="Inviter sur WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+</a>
+@endif
+
+{{-- FAB partage tontine (si tontine active sans paiement urgent) --}}
+@if($upcomingPayments->isEmpty() && $activeTontines->isNotEmpty())
+@php $firstTontine = $activeTontines->first(); @endphp
+<a href="https://wa.me/?text={{ urlencode('Rejoins ma tontine «'.$firstTontine->name.'» sur TontineSN ! Code : '.$firstTontine->code.' — '.route('tontines.join.form', ['code' => $firstTontine->code])) }}"
+   target="_blank" rel="noreferrer" class="fab fab--green" title="Inviter sur WhatsApp" aria-label="Inviter un membre">
+    <i class="fab fa-whatsapp"></i>
+</a>
+@endif
+
 @endsection
+
+@push('scripts')
+<script>
+// Highlight onglet actif selon section visible
+(function () {
+    const tabs = document.querySelectorAll('.dash-nav-tab');
+    const sections = ['section-tontines','section-paiements','section-gamification','section-transactions'];
+    function setActive() {
+        let current = sections[0];
+        sections.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.getBoundingClientRect().top <= 120) current = id;
+        });
+        tabs.forEach(t => {
+            t.classList.toggle('active', t.getAttribute('href') === '#' + current);
+        });
+    }
+    window.addEventListener('scroll', setActive, { passive: true });
+    setActive();
+})();
+</script>
+@endpush
