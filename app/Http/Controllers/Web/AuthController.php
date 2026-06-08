@@ -168,6 +168,7 @@ class AuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
         } catch (\Exception $e) {
+            Log::error('Google OAuth user() failed', ['error' => $e->getMessage(), 'class' => get_class($e)]);
             return redirect()->route('auth.login')
                              ->withErrors(['email' => 'Connexion Google annulée ou échouée.']);
         }
