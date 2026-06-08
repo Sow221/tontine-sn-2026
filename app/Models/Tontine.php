@@ -16,7 +16,7 @@ class Tontine extends Model
 
     protected $fillable = [
         'name', 'code', 'description', 'amount', 'frequency',
-        'type', 'status', 'start_date', 'end_date',
+        'type', 'status', 'visibility', 'start_date', 'end_date',
         'max_members', 'penalty_rate', 'quorum', 'draw_method',
         'weighted_draw', 'veto_threshold', 'created_by',
     ];
@@ -66,6 +66,17 @@ class Tontine extends Model
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
+
+    public function isPublic(): bool
+    {
+        return $this->visibility === 'public';
+    }
+
+    public function scopePubliclyVisible($query)
+    {
+        return $query->where('visibility', 'public')
+                     ->whereIn('status', ['pending', 'active']);
+    }
 
     public function isActive(): bool
     {

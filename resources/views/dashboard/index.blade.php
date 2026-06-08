@@ -451,15 +451,6 @@
 </a>
 @endif
 
-{{-- FAB partage tontine (si tontine active sans paiement urgent) --}}
-@if($upcomingPayments->isEmpty() && $activeTontines->isNotEmpty())
-@php $firstTontine = $activeTontines->first(); @endphp
-<a href="https://wa.me/?text={{ urlencode('Rejoins ma tontine «'.$firstTontine->name.'» sur TontineSN ! Code : '.$firstTontine->code.' — '.route('tontines.join.form', ['code' => $firstTontine->code])) }}"
-   target="_blank" rel="noreferrer" class="fab fab--green" title="Inviter sur WhatsApp" aria-label="Inviter un membre">
-    <i class="fab fa-whatsapp"></i>
-</a>
-@endif
-
 @endsection
 
 @push('scripts')

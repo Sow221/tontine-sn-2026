@@ -43,13 +43,17 @@ class TontineTest extends TestCase
     {
         $owner   = User::factory()->create();
         $member  = User::factory()->create();
-        $tontine = Tontine::factory()->create(['created_by' => $owner->id]);
+        $tontine = Tontine::factory()->create([
+            'created_by' => $owner->id,
+            'amount'     => 25000,
+        ]);
 
         $response = $this->actingAs($member)->post('/tontines/join', [
             'code' => $tontine->code,
         ]);
 
         $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
         $this->assertDatabaseHas('tontine_members', [
             'tontine_id' => $tontine->id,
             'user_id'    => $member->id,
@@ -75,6 +79,7 @@ class TontineTest extends TestCase
             'created_by'  => $owner->id,
             'status'      => 'active',
             'max_members' => 10,
+            'amount'      => 25000,
         ]);
         $tontine->members()->attach($owner->id, ['status' => 'active', 'position' => 1]);
 
@@ -97,6 +102,7 @@ class TontineTest extends TestCase
             'created_by'  => $owner->id,
             'status'      => 'active',
             'max_members' => 2,
+            'amount'      => 25000,
         ]);
         $tontine->members()->attach($owner->id, ['status' => 'active', 'position' => 1]);
         $other = User::factory()->create();

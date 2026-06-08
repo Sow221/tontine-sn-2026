@@ -138,7 +138,10 @@ class GamificationService
             'beneficiary_count' => (int) Cycle::where('beneficiary_id', $user->id)->count(),
             'tontines_created'  => (int) $user->tontines()->count(),
             'on_time_months'    => $this->getOnTimeMonths($user),
-            'tontine_completed' => (int) $user->memberships()->wherePivot('status', 'completed')->count(),
+            'tontine_completed' => (int) $user->memberships()
+                ->wherePivot('status', 'active')
+                ->where('tontines.status', 'completed')
+                ->count(),
             'invited_members'   => $this->getInvitedCount($user),
             'referrals_count'   => (int) $user->referrals()->count(),
         ];

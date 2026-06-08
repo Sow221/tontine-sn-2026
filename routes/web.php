@@ -62,6 +62,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout')->
 
 // ── Webhooks ───────────────────────────────────────────────────────────────
 Route::get('/payment/failed', [PaymentController::class, 'failed'])->name('payment.failed');
+Route::post('/webhooks/greenapi', [WebhookController::class, 'greenapi'])->name('webhooks.greenapi');
 
 // ── Espace membre ──────────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:member'])->group(function () {
@@ -74,6 +75,7 @@ Route::middleware(['auth', 'role:member'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    Route::get('/tontines/explorer',  [TontineController::class, 'explore'])->name('tontines.explore');
     // Tontines
     Route::resource('tontines', TontineController::class);
     Route::post('/tontines/join',               [TontineController::class, 'join'])->name('tontines.join');

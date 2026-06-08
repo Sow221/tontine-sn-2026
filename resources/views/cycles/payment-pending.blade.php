@@ -103,6 +103,10 @@ const maxRetries = 20; // 20 × 3s = 60s max
 let   retries    = 0;
 let   countdown  = 3;
 
+// Check if returning from PayTech (URL has paytech_return param)
+const urlParams = new URLSearchParams(window.location.search);
+const isPayTechReturn = urlParams.has('paytech_return') || document.referrer.includes('paytech.sn');
+
 function updateCountdown() {
     const el = document.getElementById('countdown');
     if (el) el.textContent = countdown;
@@ -165,9 +169,20 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Démarrer après 3s
-updateCountdown();
-setTimeout(checkStatus, 3000);
+// Show return from PayTech indicator
+if (isPayTechReturn) {
+    const timerText = document.getElementById('timer-text');
+    if (timerText) {
+        timerText.innerHTML = '✅ Retour de PayTech détecté. Vérification en cours...';
+        timerText.style.color = '#009639';
+    }
+    // Start checking immediately
+    checkStatus();
+} else {
+    // Démarrer après 3s
+    updateCountdown();
+    setTimeout(checkStatus, 3000);
+}
 </script>
 @endif
 @endpush

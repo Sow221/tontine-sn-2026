@@ -318,6 +318,10 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('{{ $inviteUrl }}')">
                     <i class="fas fa-link me-1"></i>Copier le lien
                 </button>
+                <a href="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ urlencode($inviteUrl) }}"
+                   target="_blank" rel="noreferrer" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-qrcode me-1"></i>QR Code
+                </a>
             </div>
         </div>
         @else
@@ -338,6 +342,10 @@
             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('{{ $inviteUrl }}')">
                 <i class="fas fa-link me-1"></i>Copier le lien
             </button>
+            <a href="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ urlencode($inviteUrl) }}"
+               target="_blank" rel="noreferrer" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-qrcode me-1"></i>QR Code
+            </a>
         </div>
     </div>
     @endif

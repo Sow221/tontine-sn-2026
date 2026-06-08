@@ -8,6 +8,7 @@ use App\Models\Tontine;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ChatController extends Controller
@@ -23,7 +24,7 @@ class ChatController extends Controller
             ->get();
 
         // Compter les messages non lus par tontine (depuis la dernière visite réelle du chat)
-        $lastSeenMap = \DB::table('tontine_members')
+        $lastSeenMap = DB::table('tontine_members')
             ->where('user_id', $user->id)
             ->whereIn('tontine_id', $tontines->pluck('id'))
             ->pluck('chat_last_seen_at', 'tontine_id');
@@ -57,13 +58,13 @@ class ChatController extends Controller
         set_time_limit(0);
 
         return response()->stream(function () use ($tontineId, $lastId, $user) {
-            // Désactiver le buffer de sortie
             if (ob_get_level()) ob_end_flush();
 
-            $current = $lastId;
-            $ticks   = 0;
+            $current  = $lastId;
+            $ticks    = 0;
+            $maxTicks = 300; // 5 minutes max puis fermeture propre
 
-            while (true) {
+            while ($ticks < $maxTicks) {
                 if (connection_aborted()) break;
 
                 $messages = ChatMessage::where('tontine_id', $tontineId)
@@ -87,7 +88,7 @@ class ChatController extends Controller
 
                 // Heartbeat toutes les 15s pour maintenir la connexion
                 if (++$ticks % 15 === 0) {
-                    $online = \DB::table('tontine_members')
+                    $online = DB::table('tontine_members')
                         ->where('tontine_id', $tontineId)
                         ->where('status', 'active')
                         ->where('chat_last_seen_at', '>=', now()->subMinutes(2))
@@ -131,7 +132,7 @@ class ChatController extends Controller
             ]);
 
         // Membres actifs vus dans les 2 dernières minutes (indicateur de présence)
-        $online = \DB::table('tontine_members')
+        $online = DB::table('tontine_members')
             ->where('tontine_id', $tontine->id)
             ->where('status', 'active')
             ->where('chat_last_seen_at', '>=', now()->subMinutes(2))
@@ -147,7 +148,7 @@ class ChatController extends Controller
         $this->authorizeAccess($tontine, $user);
 
         // Marquer les messages comme lus (met à jour chat_last_seen_at)
-        \DB::table('tontine_members')
+        DB::table('tontine_members')
             ->where('tontine_id', $tontine->id)
             ->where('user_id', $user->id)
             ->update(['chat_last_seen_at' => now()]);
@@ -181,7 +182,7 @@ class ChatController extends Controller
             ]);
 
             // Mettre à jour last_seen pour l'expéditeur
-            \DB::table('tontine_members')
+            DB::table('tontine_members')
                 ->where('tontine_id', $tontine->id)
                 ->where('user_id', $user->id)
                 ->update(['chat_last_seen_at' => now()]);

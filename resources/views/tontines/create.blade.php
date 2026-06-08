@@ -68,6 +68,27 @@
                 <div class="alert alert-light py-2 mt-2 small" x-text="typeDescription()" x-show="typeDescription()"></div>
                 @error('type') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
+            <div class="mb-0">
+                <label class="form-label fw-semibold">Visibilité</label>
+                <div class="d-flex gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="visibility" id="vis_private"
+                               value="private" {{ old('visibility', 'private') !== 'public' ? 'checked' : '' }}>
+                        <label class="form-check-label" for="vis_private">
+                            <i class="fas fa-lock me-1 text-muted"></i>Privée
+                            <small class="d-block text-muted" style="font-size:11px;">Accessible uniquement sur invitation (code ou lien)</small>
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="visibility" id="vis_public"
+                               value="public" {{ old('visibility') === 'public' ? 'checked' : '' }}>
+                        <label class="form-check-label" for="vis_public">
+                            <i class="fas fa-globe me-1 text-green"></i>Publique
+                            <small class="d-block text-muted" style="font-size:11px;">Visible dans le catalogue Explorer</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
         </div>
 
         {{-- Paramètres financiers --}}

@@ -174,6 +174,16 @@
         <p class="text-center text-muted small mt-3">
             <i class="fas fa-shield-alt me-1"></i>Paiement sécurisé · TLS 1.3
         </p>
+
+        {{-- Loading overlay on form submit --}}
+        <div id="payment-loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
+            <div class="text-center p-4" style="background:white;border-radius:16px;max-width:300px;margin:20px;">
+                <div class="mb-3" style="font-size:48px;">🔄</div>
+                <h5 class="fw-bold mb-2">Redirection vers PayTech...</h5>
+                <p class="text-muted mb-0">Ne fermez pas cette page. Vous allez être redirigé vers Wave / Orange Money / Carte.</p>
+                <div class="spinner-border text-primary mt-3" role="status"><span class="visually-hidden">Chargement...</span></div>
+            </div>
+        </div>
     </form>
 
 </div>
@@ -187,6 +197,22 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.addEventListener('shown.bs.modal', function () {
             const btn = this.querySelector('button[type="submit"]');
             if (btn) btn.disabled = false;
+        });
+    }
+
+    // Show loading overlay when payment form submits
+    const form = document.querySelector('form[action*="cycles/pay"]');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn && !submitBtn.disabled) {
+                const overlay = document.getElementById('payment-loading-overlay');
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Traitement...';
+                }
+            }
         });
     }
 });

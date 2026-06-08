@@ -26,6 +26,7 @@ class UpdateTontineRequest extends FormRequest
             'amount'      => $isActive ? ['prohibited'] : ['required', 'integer', 'min:' . config('tontine.transaction.min_amount'), 'max:' . config('tontine.transaction.max_amount')],
             'frequency'   => $isActive ? ['prohibited'] : ['required', 'in:daily,weekly,monthly'],
             'start_date'  => $isActive ? ['prohibited'] : ['required', 'date'],
+            'visibility'  => ['nullable', 'in:private,public'],
         ];
     }
 

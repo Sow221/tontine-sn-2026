@@ -9,15 +9,15 @@ return new class extends Migration
     {
         DB::table('users')->where('preferred_language', 'wo')->update(['preferred_language' => 'fr']);
 
-        try {
+        if (DB::getDriverName() === 'mysql') {
             DB::statement("ALTER TABLE users MODIFY COLUMN preferred_language ENUM('fr', 'en') NOT NULL DEFAULT 'fr'");
-        } catch (\Throwable $e) {
-            // Déjà appliqué — ignoré
         }
     }
 
     public function down(): void
     {
-        DB::statement("ALTER TABLE users MODIFY COLUMN preferred_language ENUM('fr', 'wo', 'en') NOT NULL DEFAULT 'fr'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE users MODIFY COLUMN preferred_language ENUM('fr', 'wo', 'en') NOT NULL DEFAULT 'fr'");
+        }
     }
 };

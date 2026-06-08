@@ -9,7 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('cycles', function (Blueprint $table) {
-            $table->unsignedBigInteger('bid_amount')->nullable()->after('total_collected');
+            if (!Schema::hasColumn('cycles', 'bid_amount')) {
+                $table->unsignedBigInteger('bid_amount')->nullable()->after('total_collected');
+            }
         });
     }
 

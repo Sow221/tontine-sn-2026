@@ -129,8 +129,8 @@ class PaymentApiController extends Controller
             'method'  => $tx->method,
             'status'  => $tx->status,
             'paid_at' => $tx->paid_at?->toIso8601String(),
-            'tontine' => $tx->cycle->tontine->name ?? null,
-            'cycle'   => $tx->cycle->cycle_number ?? null,
+            'tontine' => $tx->cycle?->tontine?->name,
+            'cycle'   => $tx->cycle?->cycle_number,
         ]));
     }
 }

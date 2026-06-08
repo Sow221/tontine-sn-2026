@@ -82,7 +82,7 @@ class TontineService
                     'status'            => 'pending',
                     'position'          => $locked->activeMembers()->count() + 1,
                     'joined_at'         => now(),
-                    'start_cycle_number'=> $startCycleNumber,
+                    'start_cycle_number'=> $startCycleNumber ?? 1,
                 ],
             ]);
 
@@ -93,6 +93,16 @@ class TontineService
 
             $result = ['ok' => true, 'message' => $message];
         });
+
+        // Notifier le créateur de la nouvelle demande (hors transaction pour éviter les locks)
+        if ($result['ok']) {
+            $creator = $tontine->creator;
+            $newMember = User::find($userId);
+            if ($creator && $newMember && $creator->id !== $userId) {
+                app(\App\Services\NotificationService::class)
+                    ->notifyNewMemberRequest($creator, $newMember, $tontine->name);
+            }
+        }
 
         return $result;
     }

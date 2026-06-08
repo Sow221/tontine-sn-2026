@@ -18,7 +18,7 @@ class ApiTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email'    => 'test@example.com',
             'password' => 'password123',
         ]);
@@ -28,7 +28,7 @@ class ApiTest extends TestCase
 
     public function test_api_login_invalid_credentials(): void
     {
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email'    => 'wrong@example.com',
             'password' => 'wrongpassword',
         ]);
@@ -38,7 +38,7 @@ class ApiTest extends TestCase
 
     public function test_api_requires_authentication(): void
     {
-        $this->getJson('/api/tontines')
+        $this->getJson('/api/v1/tontines')
             ->assertUnauthorized();
     }
 
@@ -48,13 +48,13 @@ class ApiTest extends TestCase
         $token = $user->createToken('test-token')->plainTextToken;
 
         $this->withHeaders(['Authorization' => "Bearer $token"])
-            ->getJson('/api/tontines')
+            ->getJson('/api/v1/tontines')
             ->assertOk();
     }
 
     public function test_api_register_creates_user(): void
     {
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'name'     => 'Test User',
             'email'    => 'newuser@example.com',
             'password' => 'password123',

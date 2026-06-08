@@ -53,8 +53,9 @@ class PayTechService
                 'ref_command'      => $reference,
                 'command_name'     => "Cotisation tontine",
                 'env'              => 'prod',
+                'fee_bearer'       => config('mobilemoney.paytech.fee_bearer'),
                 'ipn_url'          => route('webhooks.paytech'),
-                'success_url'      => route('payment.pending', $transaction),
+                'success_url'      => route('payment.pending', $transaction) . '?paytech_return=1',
                 'cancel_url'       => route('payment.failed', ['cycle_id' => $transaction->cycle_id]),
             ]);
 

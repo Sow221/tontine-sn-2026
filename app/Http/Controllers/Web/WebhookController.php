@@ -8,6 +8,7 @@ use App\Models\WebhookLog;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\PayTechService;
+use App\Services\WhatsApp\GreenApiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -17,6 +18,7 @@ class WebhookController extends Controller
         private PaymentService $paymentService,
         private PayTechService $payTechService,
         private NotificationService $notifier,
+        private GreenApiService $greenApi,
     ) {}
 
     public function paytech(Request $request)
@@ -88,6 +90,51 @@ class WebhookController extends Controller
             return response()->json(['status' => 'ok']);
         } catch (\Throwable $e) {
             Log::error('Erreur webhook PayTech', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+            return response()->json(['status' => 'error', 'message' => 'Internal error'], 500);
+        }
+    }
+
+    public function greenapi(Request $request)
+    {
+        try {
+            $data = $request->all();
+
+            $webhookHash = hash('sha256', json_encode($data));
+
+            if (WebhookLog::where('webhook_hash', $webhookHash)->where('status', 'processed')->exists()) {
+                Log::info('Webhook Green API déjà traité', ['hash' => $webhookHash]);
+                return response()->json(['status' => 'ok', 'message' => 'already_processed']);
+            }
+
+            WebhookLog::create([
+                'provider'     => 'greenapi',
+                'webhook_hash' => $webhookHash,
+                'payload'      => $data,
+                'status'       => 'received',
+            ]);
+
+            $processed = $this->greenApi->processWebhook($data);
+
+            if ($processed['type'] === 'incomingMessageReceived') {
+                $messageData = $processed['message'] ?? [];
+                $senderData  = $processed['sender'] ?? [];
+
+                $fromPhone = $senderData['chatId'] ?? '';
+                $text      = $messageData['textMessageData']['textMessage'] ?? '';
+                $type      = $messageData['typeMessage'] ?? '';
+
+                Log::info('Green API message received', [
+                    'from' => $fromPhone,
+                    'text' => $text,
+                    'type' => $type,
+                ]);
+            }
+
+            WebhookLog::where('webhook_hash', $webhookHash)->update(['status' => 'processed']);
+
+            return response()->json(['status' => 'ok']);
+        } catch (\Throwable $e) {
+            Log::error('Erreur webhook Green API', ['error' => $e->getMessage(), 'class' => get_class($e)]);
             return response()->json(['status' => 'error', 'message' => 'Internal error'], 500);
         }
     }

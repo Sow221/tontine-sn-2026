@@ -98,6 +98,9 @@
                     @if($memberStatus === 'pending')
                         <span class="badge badge-warning" style="font-size:10px;">En attente</span>
                     @endif
+                    @if(($tontine->visibility ?? 'private') === 'public')
+                        <span class="badge bg-info text-white" style="font-size:10px;"><i class="fas fa-globe me-1"></i>Public</span>
+                    @endif
                 </div>
                 <small class="text-muted">
                     {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA ·

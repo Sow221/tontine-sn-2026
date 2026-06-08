@@ -41,10 +41,19 @@ return [
         'redirect'      => env('GOOGLE_REDIRECT_URI'),
     ],
 
-    'twilio' => [
-        'sid'           => env('TWILIO_SID'),
-        'token'         => env('TWILIO_TOKEN'),
-        'whatsapp_from' => env('TWILIO_WHATSAPP_FROM', '+14155238886'),
+    'greenapi' => [
+        'id_instance' => env('GREENAPI_ID_INSTANCE'),
+        'api_token'   => env('GREENAPI_API_TOKEN'),
+        'api_url'     => env('GREENAPI_API_URL', 'https://7107.api.greenapi.com'),
+        'media_url'   => env('GREENAPI_MEDIA_URL', 'https://7107.api.greenapi.com'),
+    ],
+
+    'greenapi' => [
+        'id_instance'     => env('GREENAPI_ID_INSTANCE'),
+        'api_token'       => env('GREENAPI_API_TOKEN'),
+        'api_url'         => env('GREENAPI_API_URL', 'https://7107.api.greenapi.com'),
+        'media_url'       => env('GREENAPI_MEDIA_URL', 'https://7107.api.greenapi.com'),
+        'webhook_url'     => env('GREENAPI_WEBHOOK_URL'),
     ],
 
     'webhook_outbound' => [

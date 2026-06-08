@@ -31,6 +31,54 @@ class TontineController extends Controller
         private WebhookOutboundService $webhookOutbound,
     ) {}
 
+    public function explore(Request $request)
+    {
+        try {
+            $query = Tontine::publiclyVisible()
+                ->withCount(['members as active_members_count' => fn($q) => $q->where('tontine_members.status', 'active')])
+                ->with('creator');
+
+            if ($search = $request->input('search')) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%");
+                });
+            }
+
+            if ($type = $request->input('type')) {
+                $query->where('type', $type);
+            }
+
+            if ($freq = $request->input('frequency')) {
+                $query->where('frequency', $freq);
+            }
+
+            if ($max = $request->input('max_amount')) {
+                $query->where('amount', '<=', $max);
+            }
+
+            $sort = $request->input('sort', 'latest');
+            match ($sort) {
+                'amount_asc'  => $query->orderBy('amount', 'asc'),
+                'amount_desc' => $query->orderBy('amount', 'desc'),
+                'spots'       => $query->orderByRaw('(tontines.max_members - (SELECT COUNT(*) FROM tontine_members WHERE tontine_members.tontine_id = tontines.id AND tontine_members.status = ?)) desc', ['active']),
+                default       => $query->latest(),
+            };
+
+            $tontines = $query->paginate(12)->withQueryString();
+
+            $myTontineIds = Auth::user()
+                ->memberships()
+                ->pluck('tontines.id')
+                ->toArray();
+
+            return view('tontines.explore', compact('tontines', 'myTontineIds'));
+        } catch (\Throwable $e) {
+            Log::error('Erreur explorer tontines', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+            return back()->withErrors(['error' => 'Erreur lors du chargement du catalogue.']);
+        }
+    }
+
     public function index(Request $request)
     {
         try {
@@ -320,7 +368,7 @@ SVG;
             $result  = $this->service->joinTontine($tontine, Auth::id());
 
             if (!$result['ok']) {
-                if (!empty($result['already'])) {
+                if (!empty($result['already']) && $tontine) {
                     return redirect()->route('tontines.show', $tontine)->with('success', $result['message']);
                 }
                 return back()->withErrors(['code' => $result['message']]);
@@ -537,6 +585,7 @@ SVG;
             }
 
             $tontine->members()->detach($user->id);
+            Cache::forget("tontine_member_{$tontine->id}_{$user->id}");
 
             return redirect()->route('tontines.index')->with('success', 'Vous avez quitté la tontine « ' . $tontine->name . ' ».');
         } catch (\Throwable $e) {

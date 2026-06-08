@@ -47,6 +47,7 @@ Schedule::call(function () {
 // Nettoyer les transactions pending qui n'ont jamais abouti (plus de 2h)
 Schedule::call(function () {
     $stale = Transaction::where('status', 'pending')
+        ->where('method', '!=', 'cash')
         ->where('created_at', '<', now()->subHours(2))
         ->get();
 
@@ -75,7 +76,8 @@ Schedule::call(function () {
                         $member,
                         $cycle->tontine->name,
                         $cycle->tontine->amount,
-                        -$days
+                        $days,
+                        true
                     );
                 }
             });

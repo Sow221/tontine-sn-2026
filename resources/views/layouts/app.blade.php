@@ -105,8 +105,11 @@
                 <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <i class="fas fa-home"></i> Accueil
                 </a>
-                <a href="{{ route('tontines.index') }}" class="sidebar-link {{ request()->routeIs('tontines.*') ? 'active' : '' }}">
+                <a href="{{ route('tontines.index') }}" class="sidebar-link {{ request()->routeIs('tontines.*') && !request()->routeIs('tontines.explore') ? 'active' : '' }}">
                     <i class="fas fa-users"></i> Mes tontines
+                </a>
+                <a href="{{ route('tontines.explore') }}" class="sidebar-link {{ request()->routeIs('tontines.explore') ? 'active' : '' }}">
+                    <i class="fas fa-compass"></i> Explorer
                 </a>
                 <a href="{{ route('chat.index') }}" class="sidebar-link {{ request()->routeIs('chat.*') ? 'active' : '' }}">
                     <i class="fas fa-comments"></i> Messages
@@ -268,8 +271,11 @@
             <a href="{{ route('dashboard') }}" class="bottom-nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <i class="fas fa-home"></i><span>Accueil</span>
             </a>
-            <a href="{{ route('tontines.index') }}" class="bottom-nav-link {{ request()->routeIs('tontines.*') ? 'active' : '' }}">
+            <a href="{{ route('tontines.index') }}" class="bottom-nav-link {{ request()->routeIs('tontines.*') && !request()->routeIs('tontines.explore') ? 'active' : '' }}">
                 <i class="fas fa-users"></i><span>Mes tontines</span>
+            </a>
+            <a href="{{ route('tontines.explore') }}" class="bottom-nav-link {{ request()->routeIs('tontines.explore') ? 'active' : '' }}">
+                <i class="fas fa-compass"></i><span>Explorer</span>
             </a>
             <a href="{{ route('chat.index') }}" class="bottom-nav-link {{ request()->routeIs('chat.*') ? 'active' : '' }}">
                 <i class="fas fa-comments"></i><span>Messages</span>

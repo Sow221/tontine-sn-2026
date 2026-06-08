@@ -6,7 +6,9 @@ use App\Models\Cycle;
 use App\Models\Tontine;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Services\TontineService;
+use App\Services\CycleService;
+use App\Services\DrawService;
+use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,12 +16,16 @@ class TontineServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private TontineService $service;
+    private CycleService $cycleService;
+    private DrawService $drawService;
+    private PaymentService $paymentService;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = $this->app->make(TontineService::class);
+        $this->cycleService = $this->app->make(CycleService::class);
+        $this->drawService = $this->app->make(DrawService::class);
+        $this->paymentService = $this->app->make(PaymentService::class);
     }
 
     // ─── Cycle Creation Tests ─────────────────────────────────────────────────
@@ -41,7 +47,7 @@ class TontineServiceTest extends TestCase
 
         $this->assertFalse($tontine->cycles()->exists());
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $this->assertEquals(5, $tontine->cycles()->count());
     }
@@ -58,7 +64,7 @@ class TontineServiceTest extends TestCase
             $tontine->members()->attach($member, ['status' => 'active', 'position' => 0]);
         }
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $cycles = $tontine->cycles()->orderBy('cycle_number')->get();
 
@@ -83,7 +89,7 @@ class TontineServiceTest extends TestCase
             $tontine->members()->attach($member, ['status' => 'active']);
         }
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $cycles = $tontine->cycles()->orderBy('cycle_number')->get();
 
@@ -108,7 +114,7 @@ class TontineServiceTest extends TestCase
             $tontine->members()->attach($member, ['status' => 'active']);
         }
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $cycles = $tontine->cycles()->orderBy('cycle_number')->get();
 
@@ -133,7 +139,7 @@ class TontineServiceTest extends TestCase
             $tontine->members()->attach($member, ['status' => 'active']);
         }
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $cycles = $tontine->cycles()->orderBy('cycle_number')->get();
 
@@ -154,7 +160,7 @@ class TontineServiceTest extends TestCase
             $tontine->members()->attach($member, ['status' => 'active']);
         }
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $cycles = $tontine->cycles()->get();
 
@@ -175,11 +181,11 @@ class TontineServiceTest extends TestCase
             $tontine->members()->attach($member, ['status' => 'active']);
         }
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
         $firstCount = $tontine->cycles()->count();
 
         // Try to create again
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
         $secondCount = $tontine->cycles()->count();
 
         $this->assertEquals($firstCount, $secondCount);
@@ -199,7 +205,7 @@ class TontineServiceTest extends TestCase
             $tontine->members()->attach($member, ['status' => 'suspended']);
         }
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $this->assertFalse($tontine->cycles()->exists());
     }
@@ -214,7 +220,7 @@ class TontineServiceTest extends TestCase
 
         $tontine->members()->attach($member, ['status' => 'active']);
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $this->assertEquals(1, $tontine->cycles()->count());
     }
@@ -236,12 +242,12 @@ class TontineServiceTest extends TestCase
             $tontine->members()->attach($member, ['status' => 'active']);
         }
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
         $cycle = $tontine->cycles()->first();
 
         $this->assertNull($cycle->beneficiary_id);
 
-        $this->service->drawBeneficiary($cycle);
+        $this->drawService->drawBeneficiary($cycle);
 
         $cycle->refresh();
 
@@ -269,15 +275,15 @@ class TontineServiceTest extends TestCase
         $tontine->members()->attach($member2, ['status' => 'active', 'position' => 2]);
         $tontine->members()->attach($member3, ['status' => 'active', 'position' => 3]);
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $cycle1 = $tontine->cycles()->where('cycle_number', 1)->first();
         $cycle2 = $tontine->cycles()->where('cycle_number', 2)->first();
         $cycle3 = $tontine->cycles()->where('cycle_number', 3)->first();
 
-        $this->service->drawBeneficiary($cycle1);
-        $this->service->drawBeneficiary($cycle2);
-        $this->service->drawBeneficiary($cycle3);
+        $this->drawService->drawBeneficiary($cycle1);
+        $this->drawService->drawBeneficiary($cycle2);
+        $this->drawService->drawBeneficiary($cycle3);
 
         $this->assertEquals($member1->id, $cycle1->beneficiary_id);
         $this->assertEquals($member2->id, $cycle2->beneficiary_id);
@@ -296,13 +302,13 @@ class TontineServiceTest extends TestCase
             $tontine->members()->attach($member, ['status' => 'active']);
         }
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $cycle1 = $tontine->cycles()->where('cycle_number', 1)->first();
         $cycle2 = $tontine->cycles()->where('cycle_number', 2)->first();
 
-        $this->service->drawBeneficiary($cycle1);
-        $this->service->drawBeneficiary($cycle2);
+        $this->drawService->drawBeneficiary($cycle1);
+        $this->drawService->drawBeneficiary($cycle2);
 
         $this->assertNotEquals($cycle1->draw_hash, $cycle2->draw_hash);
     }
@@ -320,17 +326,17 @@ class TontineServiceTest extends TestCase
         $tontine->members()->attach($member1, ['status' => 'active', 'position' => 1]);
         $tontine->members()->attach($member2, ['status' => 'active', 'position' => 2]);
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $cycle1 = $tontine->cycles()->where('cycle_number', 1)->first();
         $cycle2 = $tontine->cycles()->where('cycle_number', 2)->first();
 
-        $this->service->drawBeneficiary($cycle1);
+        $this->drawService->drawBeneficiary($cycle1);
         $cycle1->refresh();
 
         $winner1 = $cycle1->beneficiary_id;
 
-        $this->service->drawBeneficiary($cycle2);
+        $this->drawService->drawBeneficiary($cycle2);
         $cycle2->refresh();
 
         $winner2 = $cycle2->beneficiary_id;
@@ -351,10 +357,10 @@ class TontineServiceTest extends TestCase
         $tontine->members()->attach($activeMember, ['status' => 'active']);
         $tontine->members()->attach($inactiveMember, ['status' => 'suspended']);
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
         $cycle = $tontine->cycles()->first();
 
-        $this->service->drawBeneficiary($cycle);
+        $this->drawService->drawBeneficiary($cycle);
 
         $cycle->refresh();
 
@@ -374,12 +380,12 @@ class TontineServiceTest extends TestCase
         $tontine->members()->attach($member1, ['status' => 'active', 'position' => 1]);
         $tontine->members()->attach($member2, ['status' => 'active', 'position' => 2]);
 
-        $this->service->createCycles($tontine);
+        $this->cycleService->createCycles($tontine);
 
         $cycles = $tontine->cycles()->get();
 
-        $this->service->drawBeneficiary($cycles[0]);
-        $this->service->drawBeneficiary($cycles[1]);
+        $this->drawService->drawBeneficiary($cycles[0]);
+        $this->drawService->drawBeneficiary($cycles[1]);
 
         // Manually create a third cycle
         $cycle3 = Cycle::create([
@@ -389,7 +395,7 @@ class TontineServiceTest extends TestCase
             'status'       => 'pending',
         ]);
 
-        $this->service->drawBeneficiary($cycle3);
+        $this->drawService->drawBeneficiary($cycle3);
 
         $cycle3->refresh();
 
@@ -407,7 +413,7 @@ class TontineServiceTest extends TestCase
         $cycle = Cycle::factory()->create(['due_date' => now()->addDays(5)]);
         $user = User::factory()->create();
 
-        $transaction = $this->service->recordPayment(
+        $transaction = $this->paymentService->recordPayment(
             $cycle,
             $user->id,
             100000,
@@ -417,6 +423,11 @@ class TontineServiceTest extends TestCase
         $this->assertEquals($user->id, $transaction->user_id);
         $this->assertEquals($cycle->id, $transaction->cycle_id);
         $this->assertEquals(100000, $transaction->amount);
+        $this->assertEquals('pending', $transaction->status);
+        $this->assertNull($transaction->paid_at);
+
+        $this->paymentService->confirmPayment($transaction);
+        $transaction->refresh();
         $this->assertEquals('success', $transaction->status);
         $this->assertNotNull($transaction->paid_at);
     }
@@ -429,7 +440,7 @@ class TontineServiceTest extends TestCase
         $cycle = Cycle::factory()->create();
         $user = User::factory()->create();
 
-        $transaction = $this->service->recordPayment(
+        $transaction = $this->paymentService->recordPayment(
             $cycle,
             $user->id,
             50000,
@@ -457,7 +468,7 @@ class TontineServiceTest extends TestCase
 
         $user = User::factory()->create();
 
-        $transaction = $this->service->recordPayment(
+        $transaction = $this->paymentService->recordPayment(
             $cycle,
             $user->id,
             100000,
@@ -483,7 +494,7 @@ class TontineServiceTest extends TestCase
 
         $user = User::factory()->create();
 
-        $transaction = $this->service->recordPayment(
+        $transaction = $this->paymentService->recordPayment(
             $cycle,
             $user->id,
             100000,
@@ -507,7 +518,7 @@ class TontineServiceTest extends TestCase
 
         $user = User::factory()->create();
 
-        $transaction = $this->service->recordPayment(
+        $transaction = $this->paymentService->recordPayment(
             $cycle,
             $user->id,
             100000,
@@ -531,7 +542,7 @@ class TontineServiceTest extends TestCase
             'paid_at'  => null,
         ]);
 
-        $this->service->confirmPayment($transaction);
+        $this->paymentService->confirmPayment($transaction);
 
         $transaction->refresh();
 
@@ -553,7 +564,7 @@ class TontineServiceTest extends TestCase
             'paid_at'  => $paidAt,
         ]);
 
-        $this->service->confirmPayment($transaction);
+        $this->paymentService->confirmPayment($transaction);
 
         $transaction->refresh();
 
@@ -578,7 +589,7 @@ class TontineServiceTest extends TestCase
             'status'   => 'pending',
         ]);
 
-        $this->service->confirmPayment($transaction);
+        $this->paymentService->confirmPayment($transaction);
 
         $cycle->refresh();
 
@@ -612,13 +623,13 @@ class TontineServiceTest extends TestCase
             'status'   => 'pending',
         ]);
 
-        $this->service->confirmPayment($t1);
+        $this->paymentService->confirmPayment($t1);
 
         $cycle->refresh();
         $this->assertEquals('partial', $cycle->status);
         $this->assertEquals(100000, $cycle->total_collected);
 
-        $this->service->confirmPayment($t2);
+        $this->paymentService->confirmPayment($t2);
 
         $cycle->refresh();
         $this->assertEquals('paid', $cycle->status);

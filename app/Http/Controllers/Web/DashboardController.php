@@ -24,9 +24,9 @@ class DashboardController extends Controller
 
     public function index()
     {
-        try {
-            $user = Auth::user();
+        $user = Auth::user();
 
+        try {
             if ($user->isAdmin()) {
                 return redirect()->route('admin.dashboard');
             }

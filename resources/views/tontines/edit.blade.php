@@ -39,6 +39,28 @@
                 <textarea name="description" class="form-control" rows="3">{{ old('description', $tontine->description) }}</textarea>
             </div>
 
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Visibilité</label>
+                <div class="d-flex gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="visibility" id="vis_private"
+                               value="private" {{ old('visibility', $tontine->visibility ?? 'private') !== 'public' ? 'checked' : '' }}>
+                        <label class="form-check-label" for="vis_private">
+                            <i class="fas fa-lock me-1 text-muted"></i>Privée
+                            <small class="d-block text-muted" style="font-size:11px;">Accessible uniquement sur invitation</small>
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="visibility" id="vis_public"
+                               value="public" {{ old('visibility', $tontine->visibility) === 'public' ? 'checked' : '' }}>
+                        <label class="form-check-label" for="vis_public">
+                            <i class="fas fa-globe me-1 text-green"></i>Publique
+                            <small class="d-block text-muted" style="font-size:11px;">Visible dans le catalogue Explorer</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <div class="mb-0">
                 <label class="form-label fw-semibold">Type <span class="text-danger">*</span></label>
                 @if($tontine->status === 'active')

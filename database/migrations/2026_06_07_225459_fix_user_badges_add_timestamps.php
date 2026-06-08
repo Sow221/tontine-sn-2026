@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('user_badges', function (Blueprint $table) {
-            $table->timestamps();
+            if (!Schema::hasColumn('user_badges', 'created_at')) {
+                $table->timestamps();
+            }
         });
     }
 

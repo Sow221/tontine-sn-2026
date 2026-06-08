@@ -25,19 +25,20 @@ class DrawService
                 return 'Aucune enchère soumise pour ce cycle.';
             }
         } else {
-            // Pour les types non-auction : vérifier d'abord le quorum, puis le taux de complétion
-            if ($tontine->quorum > 1) {
-                $paidCount = $cycle->successfulTransactions()->count();
-                $memberCount = $tontine->activeMembers()->count();
-                $required = (int) ceil($memberCount * $tontine->quorum / 100);
+            $paidCount   = $cycle->successfulTransactions()->count();
+            $memberCount = $tontine->activeMembers()->count();
 
+            // Si un quorum est configuré, vérifier uniquement le quorum
+            if ($tontine->quorum > 1) {
+                $required = (int) ceil($memberCount * $tontine->quorum / 100);
                 if ($paidCount < $required) {
                     return 'Quorum non atteint : ' . $paidCount . '/' . $required . ' paiements requis.';
                 }
-            }
-
-            if ($cycle->completionRate() < 100) {
-                return 'Tirage impossible : ' . $cycle->completionRate() . '% collecté seulement.';
+            } else {
+                // Sans quorum configuré, on exige 100%
+                if ($cycle->completionRate() < 100) {
+                    return 'Tirage impossible : ' . $cycle->completionRate() . '% collecté seulement.';
+                }
             }
         }
 
@@ -87,6 +88,9 @@ class DrawService
     {
         if (!$this->isVetoed($cycle)) return false;
 
+        // Sauvegarder le bénéficiaire veté avant de l'effacer
+        $vetoedUserId = $cycle->beneficiary_id;
+
         // Annuler le tirage et supprimer les votes
         $cycle->update(['beneficiary_id' => null, 'draw_hash' => null, 'drawn_at' => null]);
         CycleVeto::where('cycle_id', $cycle->id)->delete();
@@ -96,7 +100,10 @@ class DrawService
         $alreadyWon = Cycle::where('tontine_id', $tontine->id)
             ->whereNotNull('beneficiary_id')
             ->pluck('beneficiary_id');
-        $eligible = $tontine->activeMembers()->whereNotIn('users.id', $alreadyWon)->count();
+        $eligible = $tontine->activeMembers()
+            ->whereNotIn('users.id', $alreadyWon)
+            ->when($vetoedUserId, fn($q) => $q->where('users.id', '!=', $vetoedUserId))
+            ->count();
 
         if ($eligible === 0) {
             // Aucun membre éligible : marquer le cycle comme bloqué via un statut
