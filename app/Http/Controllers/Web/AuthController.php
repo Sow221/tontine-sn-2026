@@ -160,13 +160,13 @@ class AuthController extends Controller
         if ($request->filled('ref')) {
             session(['referral_code' => strtoupper($request->ref)]);
         }
-        return Socialite::driver('google')->redirect();
+        return Socialite::driver('google')->stateless()->redirect();
     }
 
     public function handleGoogleCallback()
     {
         try {
-            $googleUser = Socialite::driver('google')->user();
+            $googleUser = Socialite::driver('google')->stateless()->user();
         } catch (\Exception $e) {
             return redirect()->route('auth.login')
                              ->withErrors(['email' => 'Connexion Google annulée ou échouée.']);
