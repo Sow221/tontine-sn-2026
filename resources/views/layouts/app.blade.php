@@ -255,8 +255,11 @@
             <a href="{{ route('admin.tontines') }}" class="bottom-nav-link {{ request()->routeIs('admin.tontines*') ? 'active' : '' }}">
                 <i class="fas fa-layer-group"></i><span>Tontines</span>
             </a>
+            <a href="{{ route('admin.transactions') }}" class="bottom-nav-link {{ request()->routeIs('admin.transactions*') ? 'active' : '' }}">
+                <i class="fas fa-exchange-alt"></i><span>Transactions</span>
+            </a>
             <a href="{{ route('admin.posts') }}" class="bottom-nav-link {{ request()->routeIs('admin.posts*') ? 'active' : '' }}">
-                <i class="fas fa-newspaper"></i><span>Posts</span>
+                <i class="fas fa-newspaper"></i><span>Actualités</span>
             </a>
             <a href="{{ route('admin.stats') }}" class="bottom-nav-link {{ request()->routeIs('admin.stats') ? 'active' : '' }}">
                 <i class="fas fa-chart-line"></i><span>Stats</span>

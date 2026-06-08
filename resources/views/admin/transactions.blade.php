@@ -43,7 +43,7 @@
                 <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fas fa-filter me-1"></i>Filtrer</button>
             </div>
         </div>
-        @if(request()->hasAny(['status','method','suspicious']))
+        @if(request()->filled('status') || request()->filled('method') || request()->filled('suspicious'))
         <a href="{{ route('admin.transactions') }}" class="text-muted small mt-2 d-inline-block">
             <i class="fas fa-times me-1"></i>Effacer
         </a>

@@ -38,7 +38,7 @@
                 <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fas fa-filter"></i></button>
             </div>
         </div>
-        @if(request()->hasAny(['search','status','type']))
+        @if(request()->filled('search') || request()->filled('status') || request()->filled('type'))
         <a href="{{ route('admin.tontines') }}" class="text-muted small mt-2 d-inline-block">
             <i class="fas fa-times me-1"></i>Effacer
         </a>

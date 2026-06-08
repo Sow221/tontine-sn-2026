@@ -70,7 +70,7 @@
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card text-center">
-                <div class="stat-value text-green">{{ number_format($totalCollected / 1000, 0) }}K</div>
+                <div class="stat-value text-green">{{ $totalCollected >= 1000 ? number_format($totalCollected / 1000, 0) . 'K' : number_format($totalCollected) }}</div>
                 <div class="stat-label">FCFA collectés</div>
             </div>
         </div>

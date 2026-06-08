@@ -35,6 +35,7 @@
     </div>
 
     {{-- Répartition types tontines --}}
+    @php $totalByType = $tontinesByType->sum(); @endphp
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-6">
             <div class="card">
@@ -47,7 +48,7 @@
                     <div class="flex-grow-1">
                         <div class="progress" style="height:8px;">
                             <div class="progress-bar bg-green"
-                                 style="width:{{ $tontinesByType->sum() > 0 ? round($count / $tontinesByType->sum() * 100) : 0 }}%"></div>
+                                 style="width:{{ $totalByType > 0 ? round($count / $totalByType * 100) : 0 }}%"></div>
                         </div>
                     </div>
                     <span class="fw-bold small">{{ $count }}</span>

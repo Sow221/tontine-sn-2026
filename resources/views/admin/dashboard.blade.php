@@ -30,7 +30,7 @@
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card">
-                <div class="stat-value text-warning">{{ number_format($stats['total_transactions'] / 1000000, 1) }}M</div>
+                <div class="stat-value text-warning">{{ $stats['total_transactions'] >= 1000000 ? number_format($stats['total_transactions'] / 1000000, 1) . 'M' : number_format($stats['total_transactions'] / 1000, 0) . 'K' }}</div>
                 <div class="stat-label">FCFA collectés</div>
                 <small class="text-muted">transactions réussies</small>
             </div>
@@ -41,8 +41,8 @@
                     {{ $stats['pending_kyc'] }}
                 </div>
                 <div class="stat-label">KYC en attente</div>
-                @if($stats['pending_tx'] > 0)
-                <small class="text-warning">{{ $stats['pending_tx'] }} tx en attente</small>
+                @if($stats['pending_kyc'] > 0)
+                <small class="text-warning">{{ $stats['pending_kyc'] }} document(s) à vérifier</small>
                 @endif
             </div>
         </div>
@@ -95,7 +95,7 @@
     </div>
 
     {{-- Tontines bloquées (cycle overdue > 7 jours) — alerte proactive --}}
-    @if(isset($blockedTontines) && $blockedTontines->isNotEmpty())
+    @if($blockedTontines->isNotEmpty())
     <div class="card mb-4 border-danger">
         <div class="d-flex align-items-center justify-content-between mb-3">
             <h6 class="fw-semibold mb-0 text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Tontines bloquées ({{ $blockedTontines->count() }})</h6>
@@ -144,7 +144,7 @@
         <h6 class="fw-semibold">Tontines récentes</h6>
         <a href="{{ route('admin.tontines') }}" class="text-green small">Voir tout</a>
     </div>
-    @foreach($recentTontines as $t)
+    @forelse($recentTontines as $t)
     <div class="card mb-2 py-2">
         <div class="d-flex align-items-center gap-3">
             <a href="{{ route('admin.tontines.show', $t) }}" class="tontine-avatar text-decoration-none text-white">{{ strtoupper(substr($t->name, 0, 2)) }}</a>
@@ -175,7 +175,9 @@
             @endif
         </div>
     </div>
-    @endforeach
+    @empty
+    <p class="text-muted small">Aucune tontine récente.</p>
+    @endforelse
 
     {{-- Transactions suspectes — actionnables --}}
     @if($suspiciousTx->isNotEmpty())
