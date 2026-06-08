@@ -272,7 +272,7 @@ class NotificationService
 
     public function notifyNewChatMessage(\App\Models\Tontine $tontine, User $sender, string $message): void
     {
-        SendChatNotifications::dispatch($tontine->id, $sender->id, $message);
+        SendChatNotifications::dispatch($tontine->id, $sender->id, $message)->afterResponse();
     }
 
     public function notifyReferralJoined(User $referrer, User $newMember): void

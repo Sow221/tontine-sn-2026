@@ -86,7 +86,7 @@ class TontineApiController extends Controller
         }
 
         $tontine->update(['status' => 'active']);
-        ProcessCycle::dispatch($tontine);
+        ProcessCycle::dispatch($tontine)->afterResponse();
 
         return response()->json(['message' => 'Tontine activée. Cycles en cours de génération.']);
     }

@@ -227,7 +227,7 @@ class TontineController extends Controller
                 return back()->with('success', 'Tontine activée et ' . $tontine->cycles()->count() . ' cycles générés.');
             }
 
-            ProcessCycle::dispatch($tontine);
+            ProcessCycle::dispatch($tontine)->afterResponse();
             return back()->with('success', 'Tontine activée. Les cycles sont en cours de génération (quelques secondes).');
         } catch (\Throwable $e) {
             Log::error('Erreur activation tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);

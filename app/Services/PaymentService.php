@@ -95,7 +95,7 @@ class PaymentService
         // Dispatch jobs outside transaction to avoid locks
         $transaction->load('cycle.tontine', 'user');
         if ($transaction->user) {
-            RecalculateCreditScore::dispatch($transaction->user->id);
+            RecalculateCreditScore::dispatch($transaction->user->id)->afterResponse();
             $this->gamification->updatePaymentStreak($transaction->user, $transaction->cycle, !$transaction->cycle->isOverdue());
         }
 

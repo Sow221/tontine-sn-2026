@@ -173,13 +173,20 @@ class AuthController extends Controller
                              ->withErrors(['email' => 'Connexion Google annulée ou échouée.']);
         }
 
+        $email = $googleUser->getEmail();
+        if (!$email) {
+            Log::error('Google OAuth: no email returned');
+            return redirect()->route('auth.login')
+                ->withErrors(['email' => 'Impossible de récupérer votre email Google.']);
+        }
+
         try {
-            $isNew    = !User::where('email', $googleUser->getEmail())->exists();
+            $isNew    = !User::where('email', $email)->exists();
             $refCode  = $isNew ? (session()->pull('referral_code') ?? '') : '';
             $referrer = $refCode ? User::where('referral_code', strtoupper($refCode))->first() : null;
 
             $user = User::firstOrCreate(
-                ['email' => $googleUser->getEmail()],
+                ['email' => $email],
                 [
                     'name'        => $googleUser->getName(),
                     'avatar'      => $googleUser->getAvatar(),
@@ -203,6 +210,7 @@ class AuthController extends Controller
             if (!empty($patch)) $user->update($patch);
 
             Auth::login($user);
+            request()->session()->regenerate();
             $user->update(['last_seen_at' => now()]);
 
             // Notifier le parrain + recalculer son score (nouveaux inscrits via Google)
