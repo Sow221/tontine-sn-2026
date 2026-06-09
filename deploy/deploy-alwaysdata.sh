@@ -28,11 +28,9 @@ git reset --hard origin/main
 # Composer
 composer install --no-dev --optimize-autoloader --no-interaction
 
-# Frontend (non-fatal: ne pas bloquer le déploiement si le build échoue)
-if command -v npm &> /dev/null; then
-    npm ci --production 2>/dev/null || npm ci 2>/dev/null || true
-    npm run build 2>/dev/null || echo "[WARN] npm build failed, continuing..."
-fi
+# Frontend — les assets sont pré-buildés dans public/build/ (commit git)
+# AlwaysData a une mémoire trop limitée (~100MB) pour npm build
+# On ne fait rien ici, le git pull a déjà récupéré les derniers assets
 
 # Cache
 php artisan config:cache
