@@ -80,6 +80,7 @@ class TontineService
             \Log::info('TontineService joinTontine inside transaction debug', [
                 'startCycleNumber' => $startCycleNumber,
             ]);
+            try {
             $locked = Tontine::lockForUpdate()->find($tontine->id);
 
             if ($locked->isFull()) {
@@ -102,6 +103,13 @@ class TontineService
             }
 
             $result = ['ok' => true, 'message' => $message];
+        } catch (\Throwable $e) {
+            \Log::error('TontineService joinTontine transaction error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            $result = ['ok' => false, 'message' => $e->getMessage()];
+        }
         });
 
         // Notifier le créateur de la nouvelle demande (hors transaction pour éviter les locks)
