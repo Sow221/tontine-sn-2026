@@ -9,6 +9,7 @@ use App\Models\CreditScore;
 use App\Models\Cycle;
 use App\Models\CycleVeto;
 use App\Models\Transaction;
+use App\Models\User;
 
 class DrawService
 {
@@ -215,7 +216,6 @@ class DrawService
 
             if ($othersCount > 0 && $totalInterest > 0) {
                 $sharePerMember = (int) floor($totalInterest / $othersCount);
-                // Le reste est attribué au premier membre pour ne rien perdre
                 $remainder = $totalInterest - ($sharePerMember * $othersCount);
                 $first = true;
 
@@ -237,6 +237,23 @@ class DrawService
                         ]
                     );
                 }
+            }
+
+            // Notifier les membres dont l'enchère n'a pas été retenue
+            $notifier = app(\App\Services\NotificationService::class);
+            $tontineName = $cycle->tontine->name;
+            $cycleNum    = $cycle->cycle_number;
+            foreach ($eligible->where('id', '!=', $winner->id) as $loser) {
+                try {
+                    $notifier->sendEmail(
+                        $loser,
+                        "🏷️ Résultat enchère — {$tontineName}",
+                        "Bonjour <strong>{$loser->name}</strong>,<br><br>"
+                        . "L'enchère du cycle {$cycleNum} de la tontine <strong>{$tontineName}</strong> a été remportée par un autre membre.<br><br>"
+                        . "Votre part d'intérêts vous a été redistribuée. Consultez votre historique pour le détail.",
+                        'auction_lost'
+                    );
+                } catch (\Throwable) {}
             }
         }
 

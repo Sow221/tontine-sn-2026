@@ -67,20 +67,9 @@ class TontineService
             $startCycleNumber = $currentCycleNumber ?? 1;
         }
 
-        \Log::info('TontineService joinTontine debug', [
-            'tontine_id' => $tontine->id,
-            'tontine_status' => $tontine->status,
-            'startCycleNumber' => $startCycleNumber,
-            'userId' => $userId,
-        ]);
-
         $result = ['ok' => false, 'message' => ''];
 
         DB::transaction(function () use ($tontine, $userId, $startCycleNumber, &$result) {
-            \Log::info('TontineService joinTontine inside transaction debug', [
-                'startCycleNumber' => $startCycleNumber,
-            ]);
-            try {
             $locked = Tontine::lockForUpdate()->find($tontine->id);
 
             if ($locked->isFull()) {
@@ -103,13 +92,6 @@ class TontineService
             }
 
             $result = ['ok' => true, 'message' => $message];
-        } catch (\Throwable $e) {
-            \Log::error('TontineService joinTontine transaction error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            $result = ['ok' => false, 'message' => $e->getMessage()];
-        }
         });
 
         // Notifier le créateur de la nouvelle demande (hors transaction pour éviter les locks)
@@ -121,7 +103,7 @@ class TontineService
                     app(\App\Services\NotificationService::class)
                         ->notifyNewMemberRequest($creator, $newMember, $tontine);
                 } catch (\Throwable $e) {
-                    Log::error('Erreur notification nouvelle demande', [
+                    \Log::error('Erreur notification nouvelle demande', [
                         'error' => $e->getMessage(),
                         'class' => get_class($e),
                         'trace' => $e->getTraceAsString(),

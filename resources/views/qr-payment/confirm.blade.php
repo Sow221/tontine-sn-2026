@@ -4,6 +4,13 @@
 @section('content')
 <div class="container py-4" style="max-width:480px;">
 
+    <nav aria-label="breadcrumb" class="mb-3 small">
+        <ol class="breadcrumb bg-transparent p-0 m-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
+            <li class="breadcrumb-item active">Confirmer le paiement</li>
+        </ol>
+    </nav>
+
     <h4 class="fw-bold mb-1">Confirmer le paiement</h4>
     <p class="text-muted small mb-4">Vérifiez les détails avant de confirmer.</p>
 
@@ -37,6 +44,11 @@
 
         <form method="POST" action="{{ route('qr-payment.confirm', $token) }}">
             @csrf
+            @if($errors->any())
+            <div class="alert alert-danger py-2 mb-3 small">
+                @foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach
+            </div>
+            @endif
             <button type="submit" class="btn btn-primary w-100 mb-2">
                 <i class="fas fa-check me-2"></i>Confirmer le paiement de {{ number_format($paymentData['amount'], 0, ',', ' ') }} FCFA
             </button>

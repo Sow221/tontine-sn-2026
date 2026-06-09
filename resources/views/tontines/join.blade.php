@@ -59,6 +59,13 @@
             </div>
             @endif
 
+            <nav aria-label="breadcrumb" class="mb-3 small">
+                <ol class="breadcrumb bg-transparent p-0 m-0">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
+                    <li class="breadcrumb-item active">Rejoindre une tontine</li>
+                </ol>
+            </nav>
+
             <div class="card shadow-sm">
                 <div class="card-body">
                     <div class="mb-4">

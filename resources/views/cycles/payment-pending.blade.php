@@ -30,8 +30,11 @@
                 <strong>En attente de validation</strong> — Votre remise en espèces doit être confirmée
                 par le créateur de la tontine. Vous recevrez une notification dès la validation.
             </div>
-            <a href="{{ route('tontines.show', $transaction->cycle->tontine) }}" class="btn btn-primary w-100">
+            <a href="{{ route('tontines.show', $transaction->cycle->tontine) }}" class="btn btn-primary w-100 mb-2">
                 <i class="fas fa-arrow-left me-2"></i>Retour à la tontine
+            </a>
+            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary w-100">
+                Tableau de bord
             </a>
             @else
             <h4 class="fw-bold mb-2">Paiement en cours...</h4>

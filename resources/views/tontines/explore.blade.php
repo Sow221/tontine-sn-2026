@@ -65,7 +65,7 @@
                 <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter"></i></button>
             </div>
         </div>
-        @if(request()->hasAny(['search','type','frequency','max_amount','sort']))
+        @if(request()->hasAny(['search','type','frequency','max_amount']) || (request('sort') && request('sort') !== 'latest'))
         <a href="{{ route('tontines.explore') }}" class="text-muted small mt-2 d-inline-block">
             <i class="fas fa-times me-1"></i>Effacer les filtres
         </a>

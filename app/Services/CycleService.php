@@ -132,7 +132,7 @@ class CycleService
         $withdrawals = [];
 
         DB::transaction(function () use ($tontine, &$withdrawals) {
-            $members = $tontine->activeMembers()->get();
+            $members = $tontine->activeMembers()->lockForUpdate()->get();
 
             foreach ($members as $member) {
                 $saved = Transaction::success()->forTontine($tontine->id)
@@ -141,7 +141,7 @@ class CycleService
                     ->sum('amount');
 
                 if ($saved > 0) {
-                    $withdrawal = SavingsWithdrawal::updateOrCreate(
+                    SavingsWithdrawal::updateOrCreate(
                         ['tontine_id' => $tontine->id, 'user_id' => $member->id],
                         ['amount' => $saved, 'status' => 'pending']
                     );
@@ -153,6 +153,7 @@ class CycleService
                 }
             }
 
+            // Le statut completed n'est positionné qu'après la création de tous les withdrawals
             $tontine->update(['status' => 'completed']);
         });
 

@@ -19,5 +19,5 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            cd /home/${{ secrets.DEPLOY_USER }}/www/tontine-sn
+            cd /home/tontine-sn/tontine-sn-2026
             bash deploy/deploy-alwaysdata.sh

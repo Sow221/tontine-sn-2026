@@ -34,6 +34,8 @@
                 </span>
                 @if($user->kyc_verified)
                 <span class="badge badge-success"><i class="fas fa-shield-alt me-1"></i>KYC vérifié</span>
+                @elseif($user->kyc_status === 'rejected')
+                <span class="badge badge-danger"><i class="fas fa-times me-1"></i>KYC refusé</span>
                 @elseif($user->kyc_document)
                 <span class="badge badge-warning">KYC en attente</span>
                 @endif

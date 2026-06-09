@@ -85,9 +85,21 @@ class QrCodePaymentController extends Controller
     {
         $payer = Auth::user();
 
+        $paymentData = cache()->get("payment_qr:{$token}");
+
+        if (!$paymentData) {
+            return back()->withErrors(['error' => 'Ce QR code est invalide ou a expiré.']);
+        }
+
+        if ((int) $paymentData['from_id'] !== $payer->id) {
+            return back()->withErrors(['error' => 'Ce QR code ne vous appartient pas.']);
+        }
+
         $transaction = $this->qrService->processQrPayment($token, $payer);
 
-        abort_unless($transaction, 422, 'Impossible de traiter le paiement');
+        if (!$transaction) {
+            return back()->withErrors(['error' => 'Impossible de traiter le paiement. Le QR code est peut-être expiré.']);
+        }
 
         return redirect()->route('historique.index')
             ->with('success', 'Paiement P2P enregistré avec succès.');

@@ -6,6 +6,16 @@
 <div class="container py-5">
     <div class="text-center" style="max-width:400px; margin:0 auto;">
 
+        @if($cycle)
+        <nav aria-label="breadcrumb" class="mb-4 small text-start">
+            <ol class="breadcrumb bg-transparent p-0 m-0">
+                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('tontines.show', $cycle->tontine) }}" class="text-green">{{ $cycle->tontine->name }}</a></li>
+                <li class="breadcrumb-item active">Paiement annulé</li>
+            </ol>
+        </nav>
+        @endif
+
         <div class="mb-4" style="font-size:64px;">❌</div>
         <h4 class="fw-bold mb-2">Paiement annulé</h4>
         <p class="text-muted mb-4">

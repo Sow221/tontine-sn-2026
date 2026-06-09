@@ -385,7 +385,7 @@ SVG;
 
             return redirect()->route('tontines.show', $tontine)->with('success', $result['message']);
         } catch (\Throwable $e) {
-            Log::error('Erreur adhésion tontine', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+            \Log::error('Erreur adhésion tontine', ['error' => $e->getMessage(), 'class' => get_class($e)]);
             return back()->withErrors(['code' => 'Erreur lors de l\'adhésion.']);
         }
     }

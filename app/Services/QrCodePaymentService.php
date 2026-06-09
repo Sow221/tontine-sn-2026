@@ -4,10 +4,13 @@ namespace App\Services;
 
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Support\Str;
 
 class QrCodePaymentService
 {
+    public function __construct(private NotificationService $notifier) {}
+
     public function generatePaymentQrCode(User $from, User $to, int $amount, string $description = ''): array
     {
         $paymentToken = Str::random(32);
@@ -53,6 +56,11 @@ class QrCodePaymentService
             return null;
         }
 
+        // Sécurité : seul le générateur du QR peut payer via ce token
+        if ((int) $paymentData['from_id'] !== $payer->id) {
+            return null;
+        }
+
         $recipient = User::find($paymentData['to_id']);
         if (!$recipient || !$recipient->is_active) {
             return null;
@@ -75,6 +83,18 @@ class QrCodePaymentService
         ]);
 
         cache()->forget("payment_qr:{$paymentToken}");
+
+        // Notifier le destinataire du paiement reçu
+        $montant = number_format($paymentData['amount'], 0, ',', ' ');
+        $this->notifier->sendEmail(
+            $recipient,
+            "💸 Paiement P2P reçu — TontineSN",
+            "Bonjour <strong>{$recipient->name}</strong>,<br><br>"
+            . "<strong>{$payer->name}</strong> vous a envoyé <strong>{$montant} FCFA</strong> via QR code.<br><br>"
+            . ($paymentData['description'] ? "Motif : {$paymentData['description']}<br><br>" : '')
+            . 'Connectez-vous sur TontineSN pour voir votre historique.',
+            'p2p_received'
+        );
 
         return $transaction;
     }
