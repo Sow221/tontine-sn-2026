@@ -44,15 +44,9 @@ return [
     'greenapi' => [
         'id_instance' => env('GREENAPI_ID_INSTANCE'),
         'api_token'   => env('GREENAPI_API_TOKEN'),
-        'api_url'     => env('GREENAPI_API_URL', 'https://7107.api.greenapi.com'),
-        'media_url'   => env('GREENAPI_MEDIA_URL', 'https://7107.api.greenapi.com'),
-    ],
-
-    'greenapi' => [
-        'id_instance'     => env('GREENAPI_ID_INSTANCE'),
-        'api_token'       => env('GREENAPI_API_TOKEN'),
-        'api_url'         => env('GREENAPI_API_URL', 'https://api.greenapi.com'),
-        'webhook_url'     => env('GREENAPI_WEBHOOK_URL'),
+        'api_url'     => env('GREENAPI_API_URL', 'https://api.greenapi.com'),
+        'media_url'   => env('GREENAPI_MEDIA_URL', 'https://api.greenapi.com'),
+        'webhook_url' => env('GREENAPI_WEBHOOK_URL'),
     ],
 
     'webhook_outbound' => [
