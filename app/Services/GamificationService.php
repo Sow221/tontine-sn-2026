@@ -133,17 +133,18 @@ class GamificationService
         $successfulTxs = $user->transactions()->where('transactions.status', 'success');
 
         return [
-            'first_payment'     => (int) $successfulTxs->exists(),
-            'payment_streak'    => $user->payment_streak,
-            'beneficiary_count' => (int) Cycle::where('beneficiary_id', $user->id)->count(),
-            'tontines_created'  => (int) $user->tontines()->count(),
-            'on_time_months'    => $this->getOnTimeMonths($user),
-            'tontine_completed' => (int) $user->memberships()
+            'first_payment'           => (int) $successfulTxs->exists(),
+            'payment_streak'          => $user->payment_streak,
+            'beneficiary_count'       => (int) Cycle::where('beneficiary_id', $user->id)->count(),
+            'tontines_created'        => (int) $user->tontines()->count(),
+            'on_time_months'          => $this->getOnTimeMonths($user),
+            'tontine_completed'       => (int) $user->memberships()
                 ->wherePivot('status', 'active')
                 ->where('tontines.status', 'completed')
                 ->count(),
-            'invited_members'   => $this->getInvitedCount($user),
-            'referrals_count'   => (int) $user->referrals()->count(),
+            'invited_members'         => $this->getInvitedCount($user),
+            'referrals_count'         => (int) $user->referrals()->count(),
+            'referral_payments_count' => $this->getReferralPaymentsCount($user),
         ];
     }
 
@@ -178,6 +179,17 @@ class GamificationService
             ->where('tontine_members.status', 'active')
             ->where('tontine_members.user_id', '!=', $user->id)
             ->whereNull('tontines.deleted_at')
+            ->count();
+    }
+
+    private function getReferralPaymentsCount(User $user): int
+    {
+        return DB::table('users as referrals')
+            ->join('transactions', 'transactions.user_id', '=', 'referrals.id')
+            ->where('referrals.referred_by', $user->id)
+            ->where('transactions.status', 'success')
+            ->groupBy('referrals.id')
+            ->havingRaw('COUNT(transactions.id) >= 3')
             ->count();
     }
 }

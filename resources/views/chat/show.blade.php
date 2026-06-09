@@ -205,6 +205,7 @@ if (typeof EventSource !== 'undefined') {
 }
 
 function startPolling() {
+    if (pollTimer) clearTimeout(pollTimer);
     async function poll() {
         if (!pollActive) return;
         try {

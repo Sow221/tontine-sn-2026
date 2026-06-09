@@ -14,6 +14,7 @@ use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\TontineService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
@@ -40,9 +41,13 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Tontine::class, TontinePolicy::class);
 
         View::composer('layouts.app', function ($view) {
-            $unreadCount = Auth::check()
-                ? NotificationLog::where('user_id', Auth::id())->unread()->count()
-                : 0;
+            $unreadCount = 0;
+            if (Auth::check()) {
+                $cacheKey = 'unread_notifications_' . Auth::id();
+                $unreadCount = \Illuminate\Support\Facades\Cache::remember($cacheKey, 30, function () {
+                    return NotificationLog::where('user_id', Auth::id())->unread()->count();
+                });
+            }
             $view->with('unreadNotificationsCount', $unreadCount);
             // Expose le nonce CSP généré par SecurityHeaders middleware
             $view->with('cspNonce', request()->attributes->get('csp_nonce', ''));

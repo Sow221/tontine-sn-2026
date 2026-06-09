@@ -59,7 +59,7 @@ class TontineService
         }
 
         // Déterminer le cycle de départ si la tontine est déjà active
-        $startCycleNumber = null;
+        $startCycleNumber = 1;
         if ($tontine->status === 'active') {
             $currentCycleNumber = $tontine->cycles()
                 ->whereIn('status', ['pending', 'partial', 'overdue'])
@@ -67,9 +67,19 @@ class TontineService
             $startCycleNumber = $currentCycleNumber ?? 1;
         }
 
+        \Log::info('TontineService joinTontine debug', [
+            'tontine_id' => $tontine->id,
+            'tontine_status' => $tontine->status,
+            'startCycleNumber' => $startCycleNumber,
+            'userId' => $userId,
+        ]);
+
         $result = ['ok' => false, 'message' => ''];
 
         DB::transaction(function () use ($tontine, $userId, $startCycleNumber, &$result) {
+            \Log::info('TontineService joinTontine inside transaction debug', [
+                'startCycleNumber' => $startCycleNumber,
+            ]);
             $locked = Tontine::lockForUpdate()->find($tontine->id);
 
             if ($locked->isFull()) {
@@ -99,8 +109,17 @@ class TontineService
             $creator = $tontine->creator;
             $newMember = User::find($userId);
             if ($creator && $newMember && $creator->id !== $userId) {
-                app(\App\Services\NotificationService::class)
-                    ->notifyNewMemberRequest($creator, $newMember, $tontine->name);
+                try {
+                    app(\App\Services\NotificationService::class)
+                        ->notifyNewMemberRequest($creator, $newMember, $tontine);
+                } catch (\Throwable $e) {
+                    Log::error('Erreur notification nouvelle demande', [
+                        'error' => $e->getMessage(),
+                        'class' => get_class($e),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    // Ne pas faire échouer l'adhésion pour une erreur de notification
+                }
             }
         }
 

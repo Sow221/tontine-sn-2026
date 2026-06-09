@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy AlwaysData
 
 on:
   push:
@@ -19,5 +19,5 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            cd /var/www/tontine-sn
-            bash deploy/deploy.sh
+            cd /home/${{ secrets.DEPLOY_USER }}/www/tontine-sn
+            bash deploy/deploy-alwaysdata.sh

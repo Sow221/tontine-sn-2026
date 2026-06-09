@@ -20,8 +20,7 @@ class User extends Authenticatable
         'google_id', 'role', 'kyc_verified', 'kyc_status', 'kyc_rejected_reason',
         'kyc_document', 'kyc_document_hash', 'is_active', 'last_seen_at', 'email_verified_at',
         'payment_streak', 'max_streak', 'notification_settings',
-        'preferred_language', 'onboarding_completed',
-        'referral_code', 'referred_by',
+        'preferred_language',
     ];
 
     protected $casts = [
@@ -47,7 +46,7 @@ class User extends Authenticatable
     public function memberships(): BelongsToMany
     {
         return $this->belongsToMany(Tontine::class, 'tontine_members')
-                    ->withPivot('status', 'position', 'joined_at', 'start_cycle_number')
+                    ->withPivot('status', 'position', 'joined_at')
                     ->withTimestamps();
     }
 
@@ -115,16 +114,5 @@ class User extends Authenticatable
     public function hasTwoFactorEnabled(): bool
     {
         return $this->twoFactorSecret?->isEnabled() ?? false;
-    }
-
-    // ── Hooks ──────────────────────────────────────────────────────────────
-
-    protected static function booted(): void
-    {
-        static::creating(function (User $user) {
-            if (empty($user->referral_code)) {
-                $user->referral_code = strtoupper(\Illuminate\Support\Str::random(8));
-            }
-        });
     }
 }

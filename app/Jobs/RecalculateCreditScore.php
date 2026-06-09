@@ -24,5 +24,7 @@ class RecalculateCreditScore implements ShouldQueue
         }
 
         $scorer->calculate($user);
+
+        CheckAndNotifyBadges::dispatch($this->userId)->afterResponse();
     }
 }

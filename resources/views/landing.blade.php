@@ -495,8 +495,8 @@
             <span class="ls-score__stat-label">Membres<br>par tontine</span>
           </div>
           <div class="ls-score__stat ls-reveal ls-reveal--delay-3">
-            <span class="ls-score__stat-value" data-count="3">3</span>
-            <span class="ls-score__stat-label">Langues<br>support&eacute;es</span>
+            <span class="ls-score__stat-value" data-count="1">1</span>
+            <span class="ls-score__stat-label">Langue<br>support&eacute;e</span>
           </div>
         </div>
         <div class="ls-score__quote">

@@ -79,10 +79,23 @@
                     {{ ($s['member_email'] ?? true) ? 'checked' : '' }} id="mem_email">
                 <label class="form-check-label small" for="mem_email">Email</label>
             </div>
-            <div class="form-check mb-4">
+            <div class="form-check mb-3">
                 <input type="checkbox" name="settings[member_whatsapp]" class="form-check-input" value="1"
                     {{ ($s['member_whatsapp'] ?? true) ? 'checked' : '' }} id="mem_wa">
                 <label class="form-check-label small" for="mem_wa">WhatsApp</label>
+            </div>
+
+            {{-- Nouvelle demande d'adhésion (créateur) --}}
+            <p class="fw-semibold small mb-2">👤 Demande pour rejoindre ma tontine</p>
+            <div class="form-check mb-1">
+                <input type="checkbox" name="settings[member_request_email]" class="form-check-input" value="1"
+                    {{ ($s['member_request_email'] ?? true) ? 'checked' : '' }} id="mreq_email">
+                <label class="form-check-label small" for="mreq_email">Email</label>
+            </div>
+            <div class="form-check mb-4">
+                <input type="checkbox" name="settings[member_request_whatsapp]" class="form-check-input" value="1"
+                    {{ ($s['member_request_whatsapp'] ?? true) ? 'checked' : '' }} id="mreq_wa">
+                <label class="form-check-label small" for="mreq_wa">WhatsApp</label>
             </div>
 
             <button type="submit" class="btn btn-primary w-100">

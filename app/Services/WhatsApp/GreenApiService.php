@@ -12,14 +12,12 @@ class GreenApiService
     private ?string $idInstance;
     private ?string $apiToken;
     private string $apiUrl;
-    private string $mediaUrl;
 
     public function __construct()
     {
         $this->idInstance = config('services.greenapi.id_instance');
         $this->apiToken   = config('services.greenapi.api_token');
-        $this->apiUrl     = config('services.greenapi.api_url', 'https://7107.api.greenapi.com');
-        $this->mediaUrl   = config('services.greenapi.media_url', 'https://7107.api.greenapi.com');
+        $this->apiUrl     = config('services.greenapi.api_url', 'https://api.greenapi.com');
     }
 
     public function isConfigured(): bool
@@ -28,49 +26,8 @@ class GreenApiService
     }
 
     /**
-     * Send a template message with optional URL button
-     */
-    public function sendTemplate(string $phone, string $templateName, array $params = [], ?string $buttonUrl = null): bool
-    {
-        if (!$this->isConfigured()) {
-            Log::warning('Green API not configured', ['phone' => $phone]);
-            return false;
-        }
-
-        $phone = $this->normalizePhone($phone);
-
-        $components = [];
-
-        if (!empty($params)) {
-            $components[] = [
-                'type'       => 'body',
-                'parameters' => array_map(fn($p) => ['type' => 'text', 'text' => (string) $p], $params),
-            ];
-        }
-
-        if ($buttonUrl) {
-            $components[] = [
-                'type'       => 'button',
-                'sub_type'   => 'url',
-                'index'      => '0',
-                'parameters' => [['type' => 'text', 'text' => $buttonUrl]],
-            ];
-        }
-
-        $payload = [
-            'chatId'      => $phone . '@c.us',
-            'template'    => [
-                'name'       => $templateName,
-                'language'   => ['code' => 'fr'],
-                'components' => $components,
-            ],
-        ];
-
-        return $this->post('sendTemplate', $payload);
-    }
-
-    /**
-     * Send a simple text message
+     * Envoie un message texte simple (Markdown supporté : *gras*, _italique_, `code`)
+     * GRATUIT, illimité sur compte Developer (QR code)
      */
     public function sendText(string $phone, string $message): bool
     {
@@ -82,35 +39,49 @@ class GreenApiService
         $phone = $this->normalizePhone($phone);
 
         $payload = [
-            'chatId'   => $phone . '@c.us',
-            'message'  => $message,
+            'chatId'  => $phone . '@c.us',
+            'message' => $message,
         ];
 
-        return $this->post('sendMessage', $payload);
-    }
+        try {
+            $response = Http::timeout(15)
+                ->post("{$this->apiUrl}/waInstance{$this->idInstance}/sendMessage/{$this->apiToken}", $payload);
 
-    /**
-     * Send an image with caption
-     */
-    public function sendImage(string $phone, string $imageUrl, string $caption = ''): bool
-    {
-        if (!$this->isConfigured()) {
+            if ($response->successful()) {
+                $data = $response->json();
+                return ($data['idMessage'] ?? true) !== false;
+            }
+
+            Log::error('Green API sendMessage failed', [
+                'status'   => $response->status(),
+                'response' => $response->body(),
+            ]);
+            return false;
+        } catch (\Throwable $e) {
+            Log::error('Green API exception', ['error' => $e->getMessage()]);
             return false;
         }
-
-        $phone = $this->normalizePhone($phone);
-
-        $payload = [
-            'chatId'   => $phone . '@c.us',
-            'file'     => $imageUrl,
-            'caption'  => $caption,
-        ];
-
-        return $this->post('sendFileByUrl', $payload);
     }
 
     /**
-     * Get instance state (authorized, not_authorized, etc.)
+     * Envoie une notification structurée (remplace les templates)
+     * Utilise Markdown WhatsApp : *gras*, _italique_, ~barré~, `code`
+     */
+    public function sendNotification(string $phone, string $title, string $body, ?string $buttonUrl = null, ?string $buttonText = null): bool
+    {
+        $message = "*{$title}*\n\n{$body}";
+
+        if ($buttonUrl && $buttonText) {
+            $message .= "\n\n👉 *{$buttonText} :* {$buttonUrl}";
+        }
+
+        $message .= "\n\n_TontineSN_";
+
+        return $this->sendText($phone, $message);
+    }
+
+    /**
+     * Récupère l'état de l'instance (authorized, notAuthorized, etc.)
      */
     public function getState(): ?string
     {
@@ -132,19 +103,7 @@ class GreenApiService
     }
 
     /**
-     * Set webhook URL for incoming messages
-     */
-    public function setWebhook(string $webhookUrl): bool
-    {
-        if (!$this->isConfigured()) {
-            return false;
-        }
-
-        return $this->post('webhook', ['webhookUrl' => $webhookUrl]);
-    }
-
-    /**
-     * Process incoming webhook
+     * Traite un webhook entrant
      */
     public function processWebhook(array $payload): array
     {
@@ -157,36 +116,6 @@ class GreenApiService
             'timestamp' => $payload['timestamp'] ?? null,
             'raw'       => $payload,
         ];
-    }
-
-    private function post(string $method, array $payload): bool
-    {
-        try {
-            $url = "{$this->apiUrl}/waInstance{$this->idInstance}/{$method}/{$this->apiToken}";
-
-            $response = Http::timeout(15)
-                ->withHeaders(['Content-Type' => 'application/json'])
-                ->post($url, $payload);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                return ($data['idMessage'] ?? true) !== false;
-            }
-
-            Log::error('Green API request failed', [
-                'method'   => $method,
-                'status'   => $response->status(),
-                'response' => $response->body(),
-            ]);
-
-            return false;
-        } catch (\Throwable $e) {
-            Log::error('Green API exception', [
-                'method' => $method,
-                'error'  => $e->getMessage(),
-            ]);
-            return false;
-        }
     }
 
     private function normalizePhone(string $phone): string

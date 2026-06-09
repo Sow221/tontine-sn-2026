@@ -21,8 +21,9 @@ class Transaction extends Model
     ];
 
     protected $casts = [
-        'amount'  => 'integer',
-        'paid_at' => 'datetime',
+        'amount'   => 'integer',
+        'paid_at'  => 'datetime',
+        'metadata' => 'array',
     ];
 
     // ── Relations ──────────────────────────────────────────────────────────

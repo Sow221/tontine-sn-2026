@@ -81,6 +81,7 @@ class DashboardController extends Controller
             ));
         } catch (\Throwable $e) {
             Log::error('Erreur dashboard', ['user_id' => Auth::id(), 'error' => $e->getMessage(), 'class' => get_class($e)]);
+            $user        = $user ?? Auth::user() ?? new \App\Models\User();
             $creditScore = new CreditScore(['score' => 0, 'badge' => 'none']);
             return view('dashboard.index', compact('user') + [
                 'activeTontines' => collect(), 'upcomingPayments' => collect(),

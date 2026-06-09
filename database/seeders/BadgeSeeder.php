@@ -24,6 +24,7 @@ class BadgeSeeder extends Seeder
             ['slug' => 'referral_1',         'name' => 'Recruteur',         'description' => 'Parrainer votre premier membre',                         'icon' => '🌟', 'tier' => 'bronze', 'criteria_type' => 'referrals_count',  'criteria_value' => 1],
             ['slug' => 'referral_5',         'name' => 'Influenceur',       'description' => 'Parrainer 5 membres',                                    'icon' => '📣', 'tier' => 'silver', 'criteria_type' => 'referrals_count',  'criteria_value' => 5],
             ['slug' => 'referral_10',        'name' => 'Ambassadeur Or',    'description' => 'Parrainer 10 membres — vous êtes un pilier de la communauté','icon' => '🏅', 'tier' => 'gold',   'criteria_type' => 'referrals_count',  'criteria_value' => 10],
+            ['slug' => 'parrain_boost',      'name' => 'Parrain Boost',     'description' => 'Un de vos filleuls a effectué 3 paiements',               'icon' => '⚡', 'tier' => 'silver', 'criteria_type' => 'referral_payments_count', 'criteria_value' => 1],
         ];
 
         foreach ($badges as $badge) {

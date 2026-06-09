@@ -12,6 +12,9 @@ class TontinePolicy
     {
         if ($user->isAdmin() || $tontine->created_by === $user->id) return true;
 
+        // Tontine publique visible par tous (pending/active)
+        if ($tontine->isPublic() && in_array($tontine->status, ['pending', 'active'])) return true;
+
         return Cache::remember(
             "tontine_member_{$tontine->id}_{$user->id}",
             now()->addMinutes(5),

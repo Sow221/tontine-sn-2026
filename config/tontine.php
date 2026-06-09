@@ -51,7 +51,7 @@ return [
         'overdue_days_after'   => [1, 3, 7],
     ],
 
-    'languages' => ['fr', 'en'],
+    'languages' => ['fr'],
 
     // USSD : prévu en évolution — non exposé dans l'interface membre v1
     'ussd' => [
