@@ -134,9 +134,20 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold small">Soumettre un nouveau document</label>
                     <input type="file" name="kyc_document" class="form-control @error('kyc_document') is-invalid @enderror"
-                           accept=".jpg,.jpeg,.png,.pdf">
+                           accept=".jpg,.jpeg,.png,.pdf" required>
                     @error('kyc_document') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     <div class="form-text">CNI, passeport ou permis de conduire. JPG, PNG ou PDF. Max 5 Mo.</div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input @error('kyc_consent') is-invalid @enderror"
+                               type="checkbox" name="kyc_consent" id="kyc_consent_replace" value="1" required>
+                        <label class="form-check-label small" for="kyc_consent_replace">
+                            J'accepte que ma pièce d'identité soit collectée et traitée uniquement à des fins de vérification,
+                            conformément à notre <a href="{{ route('privacy') }}" target="_blank">politique de confidentialité</a>.
+                        </label>
+                        @error('kyc_consent') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-outline-primary w-100">
                     <i class="fas fa-upload me-2"></i>Remplacer le document

@@ -65,7 +65,7 @@
             <button type="button" class="btn btn-outline-secondary" onclick="copyToClipboard('{{ $paymentData['url'] }}')">
                 <i class="fas fa-link me-2"></i>Copier le lien
             </button>
-            <a href="{{ route('qr-payment.show') }}" class="btn btn-ghost">
+            <a href="{{ route('qr-payment.show') }}" class="btn btn-ghost w-100">
                 <i class="fas fa-arrow-left me-2"></i>Nouvelle demande
             </a>
         </div>

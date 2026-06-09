@@ -94,7 +94,7 @@ class AdminUserController extends Controller
                             $u->phone_number ?? '—',
                             match($u->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => 'Membre' },
                             $u->is_active ? 'Actif' : 'Inactif',
-                            $u->kyc_verified ? 'Vérifié' : ($u->kyc_document ? 'En attente' : 'Non soumis'),
+                            $u->kyc_verified ? 'Vérifié' : match($u->kyc_status) { 'rejected' => 'Refusé', 'pending' => 'En attente', default => ($u->kyc_document ? 'En attente' : 'Non soumis') },
                             $u->creditScore?->score ?? 0,
                             $u->referral_code ?? '—',
                             $u->referrals_count ?? 0,
@@ -169,7 +169,14 @@ class AdminUserController extends Controller
 
     public function kycReview(User $user)
     {
-        abort_unless($user->kyc_document && !$user->kyc_verified, 404);
+        if (!$user->kyc_document) {
+            return redirect()->route('admin.users.show', $user)
+                ->withErrors(['error' => 'Aucun document KYC en attente pour cet utilisateur.']);
+        }
+        if ($user->kyc_verified) {
+            return redirect()->route('admin.users.show', $user)
+                ->withErrors(['error' => 'Ce compte est déjà vérifié.']);
+        }
 
         $ocrText    = null;
         $ocrMatched = null;
@@ -209,6 +216,7 @@ class AdminUserController extends Controller
                 'kyc_status'          => 'approved',
                 'kyc_rejected_reason' => null,
                 'kyc_document'        => null,
+                'kyc_document_hash'   => null,
             ]);
             $this->notifications->send($user, 'kyc_approved', 'Votre identité a été vérifiée avec succès.');
             Cache::forget('admin.stats');
