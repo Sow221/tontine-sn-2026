@@ -3,12 +3,20 @@
 set -euo pipefail
 
 DATE=$(date '+%Y-%m-%d %H:%M:%S')
-HOME_DIR=$(eval echo ~)
-APP_DIR="${HOME_DIR}/www/tontine-sn"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+APP_DIR="$(dirname "$SCRIPT_DIR")"
 
 echo "=== [${DATE}] Deploiement TontineSN (AlwaysData) ==="
+echo "APP_DIR: ${APP_DIR}"
 
 cd "${APP_DIR}"
+
+# Auto-create .env from .env.production if missing
+if [ ! -f .env ] && [ -f .env.production ]; then
+    echo "=> .env not found, copying from .env.production"
+    cp .env.production .env
+    php artisan key:generate --force
+fi
 
 # Mode maintenance
 php artisan down --retry=60
