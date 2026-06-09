@@ -19,5 +19,17 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            cd /home/tontine-sn/tontine-sn-2026
+            APP_DIR=/home/tontine-sn/tontine-sn-2026
+
+            # Write .env.alwaysdata from GitHub secret (only if secret exists)
+            if [ -n "$ENV_ALWAYSDATA" ]; then
+              cat > "$APP_DIR/.env.alwaysdata" << 'ENVEOF'
+${{ secrets.ENV_ALWAYSDATA }}
+ENVEOF
+              echo "=> .env.alwaysdata written from secret"
+            fi
+
+            cd "$APP_DIR"
             bash deploy/deploy-alwaysdata.sh
+        env:
+          ENV_ALWAYSDATA: ${{ secrets.ENV_ALWAYSDATA }}

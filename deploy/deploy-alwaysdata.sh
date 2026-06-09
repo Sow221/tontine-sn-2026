@@ -11,11 +11,16 @@ echo "APP_DIR: ${APP_DIR}"
 
 cd "${APP_DIR}"
 
-# Auto-create .env from .env.production if missing
-if [ ! -f .env ] && [ -f .env.production ]; then
-    echo "=> .env not found, copying from .env.production"
-    cp .env.production .env
-    php artisan key:generate --force
+# Auto-create .env from .env.alwaysdata if missing
+if [ ! -f .env ]; then
+    if [ -f .env.alwaysdata ]; then
+        echo "=> .env not found, copying from .env.alwaysdata"
+        cp .env.alwaysdata .env
+        php artisan key:generate --force
+    else
+        echo "=> ERROR: .env missing and no .env.alwaysdata found. Create one from .env.example"
+        exit 1
+    fi
 fi
 
 # Mode maintenance
