@@ -28,10 +28,10 @@ git reset --hard origin/main
 # Composer
 composer install --no-dev --optimize-autoloader --no-interaction
 
-# Frontend
+# Frontend (non-fatal: ne pas bloquer le déploiement si le build échoue)
 if command -v npm &> /dev/null; then
-    npm ci --production 2>/dev/null || npm ci
-    npm run build
+    npm ci --production 2>/dev/null || npm ci 2>/dev/null || true
+    npm run build 2>/dev/null || echo "[WARN] npm build failed, continuing..."
 fi
 
 # Cache
