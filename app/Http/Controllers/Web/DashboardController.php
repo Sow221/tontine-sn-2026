@@ -101,7 +101,7 @@ class DashboardController extends Controller
         return $user->memberships()
             ->wherePivot('status', 'active')
             ->with('currentCycle')
-            ->withCount(['cycles', 'members as active_members_count' => fn($q) => $q->wherePivot('status', 'active')])
+            ->withCount(['cycles', 'members as active_members_count' => fn($q) => $q->where('tontine_members.status', 'active')])
             ->get();
     }
 
