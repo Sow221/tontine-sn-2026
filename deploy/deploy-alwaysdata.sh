@@ -43,8 +43,9 @@ php artisan route:cache
 php artisan view:cache
 php artisan event:cache
 
-# Migrations
+# Migrations + seed (idempotent — ne fait rien si admin existe déjà)
 php artisan migrate --force
+php artisan db:seed --force
 
 # Permissions
 chmod -R 775 storage bootstrap/cache

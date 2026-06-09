@@ -1,645 +1,585 @@
 <?php
 declare(strict_types=1);
 
-/*
- * ============================================================
- * SEEDER DÉMO — DONNÉES DE PRÉSENTATION
- * ============================================================
- * Ajoute TOUT ce qui manque pour démontrer toutes les
- * fonctionnalités : parrainage, types tontine, QR P2P, badges,
- * vetos, enchères, chat.
- *
- * Usage : php artisan db:seed --class=DemoDataSeeder
- *         (ou : php demo_seeder.php pour le standalone)
- * ============================================================
- */
-
 namespace Database\Seeders;
 
-use App\Models\AuctionBid;
-use App\Models\Badge;
-use App\Models\ChatMessage;
-use App\Models\CreditScore;
-use App\Models\Cycle;
-use App\Models\CycleVeto;
-use App\Models\Tontine;
-use App\Models\Transaction;
-use App\Models\User;
+use App\Models\{
+    AuctionBid, ChatMessage, Cycle, CycleVeto, Tontine, Transaction, User
+};
 use App\Services\CreditScoringService;
 use App\Services\GamificationService;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class DemoDataSeeder extends Seeder
 {
-    private const MEMBRE_PASSWORD = 'Membre2024!';
+    private Carbon $now;
+    private array $users = [];
 
     public function run(): void
     {
-        $this->command?->info('=== SEEDER DÉMO COMPLET ===');
+        $this->now = now();
+        $this->command?->info('=== DONNÉES DÉMO STRATÉGIQUES ===');
 
-        /* -------------------------------------------------------
-         * 1. CRÉATION DE FATOU SI ABSENTE
-         * ------------------------------------------------------- */
-        $fatou = User::where('email', 'fatou@tontinesn.test')->first();
-        if (!$fatou) {
-            $fatou = User::create([
-                'email'         => 'fatou@tontinesn.test',
-                'name'          => 'Fatou Diallo',
-                'phone_number'  => '+221 77 111 22 33',
-                'password'      => bcrypt(self::MEMBRE_PASSWORD),
-                'role'          => 'member',
-                'kyc_verified'  => true,
-                'is_active'     => true,
-                'created_at'    => now()->subMonths(6),
-            ]);
-            $this->command?->info('  ✓ fatou@tontinesn.test créé');
-        } else {
-            $this->command?->info('  ✓ fatou@tontinesn.test existe déjà');
-        }
-
-        /* -------------------------------------------------------
-         * 2. CHAÎNE DE PARRAINAGE RÉALISTE
-         * -------------------------------------------------------
-         * admin (ID 1) → gestionnaire (ID 2) → manager (ID 3) → 10 filleuls
-         * manager → fatou, membre, tessier, rbousquet, nbonnin,
-         *           jlemonnier, lejeune, hugues, pierre, maryse
-         * membre → parent.francoise (ID 15)
-         * ------------------------------------------------------- */
-        $this->seedReferrals();
-
-        /* -------------------------------------------------------
-         * 3. TONTINES DES TYPES MANQUANTS
-         * ------------------------------------------------------- */
-        $this->createWeightedVetoTontine();
-        $this->createAuctionTontine();
-        $this->createForcedSavingTontine();
-        $this->createCeremonialTontine();
-
-        /* -------------------------------------------------------
-         * 4. TRANSACTIONS QR P2P
-         * ------------------------------------------------------- */
+        $this->loadUsers();
+        $this->createTontineSandaga();
+        $this->createTontineOuakam();
+        $this->createTontineMedina();
+        $this->createTontineDakar();
+        $this->createTontineAuctionLiberte();
+        $this->createTontineAuctionTeranga();
+        $this->createTontineForcedHlm();
+        $this->createTontineForcedCite();
+        $this->createTontineCeremonial();
+        $this->createTontineVeto();
         $this->createP2PTransactions();
-
-        /* -------------------------------------------------------
-         * 5. MESSAGES CHAT
-         * ------------------------------------------------------- */
         $this->createChatMessages();
+        $this->awardBadgesAndScores();
 
-        /* -------------------------------------------------------
-         * 6. BADGES & SCORES
-         * ------------------------------------------------------- */
-        $this->awardBadgesAndRecalculateScores();
-
-        $this->command?->info('✓ TERMINÉ — Toutes les données de démo sont prêtes.');
+        $this->command?->info('✓ TERMINÉ — Toutes les données démo sont prêtes.');
     }
 
-    /* ==========================================================
-     *  PARRAINAGE
-     * ========================================================== */
-    private function seedReferrals(): void
+    private function loadUsers(): void
     {
-        $this->command?->info("\n--- Parrainage ---");
-
-        // admin (ID 1) parraine gestionnaire (ID 2)
-        $this->setReferral(2, 1);
-        // gestionnaire (ID 2) parraine manager (ID 3)
-        $this->setReferral(3, 2);
-
-        // manager (ID 3) = SUPER PARRAIN (10 filleuls → badge Ambassadeur Or)
-        $managerFilleuls = [
-            4,   // membre@tontinesn.test
-            5,   // tessier.etienne@example.com
-            6,   // rbousquet@example.org
-            7,   // nbonnin@example.org
-            8,   // jlemonnier@example.org
-            82,  // lejeune.eugene@example.com
-            13,  // hugues36@example.org
-            14,  // pierre06@example.com
-            86,  // maryse.laporte@example.net
+        // Indexer les utilisateurs par email pour un lookup facile
+        $emails = [
+            'admin@tontinesn.test',
+            'fatou@tontinesn.test',
+            'membre@tontinesn.test',
+            'tessier@tontinesn.test',
+            'rbousquet@tontinesn.test',
+            'nbonnin@tontinesn.test',
+            'jlemonnier@tontinesn.test',
+            'hugues@tontinesn.test',
+            'pierre@tontinesn.test',
+            'maryse@tontinesn.test',
+            'ilaurent@tontinesn.test',
+            'hcarre@tontinesn.test',
+            'roland@tontinesn.test',
+            'npaul@tontinesn.test',
+            'bleroy@tontinesn.test',
+            'juliette@tontinesn.test',
+            'maurice@tontinesn.test',
         ];
-        // Ajouter fatou à la liste des filleuls de manager
-        $fatou = User::where('email', 'fatou@tontinesn.test')->first();
-        if ($fatou) {
-            $managerFilleuls[] = $fatou->id;
+        foreach ($emails as $email) {
+            $user = User::where('email', $email)->first();
+            if ($user) {
+                $this->users[$email] = $user;
+            }
         }
-
-        foreach ($managerFilleuls as $userId) {
-            $this->setReferral($userId, 3);
-        }
-
-        // membre (ID 4) parraine parent.francoise (ID 15)
-        $this->setReferral(15, 4);
-
-        // tessier (ID 5) parraine 2 personnes
-        $this->setReferral(16, 5);  // hcarre@example.com
-        $this->setReferral(25, 5);  // lacombe.franck@example.com
-
-        $this->command?->info('  ✓ Chaînes de parrainage créées');
+        $this->command?->info('  ✓ ' . count($this->users) . ' utilisateurs chargés');
     }
 
-    private function setReferral(int $userId, int $referrerId): void
+    private function user(string $email): User
     {
-        User::where('id', $userId)->whereNull('referred_by')
-            ->update(['referred_by' => $referrerId]);
+        return $this->users[$email];
     }
 
-    /* ==========================================================
-     *  TONTINE TIRAGE POIDÉ + VÉTO
-     * ========================================================== */
-    private function createWeightedVetoTontine(): void
+    private function createTontineSandaga(): void
     {
-        $this->command?->info("\n--- Tontine Tirage avec Véto ---");
-
+        $this->command?->info("\n--- Tontine Sandaga (fixe) ---");
         $tontine = Tontine::firstOrCreate(
-            ['name' => 'Tontine Castors Tirage'],
+            ['code' => 'SAN001'],
             [
-                'code'           => 'CAS001',
-                'description'    => 'Tontine avec tirage au sort pondéré par le score crédit et droit de véto (2 requis pour bloquer).',
-                'amount'         => 50000,
-                'frequency'      => 'monthly',
-                'type'           => 'fixed',
-                'status'         => 'active',
-                'start_date'     => now()->subMonth(),
-                'max_members'    => 6,
-                'quorum'         => 60,
-                'draw_method'    => 'random',
-                'weighted_draw'  => true,
-                'veto_threshold' => 33, // 33% des membres (soit 2) nécessaire pour véto
-                'created_by'     => 4, // membre@tontinesn.test
+                'name' => 'Tontine Sandaga',
+                'description' => 'Tontine mensuelle du marché Sandaga — 8 commerçantes pour 250 000 FCFA par tour.',
+                'amount' => 25000, 'frequency' => 'monthly', 'type' => 'fixed',
+                'status' => 'active', 'visibility' => 'public',
+                'start_date' => $this->now->copy()->subMonths(3),
+                'max_members' => 8, 'quorum' => 60, 'penalty_rate' => 10,
+                'draw_method' => 'sequential', 'created_by' => $this->user('fatou@tontinesn.test')->id,
             ]
         );
+        if (!$tontine->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
 
-        if ($tontine->wasRecentlyCreated) {
-            // Membres : créateur + 5 participants actifs de la base
-            $memberIds = [4, 3, 5, 13, 14, 82]; // membre, manager, tessier, hugues, pierre, lejeune
-            $this->syncMembers($tontine, $memberIds);
+        $members = ['fatou@tontinesn.test', 'membre@tontinesn.test', 'tessier@tontinesn.test',
+                     'rbousquet@tontinesn.test', 'nbonnin@tontinesn.test', 'jlemonnier@tontinesn.test',
+                     'hugues@tontinesn.test', 'pierre@tontinesn.test'];
+        $this->attachMembers($tontine, $members);
 
-            // Cycle #1 (en cours, avec bénéficiaire assigné)
-            $cycle1 = Cycle::create([
-                'tontine_id'     => $tontine->id,
-                'cycle_number'   => 1,
-                'beneficiary_id' => 82,  // lejeune.eugene (tiré)
-                'due_date'       => now()->addDays(10),
-                'status'         => 'partial',
-                'total_collected'=> 200000, // 4/6 ont payé
-                'draw_hash'      => hash('sha256', 'cas001-1-82-' . now()->timestamp),
-                'drawn_at'       => now()->subDays(2),
-            ]);
+        // Cycle 1 — payé (il y a 2 mois)
+        $c1 = $this->makeCycle($tontine, 1, 'paid', $this->now->copy()->subMonths(2)->addDays(5),
+            $this->user('fatou@tontinesn.test'), $this->now->copy()->subMonths(2));
+        $this->payAll($c1, $members, 25000, $this->now->copy()->subMonths(2)->subDays(2));
 
-            // Paiements pour le cycle #1 (4 succès sur 6)
-            $payers = [4, 3, 5, 13]; // membre, manager, tessier, hugues
-            foreach ($payers as $uid) {
-                Transaction::create([
-                    'cycle_id' => $cycle1->id,
-                    'user_id'  => $uid,
-                    'amount'   => 50000,
-                    'method'   => 'orange_money',
-                    'status'   => 'success',
-                    'paid_at'  => now()->subDays(3),
-                ]);
-            }
+        // Cycle 2 — payé (il y a 1 mois)
+        $benef2 = $this->user('membre@tontinesn.test');
+        $c2 = $this->makeCycle($tontine, 2, 'paid', $this->now->copy()->subMonth()->addDays(5),
+            $benef2, $this->now->copy()->subMonth());
+        $this->payAll($c2, $members, 25000, $this->now->copy()->subMonth()->subDays(1));
 
-            // 2 vetos sur le cycle #1 (de ceux qui n'ont pas payé, mécontents du tirage)
-            $vetoMembers = [14, 82]; // pierre, lejeune (le bénéficiaire ne peut pas veto)
-            foreach ($vetoMembers as $uid) {
-                CycleVeto::firstOrCreate(['cycle_id' => $cycle1->id, 'user_id' => $uid]);
-            }
-
-            // Cycle #2 (en attente)
-            Cycle::create([
-                'tontine_id'     => $tontine->id,
-                'cycle_number'   => 2,
-                'due_date'       => now()->addDays(40),
-                'status'         => 'pending',
-                'total_collected'=> 0,
-            ]);
-
-            $this->command?->info('  ✓ Tontine Castors Tirage créée avec 1 cycle partiel + 2 vetos');
-        } else {
-            $this->command?->info('  ✓ Tontine Castors Tirage existe déjà');
+        // Cycle 3 — en cours (partiel, 1 membre en retard)
+        $benef3 = $this->user('tessier@tontinesn.test');
+        $c3 = $this->makeCycle($tontine, 3, 'partial', $this->now->copy()->addDays(5),
+            $benef3, $this->now->copy()->subDays(2));
+        $earlyPayers = ['fatou@tontinesn.test', 'membre@tontinesn.test', 'rbousquet@tontinesn.test',
+                         'nbonnin@tontinesn.test', 'jlemonnier@tontinesn.test', 'hugues@tontinesn.test',
+                         'pierre@tontinesn.test'];
+        foreach ($earlyPayers as $email) {
+            Transaction::create(['cycle_id' => $c3->id, 'user_id' => $this->user($email)->id,
+                'amount' => 25000, 'method' => 'wave', 'status' => 'success',
+                'paid_at' => $this->now->copy()->subDays(1), 'type' => 'cycle_payment']);
         }
+
+        // Cycle 4 — prévu
+        $this->makeCycle($tontine, 4, 'pending', $this->now->copy()->addDays(35), null, null);
+
+        $this->command?->info('  ✓ Créée : 3 cycles (2 payés + 1 partiel) · 8 membres');
     }
 
-    /* ==========================================================
-     *  TONTINE ENCHÈRES
-     * ========================================================== */
-    private function createAuctionTontine(): void
+    private function createTontineOuakam(): void
     {
-        $this->command?->info("\n--- Tontine Enchères ---");
-
+        $this->command?->info("\n--- Tontine Ouakam (fixe) ---");
         $tontine = Tontine::firstOrCreate(
-            ['name' => 'Tontine Enchères Liberté'],
+            ['code' => 'OUA001'],
             [
-                'code'           => 'ENC001',
-                'description'    => 'Tontine aux enchères — le taux le plus élevé remporte le pot (0.5% à 30%).',
-                'amount'         => 30000,
-                'frequency'      => 'monthly',
-                'type'           => 'auction',
-                'status'         => 'active',
-                'start_date'     => now()->subWeek(),
-                'max_members'    => 5,
-                'quorum'         => 1,
-                'draw_method'    => 'sequential',
-                'weighted_draw'  => false,
-                'created_by'     => 6, // rbousquet@example.org
+                'name' => 'Tontine Ouakam',
+                'description' => 'Tontine hebdomadaire du quartier Ouakam — pour les petites dépenses quotidiennes.',
+                'amount' => 5000, 'frequency' => 'weekly', 'type' => 'fixed',
+                'status' => 'active', 'visibility' => 'public',
+                'start_date' => $this->now->copy()->subWeeks(6),
+                'max_members' => 6, 'quorum' => 50, 'penalty_rate' => 5,
+                'draw_method' => 'sequential', 'created_by' => $this->user('ilaurent@tontinesn.test')->id,
             ]
         );
+        if (!$tontine->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
 
-        if ($tontine->wasRecentlyCreated) {
-            $memberIds = [6, 40, 49, 56, 68]; // créateur + npaul, bleroy, juliette.carlier, maurice.arnaude
-            $this->syncMembers($tontine, $memberIds);
+        $members = ['ilaurent@tontinesn.test', 'hcarre@tontinesn.test', 'roland@tontinesn.test',
+                     'npaul@tontinesn.test', 'bleroy@tontinesn.test', 'juliette@tontinesn.test'];
+        $this->attachMembers($tontine, $members);
 
-            // Cycle #1 (actif, enchères en cours)
-            $cycle1 = Cycle::create([
-                'tontine_id'     => $tontine->id,
-                'cycle_number'   => 1,
-                'due_date'       => now()->addDays(14),
-                'status'         => 'pending',
-                'total_collected'=> 150000, // pot total
-            ]);
-
-            // Enchères soumises (taux variés 0.5% → 15%)
-            $bids = [
-                6  => 15.00, // rbousquet (créateur) — va gagner
-                40 => 8.50,  // npaul
-                49 => 12.00, // bleroy
-                56 => 5.00,  // juliette.carlier
-                68 => 2.00,  // maurice.arnaude
-            ];
-            foreach ($bids as $uid => $rate) {
-                AuctionBid::firstOrCreate(
-                    ['cycle_id' => $cycle1->id, 'user_id' => $uid],
-                    ['bid_rate' => $rate]
-                );
-            }
-
-            $this->command?->info('  ✓ Tontine Enchères Liberté créée avec 1 cycle + 5 offres');
-        } else {
-            $this->command?->info('  ✓ Tontine Enchères Liberté existe déjà');
+        // 5 cycles hebdomadaires payés
+        for ($i = 1; $i <= 5; $i++) {
+            $benef = $this->user($members[$i - 1]);
+            $c = $this->makeCycle($tontine, $i, 'paid',
+                $this->now->copy()->subWeeks(6 - $i)->addDays(2),
+                $benef, $this->now->copy()->subWeeks(6 - $i));
+            $this->payAll($c, $members, 5000, $this->now->copy()->subWeeks(6 - $i)->subDay());
         }
+
+        // Cycle 6 — en cours (retard, overdue)
+        $c6 = $this->makeCycle($tontine, 6, 'overdue', $this->now->copy()->subDays(2), null, null);
+        // 4/6 ont payé
+        $latePayers = array_slice($members, 0, 4);
+        foreach ($latePayers as $email) {
+            Transaction::create(['cycle_id' => $c6->id, 'user_id' => $this->user($email)->id,
+                'amount' => 5000, 'method' => 'cash', 'status' => 'success',
+                'paid_at' => $this->now->copy()->subDays(3), 'type' => 'cycle_payment']);
+        }
+
+        $this->command?->info('  ✓ Créée : 6 cycles (5 payés + 1 overdue) · 6 membres');
     }
 
-    /* ==========================================================
-     *  TONTINE ÉPARGNE FORCÉE
-     * ========================================================== */
-    private function createForcedSavingTontine(): void
+    private function createTontineMedina(): void
     {
-        $this->command?->info("\n--- Tontine Épargne Forcée ---");
-
+        $this->command?->info("\n--- Tontine Médina (nouvelle) ---");
         $tontine = Tontine::firstOrCreate(
-            ['name' => 'Tontine Épargne HLM'],
+            ['code' => 'MED001'],
             [
-                'code'           => 'EPG001',
-                'description'    => 'Épargne forcée — cotisation mensuelle bloquée, récupérée en fin de cycle.',
-                'amount'         => 20000,
-                'frequency'      => 'monthly',
-                'type'           => 'forced_saving',
-                'status'         => 'active',
-                'start_date'     => now()->subMonths(2),
-                'max_members'    => 4,
-                'quorum'         => 1,
-                'draw_method'    => 'sequential',
-                'weighted_draw'  => false,
-                'created_by'     => 5, // tessier.etienne@example.com
+                'name' => 'Tontine Médina',
+                'description' => 'Nouvelle tontine du quartier Médina — inscriptions en cours, démarrage dans 2 semaines.',
+                'amount' => 15000, 'frequency' => 'monthly', 'type' => 'fixed',
+                'status' => 'pending', 'visibility' => 'public',
+                'start_date' => $this->now->copy()->addWeeks(2),
+                'max_members' => 10, 'quorum' => 50, 'penalty_rate' => 10,
+                'draw_method' => 'random', 'weighted_draw' => true,
+                'created_by' => $this->user('maurice@tontinesn.test')->id,
             ]
         );
-
         if ($tontine->wasRecentlyCreated) {
-            $memberIds = [5, 11, 16, 24]; // tessier, ilaurent, hcarre, roland.martinez
-            $this->syncMembers($tontine, $memberIds);
-
-            // Cycle #1 (payé)
-            $cycle1 = Cycle::create([
-                'tontine_id'     => $tontine->id,
-                'cycle_number'   => 1,
-                'beneficiary_id' => 5,   // tessier
-                'due_date'       => now()->subWeeks(5),
-                'status'         => 'paid',
-                'total_collected'=> 80000,
-                'drawn_at'       => now()->subWeeks(5),
-            ]);
-            foreach ($memberIds as $uid) {
-                Transaction::create([
-                    'cycle_id' => $cycle1->id,
-                    'user_id'  => $uid,
-                    'amount'   => 20000,
-                    'method'   => 'cash',
-                    'status'   => 'success',
-                    'paid_at'  => now()->subWeeks(5),
-                ]);
-            }
-
-            // Cycle #2 (payé)
-            $cycle2 = Cycle::create([
-                'tontine_id'     => $tontine->id,
-                'cycle_number'   => 2,
-                'beneficiary_id' => 11,  // ilaurent
-                'due_date'       => now()->subWeek(),
-                'status'         => 'paid',
-                'total_collected'=> 80000,
-                'drawn_at'       => now()->subWeek(),
-            ]);
-            foreach ($memberIds as $uid) {
-                Transaction::create([
-                    'cycle_id' => $cycle2->id,
-                    'user_id'  => $uid,
-                    'amount'   => 20000,
-                    'method'   => 'wave',
-                    'status'   => 'success',
-                    'paid_at'  => now()->subWeek(),
-                ]);
-            }
-
-            // Cycle #3 (en cours, partiel)
-            $cycle3 = Cycle::create([
-                'tontine_id'     => $tontine->id,
-                'cycle_number'   => 3,
-                'due_date'       => now()->addDays(23),
-                'status'         => 'partial',
-                'total_collected'=> 40000, // 2/4 payés
-            ]);
-            $partialPayers = [5, 24]; // tessier, roland
-            foreach ($partialPayers as $uid) {
-                Transaction::create([
-                    'cycle_id' => $cycle3->id,
-                    'user_id'  => $uid,
-                    'amount'   => 20000,
-                    'method'   => 'orange_money',
-                    'status'   => 'success',
-                    'paid_at'  => now()->subDays(2),
-                ]);
-            }
-
-            $this->command?->info('  ✓ Tontine Épargne HLM créée avec 2 cycles payés + 1 partiel');
-        } else {
-            $this->command?->info('  ✓ Tontine Épargne HLM existe déjà');
+            $this->attachMembers($tontine, ['maurice@tontinesn.test']);
+            $this->command?->info('  ✓ Créée : en attente de membres');
         }
     }
 
-    /* ==========================================================
-     *  TONTINE CÉRÉMONIAL
-     * ========================================================== */
-    private function createCeremonialTontine(): void
+    private function createTontineDakar(): void
+    {
+        $this->command?->info("\n--- Tontine Dakar (terminée) ---");
+        $tontine = Tontine::firstOrCreate(
+            ['code' => 'DAK001'],
+            [
+                'name' => 'Tontine Dakar Plateau',
+                'description' => 'Tontine de 6 mois terminée avec succès — tous les membres ont reçu leur tour.',
+                'amount' => 50000, 'frequency' => 'monthly', 'type' => 'fixed',
+                'status' => 'completed', 'visibility' => 'public',
+                'start_date' => $this->now->copy()->subMonths(6),
+                'end_date' => $this->now->copy()->subMonth(),
+                'max_members' => 6, 'quorum' => 80, 'penalty_rate' => 15,
+                'draw_method' => 'sequential',
+                'created_by' => $this->user('admin@tontinesn.test')->id,
+            ]
+        );
+        if (!$tontine->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+
+        $members = ['admin@tontinesn.test', 'fatou@tontinesn.test', 'membre@tontinesn.test',
+                     'tessier@tontinesn.test', 'rbousquet@tontinesn.test', 'nbonnin@tontinesn.test'];
+        $this->attachMembers($tontine, $members);
+
+        for ($i = 1; $i <= 6; $i++) {
+            $benef = $this->user($members[$i - 1]);
+            $c = $this->makeCycle($tontine, $i, 'paid',
+                $this->now->copy()->subMonths(6 - $i)->addDays(3),
+                $benef, $this->now->copy()->subMonths(6 - $i));
+            // Paiements (certains en retard pour montrer les pénalités)
+            foreach ($members as $email) {
+                $isLate = ($email === 'rbousquet@tontinesn.test' && $i === 3) ||
+                          ($email === 'membre@tontinesn.test' && $i === 5);
+                Transaction::create(['cycle_id' => $c->id, 'user_id' => $this->user($email)->id,
+                    'amount' => 50000, 'method' => 'wave', 'status' => 'success',
+                    'paid_at' => $isLate ? $c->due_date->copy()->addDays(3) : $c->due_date->copy()->subDay(),
+                    'type' => 'cycle_payment']);
+            }
+        }
+        $this->command?->info('  ✓ Créée : 6 cycles terminés · 6 membres');
+    }
+
+    private function createTontineAuctionLiberte(): void
+    {
+        $this->command?->info("\n--- Tontine Enchères Liberté ---");
+        $tontine = Tontine::firstOrCreate(
+            ['code' => 'ENC001'],
+            [
+                'name' => 'Tontine Enchères Liberté',
+                'description' => 'Tontine aux enchères du quartier Liberté — le plus offrant remporte le pot.',
+                'amount' => 30000, 'frequency' => 'monthly', 'type' => 'auction',
+                'status' => 'active', 'visibility' => 'public',
+                'start_date' => $this->now->copy()->subWeeks(2),
+                'max_members' => 5, 'quorum' => 1, 'penalty_rate' => 10,
+                'draw_method' => 'sequential',
+                'created_by' => $this->user('rbousquet@tontinesn.test')->id,
+            ]
+        );
+        if (!$tontine->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+
+        $members = ['rbousquet@tontinesn.test', 'npaul@tontinesn.test', 'bleroy@tontinesn.test',
+                     'juliette@tontinesn.test', 'maurice@tontinesn.test'];
+        $this->attachMembers($tontine, $members);
+
+        $c1 = $this->makeCycle($tontine, 1, 'pending', $this->now->copy()->addDays(14), null, null);
+        $bids = [15.00, 8.50, 12.00, 5.00, 2.00];
+        foreach ($members as $i => $email) {
+            AuctionBid::create(['cycle_id' => $c1->id, 'user_id' => $this->user($email)->id, 'bid_rate' => $bids[$i]]);
+        }
+        $this->command?->info('  ✓ Créée : 1 cycle avec 5 offres enchères');
+    }
+
+    private function createTontineAuctionTeranga(): void
+    {
+        $this->command?->info("\n--- Tontine Enchères Teranga ---");
+        $tontine = Tontine::firstOrCreate(
+            ['code' => 'ENC002'],
+            [
+                'name' => 'Tontine Enchères Teranga',
+                'description' => 'Tontine aux enchères — une nouvelle formule qui cartonne à Thiès.',
+                'amount' => 50000, 'frequency' => 'monthly', 'type' => 'auction',
+                'status' => 'active', 'visibility' => 'public',
+                'start_date' => $this->now->copy()->subMonths(2),
+                'max_members' => 4, 'quorum' => 1, 'penalty_rate' => 10,
+                'draw_method' => 'sequential',
+                'created_by' => $this->user('nbonnin@tontinesn.test')->id,
+            ]
+        );
+        if (!$tontine->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+
+        $members = ['nbonnin@tontinesn.test', 'jlemonnier@tontinesn.test', 'hugues@tontinesn.test', 'pierre@tontinesn.test'];
+        $this->attachMembers($tontine, $members);
+
+        // Cycle 1 — terminé avec enchères
+        $c1 = $this->makeCycle($tontine, 1, 'paid', $this->now->copy()->subWeeks(4)->addDays(3),
+            $this->user('nbonnin@tontinesn.test'), $this->now->copy()->subWeeks(4));
+        foreach ($members as $email) {
+            Transaction::create(['cycle_id' => $c1->id, 'user_id' => $this->user($email)->id,
+                'amount' => 50000, 'method' => 'orange_money', 'status' => 'success',
+                'paid_at' => $this->now->copy()->subWeeks(4)->subDay(), 'type' => 'cycle_payment']);
+        }
+        AuctionBid::create(['cycle_id' => $c1->id, 'user_id' => $this->user('nbonnin@tontinesn.test')->id, 'bid_rate' => 10.00]);
+        AuctionBid::create(['cycle_id' => $c1->id, 'user_id' => $this->user('jlemonnier@tontinesn.test')->id, 'bid_rate' => 7.50]);
+
+        // Cycle 2 — en cours avec enchères
+        $c2 = $this->makeCycle($tontine, 2, 'pending', $this->now->copy()->addDays(10), null, null);
+        AuctionBid::create(['cycle_id' => $c2->id, 'user_id' => $this->user('jlemonnier@tontinesn.test')->id, 'bid_rate' => 12.50]);
+        AuctionBid::create(['cycle_id' => $c2->id, 'user_id' => $this->user('pierre@tontinesn.test')->id, 'bid_rate' => 8.00]);
+        AuctionBid::create(['cycle_id' => $c2->id, 'user_id' => $this->user('hugues@tontinesn.test')->id, 'bid_rate' => 3.50]);
+
+        $this->command?->info('  ✓ Créée : 2 cycles avec enchères');
+    }
+
+    private function createTontineForcedHlm(): void
+    {
+        $this->command?->info("\n--- Tontine Épargne HLM ---");
+        $tontine = Tontine::firstOrCreate(
+            ['code' => 'EPG001'],
+            [
+                'name' => 'Tontine Épargne HLM',
+                'description' => 'Épargne forcée pour l\'achat groupé de fournitures scolaires.',
+                'amount' => 20000, 'frequency' => 'monthly', 'type' => 'forced_saving',
+                'status' => 'active', 'visibility' => 'public',
+                'start_date' => $this->now->copy()->subMonths(2),
+                'max_members' => 4, 'quorum' => 1, 'penalty_rate' => 5,
+                'draw_method' => 'sequential',
+                'created_by' => $this->user('tessier@tontinesn.test')->id,
+            ]
+        );
+        if (!$tontine->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+
+        $members = ['tessier@tontinesn.test', 'ilaurent@tontinesn.test', 'hcarre@tontinesn.test', 'roland@tontinesn.test'];
+        $this->attachMembers($tontine, $members);
+
+        // Cycle 1 — payé
+        $c1 = $this->makeCycle($tontine, 1, 'paid', $this->now->copy()->subWeeks(5),
+            $this->user('tessier@tontinesn.test'), $this->now->copy()->subWeeks(5));
+        $this->payAll($c1, $members, 20000, $this->now->copy()->subWeeks(5)->subDay());
+
+        // Cycle 2 — payé
+        $c2 = $this->makeCycle($tontine, 2, 'paid', $this->now->copy()->subWeek(),
+            $this->user('ilaurent@tontinesn.test'), $this->now->copy()->subWeek());
+        $this->payAll($c2, $members, 20000, $this->now->copy()->subWeek()->subDay());
+
+        // Cycle 3 — partiel
+        $c3 = $this->makeCycle($tontine, 3, 'partial', $this->now->copy()->addDays(23), null, null);
+        foreach (['tessier@tontinesn.test', 'roland@tontinesn.test'] as $email) {
+            Transaction::create(['cycle_id' => $c3->id, 'user_id' => $this->user($email)->id,
+                'amount' => 20000, 'method' => 'orange_money', 'status' => 'success',
+                'paid_at' => $this->now->copy()->subDays(2), 'type' => 'cycle_payment']);
+        }
+
+        $this->command?->info('  ✓ Créée : 3 cycles (2 payés + 1 partiel)');
+    }
+
+    private function createTontineForcedCite(): void
+    {
+        $this->command?->info("\n--- Tontine Épargne Cité ---");
+        $tontine = Tontine::firstOrCreate(
+            ['code' => 'EPG002'],
+            [
+                'name' => 'Tontine Épargne Cité',
+                'description' => 'Épargne forcée pour les sorties familiales — 3 membres, 10 000 F/semaine.',
+                'amount' => 10000, 'frequency' => 'weekly', 'type' => 'forced_saving',
+                'status' => 'active', 'visibility' => 'private',
+                'start_date' => $this->now->copy()->subWeeks(3),
+                'max_members' => 3, 'quorum' => 1, 'penalty_rate' => 0,
+                'draw_method' => 'sequential',
+                'created_by' => $this->user('npaul@tontinesn.test')->id,
+            ]
+        );
+        if (!$tontine->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+
+        $members = ['npaul@tontinesn.test', 'bleroy@tontinesn.test', 'juliette@tontinesn.test'];
+        $this->attachMembers($tontine, $members);
+
+        for ($i = 1; $i <= 3; $i++) {
+            $c = $this->makeCycle($tontine, $i, 'paid', $this->now->copy()->subWeeks(3 - $i),
+                $this->user($members[$i - 1]), $this->now->copy()->subWeeks(3 - $i));
+            $this->payAll($c, $members, 10000, $this->now->copy()->subWeeks(3 - $i)->subDay());
+        }
+        $this->command?->info('  ✓ Créée : 3 cycles payés · 3 membres');
+    }
+
+    private function createTontineCeremonial(): void
     {
         $this->command?->info("\n--- Tontine Cérémonial ---");
-
         $tontine = Tontine::firstOrCreate(
-            ['name' => 'Tontine Cérémonial Sandaga'],
+            ['code' => 'CER001'],
             [
-                'code'           => 'CER001',
-                'description'    => 'Cagnotte cérémoniale pour les grands événements (baptêmes, mariages). Cotisation unique à 100 000 F.',
-                'amount'         => 100000,
-                'frequency'      => 'monthly',
-                'type'           => 'ceremonial',
-                'status'         => 'active',
-                'start_date'     => now()->subMonth(),
-                'max_members'    => 4,
-                'quorum'         => 1,
-                'draw_method'    => 'sequential',
-                'weighted_draw'  => false,
-                'created_by'     => 3, // manager@tontinesn.test
+                'name' => 'Tontine Cérémonial Sandaga',
+                'description' => 'Cagnotte cérémoniale pour les grands événements (baptêmes, mariages).',
+                'amount' => 100000, 'frequency' => 'monthly', 'type' => 'ceremonial',
+                'status' => 'active', 'visibility' => 'public',
+                'start_date' => $this->now->copy()->subMonth(),
+                'max_members' => 4, 'quorum' => 1, 'penalty_rate' => 0,
+                'draw_method' => 'sequential',
+                'created_by' => $this->user('membre@tontinesn.test')->id,
             ]
         );
+        if (!$tontine->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
 
-        if ($tontine->wasRecentlyCreated) {
-            $memberIds = [3, 4, 5, 82]; // manager, membre, tessier, lejeune
-            $this->syncMembers($tontine, $memberIds);
+        $members = ['membre@tontinesn.test', 'tessier@tontinesn.test', 'jlemonnier@tontinesn.test', 'hugues@tontinesn.test'];
+        $this->attachMembers($tontine, $members);
 
-            // Cycle #1 (payé — cérémonie de Fatou)
-            $cycle1 = Cycle::create([
-                'tontine_id'     => $tontine->id,
-                'cycle_number'   => 1,
-                'beneficiary_id' => 3,   // manager
-                'due_date'       => now()->subWeeks(2),
-                'status'         => 'paid',
-                'total_collected'=> 400000,
-                'drawn_at'       => now()->subWeeks(2),
-            ]);
-            foreach ($memberIds as $uid) {
-                Transaction::create([
-                    'cycle_id' => $cycle1->id,
-                    'user_id'  => $uid,
-                    'amount'   => 100000,
-                    'method'   => 'orange_money',
-                    'status'   => 'success',
-                    'paid_at'  => now()->subWeeks(2),
-                ]);
-            }
+        $c1 = $this->makeCycle($tontine, 1, 'paid', $this->now->copy()->subWeeks(2),
+            $this->user('membre@tontinesn.test'), $this->now->copy()->subWeeks(2));
+        $this->payAll($c1, $members, 100000, $this->now->copy()->subWeeks(2)->subDay());
 
-            // Cycle #2 (en cours)
-            $cycle2 = Cycle::create([
-                'tontine_id'     => $tontine->id,
-                'cycle_number'   => 2,
-                'due_date'       => now()->addDays(14),
-                'status'         => 'pending',
-                'total_collected'=> 0,
-            ]);
-
-            $this->command?->info('  ✓ Tontine Cérémonial Sandaga créée avec 1 cycle payé + 1 en attente');
-        } else {
-            $this->command?->info('  ✓ Tontine Cérémonial Sandaga existe déjà');
-        }
+        $this->makeCycle($tontine, 2, 'pending', $this->now->copy()->addDays(14), null, null);
+        $this->command?->info('  ✓ Créée : 1 cycle payé + 1 en attente');
     }
 
-    /* ==========================================================
-     *  TRANSACTIONS QR P2P
-     * ========================================================== */
+    private function createTontineVeto(): void
+    {
+        $this->command?->info("\n--- Tontine Castors Tirage (veto) ---");
+        $tontine = Tontine::firstOrCreate(
+            ['code' => 'CAS001'],
+            [
+                'name' => 'Tontine Castors Tirage',
+                'description' => 'Tontine avec tirage pondéré par le score crédit — les membres peuvent exercer un droit de véto.',
+                'amount' => 50000, 'frequency' => 'monthly', 'type' => 'fixed',
+                'status' => 'active', 'visibility' => 'public',
+                'start_date' => $this->now->copy()->subMonth(),
+                'max_members' => 6, 'quorum' => 60, 'penalty_rate' => 10,
+                'draw_method' => 'random', 'weighted_draw' => true, 'veto_threshold' => 33,
+                'created_by' => $this->user('membre@tontinesn.test')->id,
+            ]
+        );
+        if (!$tontine->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+
+        $members = ['membre@tontinesn.test', 'tessier@tontinesn.test', 'nbonnin@tontinesn.test',
+                     'hugues@tontinesn.test', 'pierre@tontinesn.test', 'jlemonnier@tontinesn.test'];
+        $this->attachMembers($tontine, $members);
+
+        $c1 = $this->makeCycle($tontine, 1, 'partial', $this->now->copy()->addDays(10),
+            $this->user('pierre@tontinesn.test'), $this->now->copy()->subDays(2));
+        // 4/6 ont payé
+        foreach (array_slice($members, 0, 4) as $email) {
+            Transaction::create(['cycle_id' => $c1->id, 'user_id' => $this->user($email)->id,
+                'amount' => 50000, 'method' => 'orange_money', 'status' => 'success',
+                'paid_at' => $this->now->copy()->subDays(3), 'type' => 'cycle_payment']);
+        }
+        // 2 vetos
+        foreach (['nbonnin@tontinesn.test', 'jlemonnier@tontinesn.test'] as $email) {
+            CycleVeto::create(['cycle_id' => $c1->id, 'user_id' => $this->user($email)->id]);
+        }
+
+        $this->makeCycle($tontine, 2, 'pending', $this->now->copy()->addDays(40), null, null);
+        $this->command?->info('  ✓ Créée : 1 cycle partiel avec 2 vetos');
+    }
+
     private function createP2PTransactions(): void
     {
         $this->command?->info("\n--- Transactions QR P2P ---");
+        $anyCycleId = Cycle::inRandomOrder()->value('id');
+        if (!$anyCycleId) { $this->command?->info('  ⚠ Aucun cycle trouvé, P2P ignoré'); return; }
 
-        // P2P #1 : membre → manager (15 000 F)
-        $exists1 = Transaction::where('type', 'qr_p2p')
-            ->where('user_id', 4)
-            ->where('amount', 15000)
-            ->exists();
-        if (!$exists1) {
-            Transaction::create([
-                'cycle_id'  => null,
-                'user_id'   => 4,    // membre
-                'amount'    => 15000,
-                'method'    => 'direct_transfer',
-                'type'      => 'qr_p2p',
-                'description'=> 'Paiement QR P2P — remboursement course',
-                'metadata'  => json_encode(['sender_email' => 'membre@tontinesn.test', 'receiver_email' => 'manager@tontinesn.test', 'reason' => 'remboursement']),
-                'status'    => 'success',
-                'paid_at'   => now()->subDays(3),
-            ]);
-        }
-
-        // P2P #2 : lejeune → pierre06 (25 000 F)
-        $exists2 = Transaction::where('type', 'qr_p2p')
-            ->where('user_id', 82)
-            ->where('amount', 25000)
-            ->exists();
-        if (!$exists2) {
-            Transaction::create([
-                'cycle_id'  => null,
-                'user_id'   => 82,   // lejeune.eugene
-                'amount'    => 25000,
-                'method'    => 'direct_transfer',
-                'type'      => 'qr_p2p',
-                'description'=> 'Paiement QR P2P — cotisation repas de famille',
-                'metadata'  => json_encode(['sender_email' => 'lejeune.eugene@example.com', 'receiver_email' => 'pierre06@example.com', 'reason' => 'repas famille']),
-                'status'    => 'success',
-                'paid_at'   => now()->subDays(1),
-            ]);
-        }
-
-        // P2P #3 : hugues36 → maryse (10 000 F, free_money pour montrer le method)
-        $exists3 = Transaction::where('type', 'qr_p2p')
-            ->where('user_id', 13)
-            ->where('amount', 10000)
-            ->exists();
-        if (!$exists3) {
-            Transaction::create([
-                'cycle_id'  => null,
-                'user_id'   => 13,   // hugues36
-                'amount'    => 10000,
-                'method'    => 'free_money',
-                'type'      => 'qr_p2p',
-                'description'=> 'Paiement QR P2P — cadeau anniversaire',
-                'metadata'  => json_encode(['sender_email' => 'hugues36@example.org', 'receiver_email' => 'maryse.laporte@example.net', 'reason' => 'anniversaire']),
-                'status'    => 'success',
-                'paid_at'   => now()->subHours(12),
-            ]);
-        }
-
-        // P2P #4 : fatou → manager (50 000 F — montant élevé pour montrer le KYC threshold)
-        $fatou = User::where('email', 'fatou@tontinesn.test')->first();
-        if ($fatou) {
-            $exists4 = Transaction::where('type', 'qr_p2p')
-                ->where('user_id', $fatou->id)
-                ->where('amount', 50000)
-                ->exists();
-            if (!$exists4) {
+        $p2ps = [
+            ['from' => 'membre@tontinesn.test', 'amount' => 15000, 'desc' => 'Remboursement course',
+             'method' => 'direct_transfer', 'days_ago' => 3, 'meta' => ['receiver' => 'admin@tontinesn.test']],
+            ['from' => 'jlemonnier@tontinesn.test', 'amount' => 25000, 'desc' => 'Cotisation repas famille',
+             'method' => 'direct_transfer', 'days_ago' => 1, 'meta' => ['receiver' => 'pierre@tontinesn.test']],
+            ['from' => 'hugues@tontinesn.test', 'amount' => 10000, 'desc' => 'Cadeau anniversaire',
+             'method' => 'free_money', 'days_ago' => 0, 'meta' => ['receiver' => 'maryse@tontinesn.test']],
+            ['from' => 'fatou@tontinesn.test', 'amount' => 50000, 'desc' => 'Contribution cérémonie',
+             'method' => 'direct_transfer', 'days_ago' => 0, 'meta' => ['receiver' => 'membre@tontinesn.test']],
+        ];
+        $count = 0;
+        foreach ($p2ps as $p2p) {
+            $user = $this->user($p2p['from']);
+            $exists = Transaction::where('type', 'qr_p2p')->where('user_id', $user->id)->where('amount', $p2p['amount'])->exists();
+            if (!$exists) {
                 Transaction::create([
-                    'cycle_id'  => null,
-                    'user_id'   => $fatou->id,
-                    'amount'    => 50000,
-                    'method'    => 'direct_transfer',
-                    'type'      => 'qr_p2p',
-                    'description'=> 'Paiement QR P2P — contribution tontine cérémoniale',
-                    'metadata'  => json_encode(['sender_email' => 'fatou@tontinesn.test', 'receiver_email' => 'manager@tontinesn.test', 'reason' => 'contribution ceremoniale']),
-                    'status'    => 'success',
-                    'paid_at'   => now()->subHours(6),
+                    'cycle_id' => $anyCycleId, 'user_id' => $user->id,
+                    'amount' => $p2p['amount'], 'method' => $p2p['method'],
+                    'type' => 'qr_p2p', 'description' => 'Paiement QR P2P — ' . $p2p['desc'],
+                    'metadata' => json_encode($p2p['meta']),
+                    'status' => 'success', 'paid_at' => $this->now->copy()->subDays($p2p['days_ago']),
                 ]);
+                $count++;
             }
         }
-
-        $this->command?->info('  ✓ 4 transactions QR P2P créées');
+        $this->command?->info("  ✓ $count transactions QR P2P créées");
     }
 
-    /* ==========================================================
-     *  MESSAGES CHAT
-     * ========================================================== */
     private function createChatMessages(): void
     {
         $this->command?->info("\n--- Messages Chat ---");
-
-        $tontines = Tontine::whereIn('id', [3, 12])->get(); // Sandaga S2, Ouakam
-
+        $tontines = Tontine::whereIn('code', ['SAN001', 'OUA001'])->get();
         foreach ($tontines as $tontine) {
-            $existingCount = ChatMessage::where('tontine_id', $tontine->id)->count();
-            if ($existingCount > 2) {
-                $this->command?->info("  ✓ {$tontine->name} a déjà $existingCount messages");
-                continue;
-            }
-
             $members = $tontine->activeMembers->pluck('id')->toArray();
             if (count($members) < 3) continue;
-
-            $messages = [
-                ['Bonjour à tous ! Prêt pour le nouveau cycle ? 💪', $members[0]],
-                ['Présent ! J\'ai déjà versé ma cotisation ✅', $members[1]],
-                ['Super ! Moi aussi, tout est dans Orange Money 💰', $members[2]],
-                ['Quand est-ce que le tirage est prévu ?', $members[1]],
-                ['Dans 3 jours, le 15. Restez connectés 📅', $members[0]],
-                ['Parfait, je serai là 👌', $members[2]],
+            $msgs = [
+                ['Bonjour à tous ! Prêt pour le nouveau cycle ? 💪', 0],
+                ['Présent ! J\'ai déjà versé ma cotisation ✅', 1],
+                ['Super ! Moi aussi, tout est dans Orange Money 💰', 2],
+                ['Quand est-ce que le tirage est prévu ?', 1],
+                ['Dans 3 jours, le 15. Restez connectés 📅', 0],
+                ['Parfait, je serai là 👌', 2],
             ];
-
-            foreach ($messages as $i => [$msg, $userId]) {
-                $exists = ChatMessage::where('tontine_id', $tontine->id)
-                    ->where('user_id', $userId)
-                    ->where('message', $msg)
-                    ->exists();
+            $count = 0;
+            foreach ($msgs as $i => [$msg, $mi]) {
+                $exists = ChatMessage::where('tontine_id', $tontine->id)->where('message', $msg)->exists();
                 if (!$exists) {
                     ChatMessage::create([
-                        'tontine_id'  => $tontine->id,
-                        'user_id'     => $userId,
-                        'message'     => $msg,
-                        'created_at'  => now()->subDays(7 - $i),
+                        'tontine_id' => $tontine->id, 'user_id' => $members[$mi],
+                        'message' => $msg, 'created_at' => $this->now->copy()->subDays(7 - $i),
                     ]);
+                    $count++;
                 }
             }
-            $this->command?->info("  ✓ 6 messages ajoutés dans {$tontine->name}");
+            $this->command?->info("  ✓ $count messages dans {$tontine->name}");
         }
     }
 
-    /* ==========================================================
-     *  BADGES & RECALCUL SCORES
-     * ========================================================== */
-    private function awardBadgesAndRecalculateScores(): void
+    private function awardBadgesAndScores(): void
     {
         $this->command?->info("\n--- Badges & Scores ---");
+
+        // Payer les streaks pour que les badges soient attribuables
+        User::whereIn('email', [
+            'admin@tontinesn.test', 'fatou@tontinesn.test', 'tessier@tontinesn.test',
+            'rbousquet@tontinesn.test', 'hugues@tontinesn.test', 'pierre@tontinesn.test',
+        ])->update(['payment_streak' => 8, 'max_streak' => 10]);
+
+        User::whereIn('email', [
+            'membre@tontinesn.test', 'nbonnin@tontinesn.test', 'jlemonnier@tontinesn.test',
+            'ilaurent@tontinesn.test', 'roland@tontinesn.test',
+        ])->update(['payment_streak' => 5, 'max_streak' => 7]);
+
+        User::whereIn('email', [
+            'hcarre@tontinesn.test', 'npaul@tontinesn.test', 'bleroy@tontinesn.test',
+            'juliette@tontinesn.test', 'maurice@tontinesn.test',
+        ])->update(['payment_streak' => 3, 'max_streak' => 4]);
 
         $gamification = app(GamificationService::class);
         $scoring = app(CreditScoringService::class);
 
-        // Forcer le recalcul des stats : mettre à jour les payment_streak
-        // pour ceux qui ont beaucoup de paiements
-        $this->bootstrapPaymentStreaks();
-
-        // Attribuer les badges aux utilisateurs clés
-        $keyUsers = [1, 2, 3, 4, 5, 6, 7, 8, 13, 14, 15, 82, 86];
-        foreach ($keyUsers as $uid) {
-            $user = User::find($uid);
-            if (!$user) continue;
-
-            $earned = $gamification->checkAndAwardBadges($user);
-            if ($earned->isNotEmpty()) {
-                $this->command?->info("  ✓ {$user->email} : badges attribués → " . $earned->pluck('slug')->implode(', '));
+        foreach ($this->users as $email => $user) {
+            $badges = $gamification->checkAndAwardBadges($user);
+            if ($badges->isNotEmpty()) {
+                $this->command?->info("  🏅 $email : " . $badges->pluck('slug')->implode(', '));
             }
         }
 
-        // Recalculer les scores crédit pour TOUS les utilisateurs
         $count = 0;
-        User::where('is_active', true)->chunk(50, function ($users) use ($scoring, &$count) {
-            foreach ($users as $user) {
-                $scoring->calculate($user);
-                $count++;
-            }
-        });
+        foreach ($this->users as $user) {
+            $scoring->calculate($user);
+            $count++;
+        }
         $this->command?->info("  ✓ Scores recalculés pour $count utilisateurs");
     }
 
-    private function bootstrapPaymentStreaks(): void
+    private function attachMembers(Tontine $tontine, array $emails): void
     {
-        // Donner un payment_streak cohérent aux utilisateurs avec beaucoup de paiements
-        User::whereIn('id', [3, 5, 13, 14, 82, 86, 91])
-            ->update(['payment_streak' => 5, 'max_streak' => 8]);
-        User::whereIn('id', [4, 6, 15, 16])
-            ->update(['payment_streak' => 3, 'max_streak' => 5]);
-        User::whereIn('id', [25, 40, 41, 43, 49, 56, 65, 66, 68, 94])
-            ->update(['payment_streak' => 2, 'max_streak' => 4]);
-    }
-
-    /* ==========================================================
-     *  UTILITAIRE : SYNC MEMBRES
-     * ========================================================== */
-    private function syncMembers(Tontine $tontine, array $userIds): void
-    {
-        $now = now();
         $data = [];
-        foreach ($userIds as $i => $uid) {
-            $data[$uid] = [
-                'status'             => 'active',
-                'position'           => $i + 1,
-                'joined_at'          => $now->copy()->subDays(30 - $i * 5),
+        foreach ($emails as $i => $email) {
+            $user = $this->user($email);
+            if (!$user) continue;
+            $data[$user->id] = [
+                'status' => 'active', 'position' => $i + 1,
+                'joined_at' => $this->now->copy()->subDays(30 - $i * 3),
                 'start_cycle_number' => 1,
             ];
         }
         $tontine->members()->syncWithoutDetaching($data);
+    }
+
+    private function makeCycle(Tontine $t, int $num, string $status, Carbon $dueDate,
+                                ?User $benef = null, ?Carbon $drawnAt = null): Cycle
+    {
+        return Cycle::create([
+            'tontine_id' => $t->id, 'cycle_number' => $num,
+            'beneficiary_id' => $benef?->id, 'due_date' => $dueDate,
+            'status' => $status, 'total_collected' => 0,
+            'draw_hash' => $drawnAt ? hash('sha256', $t->code . "-$num-{$benef?->id}-" . $drawnAt->timestamp) : null,
+            'drawn_at' => $drawnAt,
+        ]);
+    }
+
+    private function payAll(Cycle $cycle, array $emails, int $amount, Carbon $paidAt): void
+    {
+        foreach ($emails as $email) {
+            Transaction::create([
+                'cycle_id' => $cycle->id, 'user_id' => $this->user($email)->id,
+                'amount' => $amount, 'method' => 'wave', 'status' => 'success',
+                'paid_at' => $paidAt, 'type' => 'cycle_payment',
+            ]);
+        }
     }
 }
