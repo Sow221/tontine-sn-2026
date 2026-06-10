@@ -190,10 +190,24 @@
             </div>
             <div class="flex-grow-1">
                 <p class="mb-0 fw-semibold small">{{ $tx->cycle->tontine->name ?? '—' }}</p>
-                <small class="text-muted">
+                <small class="text-muted d-flex align-items-center gap-1 flex-wrap">
                     Cycle {{ $tx->cycle->cycle_number ?? '—' }} ·
                     {{ $tx->paid_at?->format('d/m/Y H:i') ?? $tx->created_at->format('d/m/Y H:i') }} ·
-                    {{ match($tx->method) { 'wave' => 'Wave', 'orange_money' => 'Orange Money', 'free_money' => 'Free Money', 'card' => 'Carte', 'cash' => 'Espèces', default => ucfirst($tx->method) } }}
+                    @php
+                        $opIcons = [
+                            'wave'         => 'images/logo wave.webp',
+                            'orange_money' => 'images/logo orange money.webp',
+                            'free_money'   => 'images/logo free money.svg',
+                        ];
+                    @endphp
+                    @if(isset($opIcons[$tx->method]))
+                    <img src="{{ asset($opIcons[$tx->method]) }}" alt="" style="height:18px;width:auto;border-radius:3px;">
+                    @else
+                    <span class="badge" style="background:{{ match($tx->method) { 'card' => '#eef2ff', 'cash' => '#f0fdf4', default => '#f1f5f9' } }};color:{{ match($tx->method) { 'card' => '#6366f1', 'cash' => '#009639', default => '#64748b' } }};font-size:10px;">
+                        <i class="fas fa-{{ match($tx->method) { 'card' => 'credit-card', 'cash' => 'money-bill-wave', default => 'question' } }} me-1"></i>
+                        {{ match($tx->method) { 'card' => 'Carte', 'cash' => 'Espèces', default => ucfirst($tx->method) } }}
+                    </span>
+                    @endif
                 </small>
             </div>
             <span class="fw-bold {{ $tx->status === 'success' ? 'text-green' : ($tx->status === 'failed' ? 'text-danger' : 'text-warning') }}">

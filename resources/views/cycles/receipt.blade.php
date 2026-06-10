@@ -61,7 +61,19 @@
             </div>
             <div class="receipt-row">
                 <span class="key">Mode de paiement</span>
-                <span class="val">
+                <span class="val d-flex align-items-center gap-2">
+                    @php
+                        $opImgs = [
+                            'wave'         => 'images/logo wave.webp',
+                            'orange_money' => 'images/logo orange money.webp',
+                            'free_money'   => 'images/logo free money.svg',
+                        ];
+                    @endphp
+                    @if(isset($opImgs[$transaction->method]))
+                    <img src="{{ public_path($opImgs[$transaction->method]) }}" alt="" style="height:20px;width:auto;">
+                    @else
+                    <i class="fas fa-{{ match($transaction->method) { 'card' => 'credit-card', 'cash' => 'money-bill-wave', default => 'question' } }}" style="font-size:16px;color:{{ match($transaction->method) { 'card' => '#6366f1', 'cash' => '#009639', default => '#64748b' } }};"></i>
+                    @endif
                     {{ match($transaction->method) {
                         'wave'         => 'Wave',
                         'orange_money' => 'Orange Money',
