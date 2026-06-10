@@ -135,7 +135,7 @@
         </nav>
 
         <div class="sidebar-footer">
-            <div class="sidebar-user mb-3">
+            <div class="sidebar-user mb-2">
                 <div class="sidebar-user-avatar" aria-hidden="true">
                     {{ strtoupper(substr(auth()->user()->name ?? auth()->user()->email, 0, 1)) }}
                 </div>
@@ -143,6 +143,15 @@
                     <div class="sidebar-user-name text-truncate">{{ auth()->user()->name ?? auth()->user()->email }}</div>
                     <div class="sidebar-user-role">{{ match(auth()->user()->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => __('member.member') } }}</div>
                 </div>
+            </div>
+            <div class="sidebar-session-info">
+                <i class="fas fa-fingerprint me-1"></i>
+                <span>Session: {{ auth()->user()->identifier ?? 'SN-' . str_pad(auth()->id(), 4, '0', STR_PAD_LEFT) }}</span>
+            </div>
+            <div class="sidebar-footer-links">
+                <a href="{{ route('profile.show') }}" class="sidebar-footer-link">
+                    <i class="fas fa-cog"></i> Paramètres généraux
+                </a>
             </div>
             <form method="POST" action="{{ route('theme.toggle') }}" class="mb-2" x-data>
                 @csrf
@@ -206,7 +215,6 @@
                             aria-haspopup="true" :aria-expanded="dropdownOpen"
                             aria-label="Menu utilisateur">
                         <span class="topbar-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? auth()->user()->email, 0, 1)) }}</span>
-                        <span class="topbar-user-role-badge">{{ match(auth()->user()->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => '' } }}</span>
                         <i class="fas fa-chevron-down topbar-chevron" :class="{ 'open': dropdownOpen }"></i>
                     </button>
                     <div class="topbar-dropdown-menu" x-show="dropdownOpen"
@@ -227,7 +235,7 @@
                         <div class="topbar-dropdown-divider"></div>
                         <form method="POST" action="{{ route('auth.logout') }}">
                             @csrf
-                            <button type="submit" class="topbar-dropdown-item">
+                            <button type="submit" class="topbar-dropdown-item topbar-dropdown-item--danger">
                                 <i class="fas fa-sign-out-alt"></i> Se déconnecter
                             </button>
                         </form>
