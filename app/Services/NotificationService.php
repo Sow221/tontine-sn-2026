@@ -98,6 +98,13 @@ class NotificationService
 
     public function sendWhatsApp(User $user, string $message, string $event = 'general'): bool
     {
+        SendWhatsAppNotification::dispatch($user->id, $message, $event);
+
+        return true;
+    }
+
+    public function sendWhatsAppSync(User $user, string $message, string $event = 'general'): bool
+    {
         if (empty($user->phone_number)) {
             $this->logNotification($user, 'whatsapp', $event, $message, 'failed');
 
@@ -170,7 +177,7 @@ class NotificationService
         };
 
         $this->sendEmail($user, $this->subjectFromType($type), "<p>{$message}</p>", $event);
-        $this->sendWhatsApp($user, $message, $event);
+        $this->sendWhatsApp($user, "Bonjour {$user->name}, {$message}", $event);
     }
 
     private function wantsChannel(User $user, string $settingKey): bool
@@ -183,7 +190,7 @@ class NotificationService
     public function notifyBeneficiary(User $user, string $tontineName, int $amount): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $msg = "🎉 C'est votre tour ! Vous êtes bénéficiaire de la tontine {$tontineName}. Montant à recevoir : {$montant} FCFA. Connectez-vous sur TontineSN.";
+        $msg = "🎉 Bonjour {$user->name}, c'est votre tour ! Vous êtes bénéficiaire de la tontine {$tontineName}. Montant à recevoir : {$montant} FCFA. Connectez-vous sur TontineSN.";
 
         if ($this->wantsChannel($user, 'beneficiary_whatsapp')) {
             $this->sendWhatsApp($user, $msg, self::EVENT_BENEFICIARY);
@@ -204,7 +211,7 @@ class NotificationService
     public function notifyPaymentConfirmed(User $user, int $amount, string $tontineName): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $msg = "✅ Paiement confirmé ! Votre cotisation de {$montant} FCFA pour la tontine {$tontineName} a été enregistrée. Merci !";
+        $msg = "✅ Bonjour {$user->name}, paiement confirmé ! Votre cotisation de {$montant} FCFA pour la tontine {$tontineName} a été enregistrée. Merci !";
 
         if ($this->wantsChannel($user, 'payment_whatsapp')) {
             $this->sendWhatsApp($user, $msg, self::EVENT_PAYMENT);
@@ -224,7 +231,7 @@ class NotificationService
 
     public function notifyMemberApproved(User $user, string $tontineName): void
     {
-        $msg = "✅ Votre adhésion à la tontine {$tontineName} a été approuvée ! Bienvenue dans le groupe. Connectez-vous sur TontineSN.";
+        $msg = "✅ Bonjour {$user->name}, votre adhésion à la tontine {$tontineName} a été approuvée ! Bienvenue dans le groupe. Connectez-vous sur TontineSN.";
 
         if ($this->wantsChannel($user, 'member_whatsapp')) {
             $this->sendWhatsApp($user, $msg, self::EVENT_MEMBER_APPROVED);
@@ -244,7 +251,7 @@ class NotificationService
     public function notifyPaymentReminder(User $user, string $tontineName, int $amount, int $daysLeft): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $msg = "🔔 Rappel : votre cotisation de {$montant} FCFA pour la tontine {$tontineName} est due dans {$daysLeft} jour(s). Payez à temps pour garder votre score crédit.";
+        $msg = "🔔 Bonjour {$user->name}, rappel : votre cotisation de {$montant} FCFA pour la tontine {$tontineName} est due dans {$daysLeft} jour(s). Payez à temps pour garder votre score crédit.";
 
         if ($this->wantsChannel($user, 'reminder_whatsapp')) {
             $this->sendWhatsApp($user, $msg, self::EVENT_REMINDER);
@@ -264,7 +271,7 @@ class NotificationService
 
     public function notifyCycleStart(User $user, string $tontineName, string $dueDate): void
     {
-        $msg = "📅 Nouveau cycle démarré pour la tontine {$tontineName}. Date limite : {$dueDate}. Connectez-vous sur TontineSN pour payer.";
+        $msg = "📅 Bonjour {$user->name}, nouveau cycle démarré pour la tontine {$tontineName}. Date limite : {$dueDate}. Connectez-vous sur TontineSN pour payer.";
 
         if ($this->wantsChannel($user, 'cycle_whatsapp')) {
             $this->sendWhatsApp($user, $msg, self::EVENT_CYCLE_START);
@@ -289,7 +296,7 @@ class NotificationService
     public function notifySavingsWithdrawal(User $user, string $tontineName, int $amount): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $msg = "💰 Votre épargne de {$montant} FCFA dans la tontine {$tontineName} est disponible. Contactez le gestionnaire pour récupérer votre argent.";
+        $msg = "💰 Bonjour {$user->name}, votre épargne de {$montant} FCFA dans la tontine {$tontineName} est disponible. Contactez le gestionnaire pour récupérer votre argent.";
 
         $this->sendWhatsApp($user, $msg, self::EVENT_SAVINGS);
         $this->sendEmail(

@@ -22,6 +22,9 @@ Schedule::command('tontine:recalculate-scores')->weeklyOn(0, '03:00');
 // Rappels de paiement J-3 et J-1
 Schedule::job(new SendReminders)->dailyAt('08:00');
 
+// Worker file d'attente (exécute les jobs WhatsApp en arrière-plan)
+Schedule::command('queue:work --stop-when-empty --max-time=60 --sleep=3')->everyMinute()->withoutOverlapping();
+
 // Nettoyage des magic links expirés
 Schedule::call(fn () => MagicLink::where('expires_at', '<', now())->delete())->daily();
 
