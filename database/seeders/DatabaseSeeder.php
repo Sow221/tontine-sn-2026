@@ -10,16 +10,11 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        if (User::where('email', 'admin@tontinesn.test')->exists()) {
-            $this->command?->info('Les données existent déjà, skip.');
-            return;
-        }
-
         $pw = env('SEED_MEMBRE_PASSWORD', 'Membre2024!');
         $adminPw = env('SEED_ADMIN_PASSWORD', 'Admin2024!');
         $this->now = now();
 
-        $this->command?->info('=== CRÉATION DES UTILISATEURS ===');
+        $this->command?->info('=== CRÉATION/MISE À JOUR DES UTILISATEURS ===');
 
         // ── Admin ──
         $admin = $this->create('admin@tontinesn.test', 'Administrateur', '+221 77 000 00 00',
@@ -61,10 +56,11 @@ class DatabaseSeeder extends Seeder
             $pw, 'member', 'none', true, 2)->update(['referred_by' => $membre->id]);
 
         // ── Tessier parraine 2 personnes ──
+        $tessier = User::where('email', 'tessier@tontinesn.test')->first();
         $this->create('lacombe.franck@tontinesn.test', 'Franck Lacombe', '+221 76 303 03 03',
-            $pw, 'member', 'approved', true, 4)->update(['referred_by' => 5]);
+            $pw, 'member', 'approved', true, 4)->update(['referred_by' => $tessier?->id]);
         $this->create('blanchet.amedee@tontinesn.test', 'Amédée Blanchet', '+221 77 404 04 04',
-            $pw, 'member', 'none', true, 1)->update(['referred_by' => 5]);
+            $pw, 'member', 'none', true, 1)->update(['referred_by' => $tessier?->id]);
 
         // ── 20 autres membres avec variété de profils ──
         $autres = [
@@ -99,7 +95,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $total = User::count();
-        $this->command?->info("  ✓ $total utilisateurs créés");
+        $this->command?->info("  ✓ $total utilisateurs présents");
 
         // ── Badges ──
         $this->call(BadgeSeeder::class);
@@ -131,17 +127,19 @@ class DatabaseSeeder extends Seeder
                             string $password, string $role, string $kycStatus,
                             bool $active, int $monthsAgo): User
     {
-        return User::create([
-            'email' => $email,
-            'name' => $name,
-            'phone_number' => $phone,
-            'password' => bcrypt($password),
-            'role' => $role,
-            'kyc_status' => $kycStatus,
-            'kyc_verified' => $kycStatus === 'approved',
-            'is_active' => $active,
-            'onboarding_completed' => true,
-            'created_at' => $this->now->copy()->subMonths($monthsAgo),
-        ]);
+        return User::updateOrCreate(
+            ['email' => $email],
+            [
+                'name' => $name,
+                'phone_number' => $phone,
+                'password' => bcrypt($password),
+                'role' => $role,
+                'kyc_status' => $kycStatus,
+                'kyc_verified' => $kycStatus === 'approved',
+                'is_active' => $active,
+                'onboarding_completed' => true,
+                'created_at' => $this->now->copy()->subMonths($monthsAgo),
+            ]
+        );
     }
 }
