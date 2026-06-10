@@ -4,7 +4,7 @@
 [![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?logo=laravel&logoColor=white)]()
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)]()
 [![License](https://img.shields.io/badge/License-MIT-green)]()
-[![Tests](https://img.shields.io/badge/tests-84%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-104%20passing-brightgreen)]()
 
 Projet académique · Master Développement Web · Sénégal
 
@@ -85,13 +85,32 @@ Accès : http://localhost:8000
 
 ## Comptes de test (après seeding)
 
-| Rôle        | Email                          |
-|-------------|--------------------------------|
-| Super Admin | awas28948@gmail.com            |
-| Gérante     | awas28948+manager@gmail.com    |
-| Membre      | awas28948+aminata@gmail.com    |
+| Rôle        | Email                       | Mot de passe   |
+|-------------|-----------------------------|----------------|
+| Super Admin | admin@tontinesn.test        | Admin2024!     |
+| Manager     | manager@tontinesn.test      | Membre2024!    |
+| Membre 1    | fatou@tontinesn.test        | Membre2024!    |
+| Membre 2    | membre@tontinesn.test       | Membre2024!    |
 
-> Connexion par email/mot de passe ou Google OAuth
+> Connexion par email/mot de passe (ou Google OAuth). 40 utilisateurs seedés au total.
+
+### Données de démonstration
+
+| Tontine               | Type            | Membres | Statut    |
+|-----------------------|-----------------|---------|-----------|
+| DAK001 — Famille Diallo | Fixe           | 6       | Terminée  |
+| THI001 — Amis de Thiès  | Fixe           | 5       | Active    |
+| DAK002 — Médina         | Fixe           | 4       | Active    |
+| CAS001 — Castors        | Pondéré + Véto | 5       | Active    |
+| STL001 — Saint-Louis    | Fixe           | 5       | Active    |
+| DKR003 — Teranga        | Fixe           | 5       | Active    |
+| ENC001 — Épargne Pro    | Enchères       | 5       | Active    |
+| ENC002 — Développement  | Enchères       | 5       | Active    |
+| EPG001 — Épargne Solidaire | Épargne forcée | 4    | Active    |
+| EPG002 — Projet Avenir  | Épargne forcée | 6       | Active    |
+| CER001 — Mariage Aminata | Cérémonielle  | 3       | Active    |
+
+Stats : **222 transactions**, **43 cycles**, **10 badges**
 
 ---
 
