@@ -1,10 +1,11 @@
 @extends('layouts.app')
 @section('title', 'Accueil')
 
-@section('content')
 @push('head-scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 @endpush
+
+@section('content')
 @php
     $h = now()->hour;
     $greeting = $h < 6 || $h >= 18 ? __('member.greeting_evening') : ($h < 13 ? __('member.greeting_morning') : __('member.greeting_afternoon'));
