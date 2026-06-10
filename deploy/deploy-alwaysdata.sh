@@ -45,8 +45,8 @@ php artisan event:cache
 php artisan migrate --force
 php artisan db:seed --force
 
-# Permissions
-chmod -R 775 storage bootstrap/cache
+# Permissions (ignorer les erreurs sur AlwaysData - hébergement mutualisé)
+chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 
 # Storage link
 php artisan storage:link --force 2>/dev/null || true
