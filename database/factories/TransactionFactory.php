@@ -12,10 +12,10 @@ class TransactionFactory extends Factory
     {
         return [
             'cycle_id' => Cycle::factory(),
-            'user_id'  => User::factory(),
-            'amount'   => 50000,
-            'method'   => 'cash',
-            'status'   => 'pending',
+            'user_id' => User::factory(),
+            'amount' => 50000,
+            'method' => 'cash',
+            'status' => 'pending',
         ];
     }
 }

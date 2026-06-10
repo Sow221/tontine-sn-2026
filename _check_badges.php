@@ -1,9 +1,12 @@
 <?php
-require __DIR__ . '/vendor/autoload.php';
-$app = require __DIR__ . '/bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-echo "user_badges count: " . DB::table('user_badges')->count() . "\n";
+use Illuminate\Contracts\Console\Kernel;
+
+require __DIR__.'/vendor/autoload.php';
+$app = require __DIR__.'/bootstrap/app.php';
+$app->make(Kernel::class)->bootstrap();
+
+echo 'user_badges count: '.DB::table('user_badges')->count()."\n";
 
 echo "\n=== user_badges actuels ===\n";
 DB::table('user_badges')->get()->each(function ($r) {

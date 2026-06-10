@@ -12,7 +12,7 @@ class RoleMiddleware
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return $request->expectsJson()
                 ? response()->json(['message' => 'Non authentifié.'], 401)
                 : redirect()->route('auth.login');
@@ -30,9 +30,9 @@ class RoleMiddleware
         // L'utilisateur doit avoir l'un des rôles autorisés
         // Les admins passent sur toutes les routes non-memberOnly
         $authorized = in_array($user->role, $roles)
-            || (!$memberOnly && $user->isAdmin());
+            || (! $memberOnly && $user->isAdmin());
 
-        if (!$authorized) {
+        if (! $authorized) {
             return $request->expectsJson()
                 ? response()->json(['message' => 'Accès non autorisé.'], 403)
                 : abort(403, 'Accès non autorisé.');

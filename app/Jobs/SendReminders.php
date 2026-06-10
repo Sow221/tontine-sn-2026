@@ -29,7 +29,7 @@ class SendReminders implements ShouldQueue
                 ->chunk(50, function ($cycles) use ($days, $notifier) {
                     foreach ($cycles as $cycle) {
                         foreach ($cycle->tontine->activeMembers as $member) {
-                            $key = 'reminder:' . $member->id . ':' . $cycle->id;
+                            $key = 'reminder:'.$member->id.':'.$cycle->id;
 
                             if (RateLimiter::tooManyAttempts($key, 1)) {
                                 continue;

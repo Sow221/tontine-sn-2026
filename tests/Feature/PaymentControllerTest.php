@@ -14,22 +14,22 @@ class PaymentControllerTest extends TestCase
 
     public function test_show_payment_form(): void
     {
-        $owner   = User::factory()->create();
-        $member  = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $tontine = Tontine::factory()->create(['created_by' => $owner->id, 'status' => 'active']);
         $tontine->members()->attach($member->id, ['status' => 'active', 'position' => 1]);
         $cycle = Cycle::factory()->create(['tontine_id' => $tontine->id, 'status' => 'pending']);
 
         $this->actingAs($member)
-             ->get(route('cycles.pay', $cycle))
-             ->assertOk();
+            ->get(route('cycles.pay', $cycle))
+            ->assertOk();
     }
 
     public function test_guest_cannot_access_payment(): void
     {
-        $owner   = User::factory()->create();
+        $owner = User::factory()->create();
         $tontine = Tontine::factory()->create(['created_by' => $owner->id]);
-        $cycle   = Cycle::factory()->create(['tontine_id' => $tontine->id]);
+        $cycle = Cycle::factory()->create(['tontine_id' => $tontine->id]);
 
         $this->get(route('cycles.pay', $cycle))->assertRedirect(route('auth.login'));
     }

@@ -12,10 +12,10 @@ class TontineService
 {
     public function joinTontine(?Tontine $tontine, int $userId): array
     {
-        if (!$tontine) {
+        if (! $tontine) {
             return ['ok' => false, 'message' => 'Code invalide. Vérifiez et réessayez.'];
         }
-        if (!$tontine->acceptsNewMembers()) {
+        if (! $tontine->acceptsNewMembers()) {
             return ['ok' => false, 'message' => 'Cette tontine n\'accepte plus de nouveaux membres (complète ou clôturée).'];
         }
         if ($tontine->members()->where('users.id', $userId)->whereIn('tontine_members.status', ['active', 'pending'])->exists()) {
@@ -25,25 +25,25 @@ class TontineService
             return ['ok' => false, 'message' => 'Vous ne pouvez pas rejoindre cette tontine.'];
         }
 
-        $user  = User::find($userId);
+        $user = User::find($userId);
         $score = $user?->creditScore?->score ?? 0;
-        $kycThreshold    = config('tontine.transaction.kyc_threshold', 300_000);
+        $kycThreshold = config('tontine.transaction.kyc_threshold', 300_000);
         $kycDocThreshold = config('tontine.transaction.kyc_doc_threshold', 50_000);
 
-        if ($tontine->amount >= $kycDocThreshold && !$user?->kyc_document) {
+        if ($tontine->amount >= $kycDocThreshold && ! $user?->kyc_document) {
             return [
-                'ok'        => false,
-                'message'   => 'Veuillez soumettre un document d\'identité dans votre profil pour rejoindre une tontine de '
-                               . number_format($tontine->amount, 0, ',', ' ') . ' FCFA ou plus.',
+                'ok' => false,
+                'message' => 'Veuillez soumettre un document d\'identité dans votre profil pour rejoindre une tontine de '
+                               .number_format($tontine->amount, 0, ',', ' ').' FCFA ou plus.',
                 'kyc_block' => true,
             ];
         }
 
-        if ($tontine->amount >= $kycThreshold && !$user?->kyc_verified) {
+        if ($tontine->amount >= $kycThreshold && ! $user?->kyc_verified) {
             return [
-                'ok'        => false,
-                'message'   => 'Une vérification d\'identité (KYC) approuvée est requise pour rejoindre une tontine de '
-                               . number_format($tontine->amount, 0, ',', ' ') . ' FCFA ou plus. Soumettez votre document dans votre profil.',
+                'ok' => false,
+                'message' => 'Une vérification d\'identité (KYC) approuvée est requise pour rejoindre une tontine de '
+                               .number_format($tontine->amount, 0, ',', ' ').' FCFA ou plus. Soumettez votre document dans votre profil.',
                 'kyc_block' => true,
             ];
         }
@@ -51,9 +51,9 @@ class TontineService
         $hasHistory = $user?->transactions()->where('status', 'success')->exists();
         if ($hasHistory && $score < 2 && $tontine->amount > 50_000) {
             return [
-                'ok'          => false,
-                'message'     => 'Votre score crédit (' . $score . '/10) est insuffisant pour rejoindre une tontine de '
-                               . number_format($tontine->amount, 0, ',', ' ') . ' FCFA. Améliorez votre score en payant à temps.',
+                'ok' => false,
+                'message' => 'Votre score crédit ('.$score.'/10) est insuffisant pour rejoindre une tontine de '
+                               .number_format($tontine->amount, 0, ',', ' ').' FCFA. Améliorez votre score en payant à temps.',
                 'score_block' => true,
             ];
         }
@@ -74,21 +74,22 @@ class TontineService
 
             if ($locked->isFull()) {
                 $result = ['ok' => false, 'message' => 'Cette tontine est complète.'];
+
                 return;
             }
 
             $locked->members()->syncWithoutDetaching([
                 $userId => [
-                    'status'            => 'pending',
-                    'position'          => $locked->activeMembers()->count() + 1,
-                    'joined_at'         => now(),
-                    'start_cycle_number'=> $startCycleNumber ?? 1,
+                    'status' => 'pending',
+                    'position' => $locked->activeMembers()->count() + 1,
+                    'joined_at' => now(),
+                    'start_cycle_number' => $startCycleNumber ?? 1,
                 ],
             ]);
 
             $message = 'Demande d\'adhésion envoyée. En attente d\'approbation.';
             if ($startCycleNumber && $startCycleNumber > 1) {
-                $message .= ' Vous commencerez à cotiser à partir du cycle ' . $startCycleNumber . '.';
+                $message .= ' Vous commencerez à cotiser à partir du cycle '.$startCycleNumber.'.';
             }
 
             $result = ['ok' => true, 'message' => $message];
@@ -100,7 +101,7 @@ class TontineService
             $newMember = User::find($userId);
             if ($creator && $newMember && $creator->id !== $userId) {
                 try {
-                    app(\App\Services\NotificationService::class)
+                    app(NotificationService::class)
                         ->notifyNewMemberRequest($creator, $newMember, $tontine);
                 } catch (\Throwable $e) {
                     \Log::error('Erreur notification nouvelle demande', [

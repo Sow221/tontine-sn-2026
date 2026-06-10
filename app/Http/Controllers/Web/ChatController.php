@@ -20,7 +20,7 @@ class ChatController extends Controller
         $tontines = $user->memberships()
             ->wherePivot('status', 'active')
             ->with(['latestMessage.user'])
-            ->withCount(['members as members_count' => fn($q) => $q->where('tontine_members.status', 'active')])
+            ->withCount(['members as members_count' => fn ($q) => $q->where('tontine_members.status', 'active')])
             ->get();
 
         // Compter les messages non lus par tontine (depuis la dernière visite réelle du chat)
@@ -29,13 +29,13 @@ class ChatController extends Controller
             ->whereIn('tontine_id', $tontines->pluck('id'))
             ->pluck('chat_last_seen_at', 'tontine_id');
 
-        $unreadCounts = \App\Models\ChatMessage::whereIn('tontine_id', $tontines->pluck('id'))
+        $unreadCounts = ChatMessage::whereIn('tontine_id', $tontines->pluck('id'))
             ->where('user_id', '!=', $user->id)
             ->where(function ($q) use ($lastSeenMap) {
                 foreach ($lastSeenMap as $tontineId => $lastSeen) {
                     $q->orWhere(function ($q2) use ($tontineId, $lastSeen) {
                         $q2->where('tontine_id', $tontineId)
-                           ->where('created_at', '>', $lastSeen ?? '1970-01-01');
+                            ->where('created_at', '>', $lastSeen ?? '1970-01-01');
                     });
                 }
             })
@@ -51,21 +51,25 @@ class ChatController extends Controller
         $user = Auth::user();
         $this->authorizeAccess($tontine, $user);
 
-        $lastId    = (int) $request->query('lastEventId', $request->query('after', 0));
+        $lastId = (int) $request->query('lastEventId', $request->query('after', 0));
         $tontineId = $tontine->id;
 
         // Désactiver le max_execution_time pour les connexions persistantes SSE
         set_time_limit(0);
 
-        return response()->stream(function () use ($tontineId, $lastId, $user) {
-            if (ob_get_level()) ob_end_flush();
+        return response()->stream(function () use ($tontineId, $lastId) {
+            if (ob_get_level()) {
+                ob_end_flush();
+            }
 
-            $current  = $lastId;
-            $ticks    = 0;
+            $current = $lastId;
+            $ticks = 0;
             $maxTicks = 300; // 5 minutes max puis fermeture propre
 
             while ($ticks < $maxTicks) {
-                if (connection_aborted()) break;
+                if (connection_aborted()) {
+                    break;
+                }
 
                 $messages = ChatMessage::where('tontine_id', $tontineId)
                     ->where('id', '>', $current)
@@ -76,11 +80,11 @@ class ChatController extends Controller
 
                 foreach ($messages as $msg) {
                     $data = json_encode([
-                        'id'      => $msg->id,
+                        'id' => $msg->id,
                         'user_id' => $msg->user_id,
-                        'name'    => $msg->user?->name,
+                        'name' => $msg->user?->name,
                         'message' => $msg->message,
-                        'time'    => $msg->created_at->isoFormat('HH:mm \u00b7 D MMM'),
+                        'time' => $msg->created_at->isoFormat('HH:mm \u00b7 D MMM'),
                     ]);
                     echo "id: {$msg->id}\ndata: {$data}\n\n";
                     $current = $msg->id;
@@ -93,20 +97,22 @@ class ChatController extends Controller
                         ->where('status', 'active')
                         ->where('chat_last_seen_at', '>=', now()->subMinutes(2))
                         ->count();
-                    echo 'event: heartbeat' . "\n";
-                    echo 'data: ' . json_encode(['online' => $online]) . "\n\n";
+                    echo 'event: heartbeat'."\n";
+                    echo 'data: '.json_encode(['online' => $online])."\n\n";
                 }
 
-                if (ob_get_level()) ob_flush();
+                if (ob_get_level()) {
+                    ob_flush();
+                }
                 flush();
 
                 sleep(1);
             }
         }, 200, [
-            'Content-Type'      => 'text/event-stream',
-            'Cache-Control'     => 'no-cache, no-store',
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache, no-store',
             'X-Accel-Buffering' => 'no',  // Désactive le buffer Nginx
-            'Connection'        => 'keep-alive',
+            'Connection' => 'keep-alive',
         ]);
     }
 
@@ -123,12 +129,12 @@ class ChatController extends Controller
             ->orderBy('id')
             ->limit(50)
             ->get()
-            ->map(fn($m) => [
-                'id'      => $m->id,
+            ->map(fn ($m) => [
+                'id' => $m->id,
                 'user_id' => $m->user_id,
-                'name'    => $m->user?->name,
+                'name' => $m->user?->name,
                 'message' => $m->message,
-                'time'    => $m->created_at->isoFormat('HH:mm · D MMM'),
+                'time' => $m->created_at->isoFormat('HH:mm · D MMM'),
             ]);
 
         // Membres actifs vus dans les 2 dernières minutes (indicateur de présence)
@@ -171,14 +177,14 @@ class ChatController extends Controller
             'message' => ['required', 'string', 'max:2000'],
         ], [
             'message.required' => 'Le message ne peut pas être vide.',
-            'message.max'      => 'Le message ne doit pas dépasser 2000 caractères.',
+            'message.max' => 'Le message ne doit pas dépasser 2000 caractères.',
         ]);
 
         try {
             $msg = ChatMessage::create([
                 'tontine_id' => $tontine->id,
-                'user_id'    => $user->id,
-                'message'    => trim($request->message),
+                'user_id' => $user->id,
+                'message' => trim($request->message),
             ]);
 
             // Mettre à jour last_seen pour l'expéditeur
@@ -191,8 +197,8 @@ class ChatController extends Controller
 
             if ($request->expectsJson()) {
                 return response()->json([
-                    'ok'   => true,
-                    'id'   => $msg->id,
+                    'ok' => true,
+                    'id' => $msg->id,
                     'time' => $msg->created_at->isoFormat('HH:mm · D MMM'),
                 ]);
             }
@@ -203,6 +209,7 @@ class ChatController extends Controller
             if ($request->expectsJson()) {
                 return response()->json(['errors' => ['message' => ['Erreur lors de l\'envoi.']]], 422);
             }
+
             return back()->withErrors(['error' => 'Erreur lors de l\'envoi du message.']);
         }
     }

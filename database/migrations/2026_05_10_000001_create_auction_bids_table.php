@@ -22,7 +22,7 @@ return new class extends Migration
         // Ajouter bid_amount sur cycles pour stocker le montant net de l'enchère gagnante
         Schema::table('cycles', function (Blueprint $table) {
             $table->unsignedBigInteger('bid_amount')->nullable()->after('total_collected')
-                  ->comment('Montant net reçu par le gagnant de l\'enchère');
+                ->comment('Montant net reçu par le gagnant de l\'enchère');
         });
     }
 

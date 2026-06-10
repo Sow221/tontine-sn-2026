@@ -17,18 +17,20 @@ class GamificationService
     public function checkAndAwardBadges(User $user): Collection
     {
         $existing = $user->badges()->pluck('slug');
-        $earned   = collect();
+        $earned = collect();
 
         foreach ($this->qualifyingBadges($user) as $badge) {
-            if ($existing->contains($badge->slug)) continue;
+            if ($existing->contains($badge->slug)) {
+                continue;
+            }
 
             // Ignorer le doublon en cas de race condition (double visite simultanée)
             DB::table('user_badges')->insertOrIgnore([
-                'user_id'   => $user->id,
-                'badge_id'  => $badge->id,
+                'user_id' => $user->id,
+                'badge_id' => $badge->id,
                 'earned_at' => now(),
-                'created_at'=> now(),
-                'updated_at'=> now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             $earned->push($badge);
@@ -60,9 +62,9 @@ class GamificationService
             ->where('role', 'member');
 
         if ($tontine) {
-            $query->whereHas('memberships', fn($q) => $q->where('tontine_id', $tontine->id)->where('tontine_members.status', 'active'));
+            $query->whereHas('memberships', fn ($q) => $q->where('tontine_id', $tontine->id)->where('tontine_members.status', 'active'));
         } else {
-            $query->whereHas('memberships', fn($q) => $q->where('tontine_members.status', 'active'));
+            $query->whereHas('memberships', fn ($q) => $q->where('tontine_members.status', 'active'));
         }
 
         return $query
@@ -77,9 +79,11 @@ class GamificationService
     {
         $tontineIds = $user->memberships()->pluck('tontines.id');
 
-        if ($tontineIds->isEmpty()) return collect();
+        if ($tontineIds->isEmpty()) {
+            return collect();
+        }
 
-        $cacheKey = 'leaderboard.user.' . $user->id;
+        $cacheKey = 'leaderboard.user.'.$user->id;
 
         return Cache::remember($cacheKey, 300, function () use ($tontineIds, $limit) {
             return User::query()
@@ -89,7 +93,7 @@ class GamificationService
                 ->selectRaw('users.max_streak')
                 ->where('is_active', true)
                 ->where('role', 'member')
-                ->whereHas('memberships', fn($q) => $q->whereIn('tontine_id', $tontineIds)->where('tontine_members.status', 'active'))
+                ->whereHas('memberships', fn ($q) => $q->whereIn('tontine_id', $tontineIds)->where('tontine_members.status', 'active'))
                 ->orderByDesc('credit_score')
                 ->orderByDesc('max_streak')
                 ->orderByDesc('badge_count')
@@ -105,13 +109,13 @@ class GamificationService
         $badgeCountByTier = $badges->groupBy('tier')->map->count();
 
         return [
-            'badges'         => $badges,
-            'total_badges'   => $badges->count(),
-            'bronze_count'   => $badgeCountByTier->get('bronze', 0),
-            'silver_count'   => $badgeCountByTier->get('silver', 0),
-            'gold_count'     => $badgeCountByTier->get('gold', 0),
+            'badges' => $badges,
+            'total_badges' => $badges->count(),
+            'bronze_count' => $badgeCountByTier->get('bronze', 0),
+            'silver_count' => $badgeCountByTier->get('silver', 0),
+            'gold_count' => $badgeCountByTier->get('gold', 0),
             'payment_streak' => $user->payment_streak,
-            'max_streak'     => $user->max_streak,
+            'max_streak' => $user->max_streak,
         ];
     }
 
@@ -120,10 +124,11 @@ class GamificationService
         $stats = $this->computeStats($user);
 
         // Cache des badges par utilisateur (1h) pour éviter des requêtes répétées
-        $badges = Cache::remember('badges.all', 3600, fn() => Badge::all());
+        $badges = Cache::remember('badges.all', 3600, fn () => Badge::all());
 
         return $badges->filter(function (Badge $badge) use ($stats): bool {
             $value = $stats[$badge->criteria_type] ?? 0;
+
             return $value >= $badge->criteria_value;
         })->values();
     }
@@ -133,17 +138,17 @@ class GamificationService
         $successfulTxs = $user->transactions()->where('transactions.status', 'success');
 
         return [
-            'first_payment'           => (int) $successfulTxs->exists(),
-            'payment_streak'          => $user->payment_streak,
-            'beneficiary_count'       => (int) Cycle::where('beneficiary_id', $user->id)->count(),
-            'tontines_created'        => (int) $user->tontines()->count(),
-            'on_time_months'          => $this->getOnTimeMonths($user),
-            'tontine_completed'       => (int) $user->memberships()
+            'first_payment' => (int) $successfulTxs->exists(),
+            'payment_streak' => $user->payment_streak,
+            'beneficiary_count' => (int) Cycle::where('beneficiary_id', $user->id)->count(),
+            'tontines_created' => (int) $user->tontines()->count(),
+            'on_time_months' => $this->getOnTimeMonths($user),
+            'tontine_completed' => (int) $user->memberships()
                 ->wherePivot('status', 'active')
                 ->where('tontines.status', 'completed')
                 ->count(),
-            'invited_members'         => $this->getInvitedCount($user),
-            'referrals_count'         => (int) $user->referrals()->count(),
+            'invited_members' => $this->getInvitedCount($user),
+            'referrals_count' => (int) $user->referrals()->count(),
             'referral_payments_count' => $this->getReferralPaymentsCount($user),
         ];
     }
@@ -155,7 +160,9 @@ class GamificationService
             ->where('transactions.paid_at', '>=', now()->subMonths(3))
             ->exists();
 
-        if (!$hasRecentPayments) return 0;
+        if (! $hasRecentPayments) {
+            return 0;
+        }
 
         // Compatible MySQL et SQLite
         $driver = config('database.default');

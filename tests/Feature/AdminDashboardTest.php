@@ -31,7 +31,7 @@ class AdminDashboardTest extends TestCase
     public function test_admin_can_toggle_user(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $user  = User::factory()->create(['is_active' => true]);
+        $user = User::factory()->create(['is_active' => true]);
 
         $this->actingAs($admin)
             ->post(route('admin.users.toggle', $user))

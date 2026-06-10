@@ -18,6 +18,7 @@ use Laravel\Socialite\Facades\Socialite;
 class AuthController extends Controller
 {
     public function __construct(private NotificationService $notifier) {}
+
     public function showLogin()
     {
         return view('auth.login');
@@ -26,21 +27,21 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => ['required', 'email'],
+            'email' => ['required', 'email'],
             'password' => ['required'],
         ], [
-            'email.required'    => "L'email est obligatoire.",
+            'email.required' => "L'email est obligatoire.",
             'password.required' => 'Le mot de passe est obligatoire.',
         ]);
 
         try {
             $user = User::where('email', $request->email)->first();
 
-            if ($user && !$user->is_active) {
+            if ($user && ! $user->is_active) {
                 return back()->withErrors(['email' => 'Votre compte a été désactivé. Contactez l\'administrateur.'])->onlyInput('email');
             }
 
-            if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+            if (! Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
                 return back()->withErrors(['email' => 'Email ou mot de passe incorrect.'])->onlyInput('email');
             }
 
@@ -59,6 +60,7 @@ class AuthController extends Controller
             return redirect()->intended(route('dashboard'));
         } catch (\Throwable $e) {
             Log::error('Erreur connexion', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['email' => 'Erreur de connexion. Veuillez réessayer.'])->onlyInput('email');
         }
     }
@@ -69,22 +71,23 @@ class AuthController extends Controller
         if ($request->filled('ref')) {
             session(['referral_code' => strtoupper($request->ref)]);
         }
+
         return view('auth.register');
     }
 
     public function register(RegisterRequest $request)
     {
         try {
-            $refCode  = session()->pull('referral_code') ?? strtoupper($request->input('ref', ''));
+            $refCode = session()->pull('referral_code') ?? strtoupper($request->input('ref', ''));
             $referrer = $refCode ? User::where('referral_code', $refCode)->first() : null;
 
             $user = User::create([
-                'name'         => $request->name,
-                'email'        => $request->email,
+                'name' => $request->name,
+                'email' => $request->email,
                 'phone_number' => $request->phone_number,
-                'password'     => Hash::make($request->password),
-                'role'         => 'member',
-                'referred_by'  => $referrer?->id,
+                'password' => Hash::make($request->password),
+                'role' => 'member',
+                'referred_by' => $referrer?->id,
             ]);
 
             Auth::login($user);
@@ -99,6 +102,7 @@ class AuthController extends Controller
             return redirect()->route('dashboard')->with('success', 'Bienvenue sur TontineSN ! Créez votre première tontine ou rejoignez un groupe avec un code.');
         } catch (\Throwable $e) {
             Log::error('Erreur inscription', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['email' => 'Erreur lors de l\'inscription. Veuillez réessayer.'])->withInput();
         }
     }
@@ -129,11 +133,11 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'token'    => ['required'],
-            'email'    => ['required', 'email'],
+            'token' => ['required'],
+            'email' => ['required', 'email'],
             'password' => ['required', 'min:8', 'confirmed'],
         ], [
-            'password.min'       => 'Le mot de passe doit contenir au moins 8 caractères.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
             'password.confirmed' => 'Les mots de passe ne correspondent pas.',
         ]);
 
@@ -150,6 +154,7 @@ class AuthController extends Controller
                 : back()->withErrors(['email' => __($status)]);
         } catch (\Throwable $e) {
             Log::error('Erreur réinitialisation mot de passe', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['email' => 'Erreur lors de la réinitialisation. Veuillez réessayer.']);
         }
     }
@@ -160,6 +165,7 @@ class AuthController extends Controller
         if ($request->filled('ref')) {
             session(['referral_code' => strtoupper($request->ref)]);
         }
+
         return Socialite::driver('google')->stateless()->redirect();
     }
 
@@ -169,45 +175,49 @@ class AuthController extends Controller
             $googleUser = Socialite::driver('google')->stateless()->user();
         } catch (\Exception $e) {
             Log::error('Google OAuth user() failed', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return redirect()->route('auth.login')
-                             ->withErrors(['email' => 'Connexion Google annulée ou échouée.']);
+                ->withErrors(['email' => 'Connexion Google annulée ou échouée.']);
         }
 
         $email = $googleUser->getEmail();
-        if (!$email) {
+        if (! $email) {
             Log::error('Google OAuth: no email returned');
+
             return redirect()->route('auth.login')
                 ->withErrors(['email' => 'Impossible de récupérer votre email Google.']);
         }
 
         try {
-            $isNew    = !User::where('email', $email)->exists();
-            $refCode  = $isNew ? (session()->pull('referral_code') ?? '') : '';
+            $isNew = ! User::where('email', $email)->exists();
+            $refCode = $isNew ? (session()->pull('referral_code') ?? '') : '';
             $referrer = $refCode ? User::where('referral_code', strtoupper($refCode))->first() : null;
 
             $user = User::firstOrCreate(
                 ['email' => $email],
                 [
-                    'name'        => $googleUser->getName(),
-                    'avatar'      => $googleUser->getAvatar(),
-                    'google_id'   => $googleUser->getId(),
-                    'password'    => Str::random(32),
-                    'role'        => 'member',
+                    'name' => $googleUser->getName(),
+                    'avatar' => $googleUser->getAvatar(),
+                    'google_id' => $googleUser->getId(),
+                    'password' => Str::random(32),
+                    'role' => 'member',
                     'referred_by' => $referrer?->id,
                 ]
             );
 
-            if (!$user->is_active) {
+            if (! $user->is_active) {
                 return redirect()->route('auth.login')
                     ->withErrors(['email' => 'Votre compte a été désactivé. Contactez l\'administrateur.']);
             }
 
             $patch = array_filter([
-                'google_id' => !$user->google_id ? $googleUser->getId() : null,
-                'name'      => !$user->name      ? $googleUser->getName() : null,
-                'avatar'    => !$user->avatar    ? $googleUser->getAvatar() : null,
+                'google_id' => ! $user->google_id ? $googleUser->getId() : null,
+                'name' => ! $user->name ? $googleUser->getName() : null,
+                'avatar' => ! $user->avatar ? $googleUser->getAvatar() : null,
             ]);
-            if (!empty($patch)) $user->update($patch);
+            if (! empty($patch)) {
+                $user->update($patch);
+            }
 
             Auth::login($user);
             request()->session()->regenerate();
@@ -230,6 +240,7 @@ class AuthController extends Controller
             return redirect()->intended(route('dashboard'));
         } catch (\Throwable $e) {
             Log::error('Erreur Google OAuth', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return redirect()->route('auth.login')
                 ->withErrors(['email' => 'Erreur lors de la connexion Google.']);
         }
@@ -240,6 +251,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('auth.login');
     }
 }

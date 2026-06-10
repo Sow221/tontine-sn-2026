@@ -14,11 +14,11 @@ class HistoriqueController extends Controller
     public function export(Request $request)
     {
         try {
-            $user  = Auth::user();
+            $user = Auth::user();
             $query = $user->transactions()->with('cycle.tontine')->latest();
 
             if ($request->filled('tontine_id')) {
-                $query->whereHas('cycle', fn($q) => $q->where('tontine_id', $request->tontine_id));
+                $query->whereHas('cycle', fn ($q) => $q->where('tontine_id', $request->tontine_id));
             }
             if ($request->filled('status')) {
                 $query->where('status', $request->status);
@@ -30,23 +30,23 @@ class HistoriqueController extends Controller
 
             $transactions = $query->get();
 
-            $filename = 'historique-tontinesn-' . now()->format('Y-m-d') . '.csv';
+            $filename = 'historique-tontinesn-'.now()->format('Y-m-d').'.csv';
 
             $headers = [
-                'Content-Type'        => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
             ];
 
             $callback = function () use ($transactions) {
                 $file = fopen('php://output', 'w');
-                fputs($file, "\xEF\xBB\xBF");
+                fwrite($file, "\xEF\xBB\xBF");
                 fputcsv($file, ['Date', 'Tontine', 'Cycle', 'Montant (FCFA)', 'Méthode', 'Statut'], ';');
 
                 foreach ($transactions as $tx) {
                     fputcsv($file, [
                         $tx->paid_at?->format('d/m/Y H:i') ?? $tx->created_at->format('d/m/Y H:i'),
                         $tx->cycle->tontine->name ?? '—',
-                        'Cycle ' . ($tx->cycle->cycle_number ?? '—'),
+                        'Cycle '.($tx->cycle->cycle_number ?? '—'),
                         $tx->amount,
                         $tx->method_label,
                         $tx->status_label,
@@ -58,6 +58,7 @@ class HistoriqueController extends Controller
             return response()->stream($callback, 200, $headers);
         } catch (\Throwable $e) {
             Log::error('Erreur export historique', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de l\'export.']);
         }
     }
@@ -65,13 +66,13 @@ class HistoriqueController extends Controller
     public function index(Request $request)
     {
         try {
-            $user     = Auth::user();
+            $user = Auth::user();
             $tontines = $user->memberships()->get(['tontines.id', 'tontines.name']);
 
             $query = $user->transactions()->with('cycle.tontine')->latest();
 
             if ($request->filled('tontine_id')) {
-                $query->whereHas('cycle', fn($q) => $q->where('tontine_id', $request->tontine_id));
+                $query->whereHas('cycle', fn ($q) => $q->where('tontine_id', $request->tontine_id));
             }
 
             if ($request->filled('status')) {
@@ -99,6 +100,7 @@ class HistoriqueController extends Controller
             return view('historique.index', compact('transactions', 'tontines', 'totalSuccess', 'periodes'));
         } catch (\Throwable $e) {
             Log::error('Erreur historique', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors du chargement de l\'historique.']);
         }
     }
@@ -106,11 +108,11 @@ class HistoriqueController extends Controller
     public function exportPdf(Request $request)
     {
         try {
-            $user  = Auth::user();
+            $user = Auth::user();
             $query = $user->transactions()->with('cycle.tontine')->latest();
 
             if ($request->filled('tontine_id')) {
-                $query->whereHas('cycle', fn($q) => $q->where('tontine_id', $request->tontine_id));
+                $query->whereHas('cycle', fn ($q) => $q->where('tontine_id', $request->tontine_id));
             }
             if ($request->filled('status')) {
                 $query->where('status', $request->status);
@@ -122,7 +124,7 @@ class HistoriqueController extends Controller
 
             $transactions = $query->get();
 
-            $options = new Options();
+            $options = new Options;
             $options->set('isRemoteEnabled', true);
             $options->set('isHtml5ParserEnabled', true);
 
@@ -131,14 +133,15 @@ class HistoriqueController extends Controller
             $dompdf->setPaper('A4', 'landscape');
             $dompdf->render();
 
-            $filename = 'historique-complet-tontinesn-' . now()->format('Y-m-d') . '.pdf';
+            $filename = 'historique-complet-tontinesn-'.now()->format('Y-m-d').'.pdf';
 
             return response($dompdf->output(), 200, [
-                'Content-Type'        => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
             ]);
         } catch (\Throwable $e) {
             Log::error('Erreur export PDF historique', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de l\'export PDF.']);
         }
     }

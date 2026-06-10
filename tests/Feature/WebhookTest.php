@@ -2,10 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Http\Controllers\Web\PaymentController;
 use App\Models\Transaction;
 use App\Services\PayTechService;
-use App\Services\TontineService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,8 +25,8 @@ class WebhookTest extends TestCase
     public function test_webhook_verifies_and_confirms_payment(): void
     {
         $transaction = Transaction::factory()->create([
-            'amount'  => 50000,
-            'status'  => 'pending',
+            'amount' => 50000,
+            'status' => 'pending',
             'external_reference' => 'valid_token',
         ]);
 
@@ -38,9 +36,9 @@ class WebhookTest extends TestCase
         $this->app->instance(PayTechService::class, $payTechMock);
 
         $this->post(route('webhooks.paytech'), [
-            'token'       => 'valid_token',
+            'token' => 'valid_token',
             'ref_command' => "TontineSN-{$transaction->id}",
-            'amount'      => 50000,
+            'amount' => 50000,
         ])->assertOk();
 
         $transaction->refresh();

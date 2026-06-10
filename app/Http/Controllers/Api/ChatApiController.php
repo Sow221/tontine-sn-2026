@@ -37,12 +37,12 @@ class ChatApiController extends Controller
             ->orderBy('id')
             ->limit(50)
             ->get()
-            ->map(fn($m) => [
-                'id'         => $m->id,
-                'user_id'    => $m->user_id,
-                'name'       => $m->user?->name,
-                'avatar'     => $m->user?->avatar,
-                'message'    => $m->message,
+            ->map(fn ($m) => [
+                'id' => $m->id,
+                'user_id' => $m->user_id,
+                'name' => $m->user?->name,
+                'avatar' => $m->user?->avatar,
+                'message' => $m->message,
                 'created_at' => $m->created_at->toIso8601String(),
             ]);
 
@@ -60,8 +60,8 @@ class ChatApiController extends Controller
         try {
             $message = ChatMessage::create([
                 'tontine_id' => $tontine->id,
-                'user_id'    => Auth::id(),
-                'message'    => trim($request->message),
+                'user_id' => Auth::id(),
+                'message' => trim($request->message),
             ]);
 
             $notifier->notifyNewChatMessage($tontine, Auth::user(), $request->message);
@@ -69,10 +69,11 @@ class ChatApiController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Message envoyé.',
-                'data'    => $message->load('user:id,name,avatar'),
+                'data' => $message->load('user:id,name,avatar'),
             ]);
         } catch (\Throwable $e) {
             Log::error('API chat erreur envoi', ['tontine_id' => $tontine->id, 'error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Erreur lors de l\'envoi.'], 500);
         }
     }

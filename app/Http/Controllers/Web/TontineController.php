@@ -9,6 +9,7 @@ use App\Jobs\ProcessCycle;
 use App\Models\SavingsWithdrawal;
 use App\Models\Tontine;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\CycleService;
 use App\Services\DrawService;
 use App\Services\NotificationService;
@@ -35,13 +36,13 @@ class TontineController extends Controller
     {
         try {
             $query = Tontine::publiclyVisible()
-                ->withCount(['members as active_members_count' => fn($q) => $q->where('tontine_members.status', 'active')])
+                ->withCount(['members as active_members_count' => fn ($q) => $q->where('tontine_members.status', 'active')])
                 ->with('creator');
 
             if ($search = $request->input('search')) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%");
+                        ->orWhere('description', 'like', "%{$search}%");
                 });
             }
 
@@ -59,10 +60,10 @@ class TontineController extends Controller
 
             $sort = $request->input('sort', 'latest');
             match ($sort) {
-                'amount_asc'  => $query->orderBy('amount', 'asc'),
+                'amount_asc' => $query->orderBy('amount', 'asc'),
                 'amount_desc' => $query->orderBy('amount', 'desc'),
-                'spots'       => $query->orderByRaw('(tontines.max_members - (SELECT COUNT(*) FROM tontine_members WHERE tontine_members.tontine_id = tontines.id AND tontine_members.status = ?)) desc', ['active']),
-                default       => $query->latest(),
+                'spots' => $query->orderByRaw('(tontines.max_members - (SELECT COUNT(*) FROM tontine_members WHERE tontine_members.tontine_id = tontines.id AND tontine_members.status = ?)) desc', ['active']),
+                default => $query->latest(),
             };
 
             $tontines = $query->paginate(12)->withQueryString();
@@ -75,6 +76,7 @@ class TontineController extends Controller
             return view('tontines.explore', compact('tontines', 'myTontineIds'));
         } catch (\Throwable $e) {
             Log::error('Erreur explorer tontines', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors du chargement du catalogue.']);
         }
     }
@@ -85,12 +87,12 @@ class TontineController extends Controller
             $query = Auth::user()->memberships()
                 ->withPivot('status', 'position')
                 ->with('creator', 'cycles')
-                ->withCount(['members as active_members_count' => fn($q) => $q->where('tontine_members.status', 'active')]);
+                ->withCount(['members as active_members_count' => fn ($q) => $q->where('tontine_members.status', 'active')]);
 
             if ($search = $request->input('search')) {
                 $query->where(function ($q) use ($search) {
                     $q->where('tontines.name', 'like', "%{$search}%")
-                      ->orWhere('tontines.code', 'like', "%{$search}%");
+                        ->orWhere('tontines.code', 'like', "%{$search}%");
                 });
             }
 
@@ -103,6 +105,7 @@ class TontineController extends Controller
             return view('tontines.index', compact('tontines'));
         } catch (\Throwable $e) {
             Log::error('Erreur liste tontines', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors du chargement des tontines.']);
         }
     }
@@ -121,15 +124,16 @@ class TontineController extends Controller
             ]);
 
             $tontine->members()->attach(Auth::id(), [
-                'status'    => 'active',
-                'position'  => 1,
+                'status' => 'active',
+                'position' => 1,
                 'joined_at' => now(),
             ]);
 
             return redirect()->route('tontines.show', $tontine)
-                             ->with('success', 'Tontine créée avec succès !');
+                ->with('success', 'Tontine créée avec succès !');
         } catch (\Throwable $e) {
             Log::error('Erreur création tontine', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de la création de la tontine.'])->withInput();
         }
     }
@@ -142,14 +146,14 @@ class TontineController extends Controller
             // Chargement unique et complet — évite le double load et les N+1
             $tontine->load([
                 'members',
-                'cycles' => fn($q) => $q->select('id','tontine_id','cycle_number','due_date','status','total_collected','beneficiary_id','drawn_at','bid_amount')->orderBy('cycle_number'),
+                'cycles' => fn ($q) => $q->select('id', 'tontine_id', 'cycle_number', 'due_date', 'status', 'total_collected', 'beneficiary_id', 'drawn_at', 'bid_amount')->orderBy('cycle_number'),
                 'currentCycle.transactions',
                 'currentCycle.auctionBids',
                 'currentCycle.beneficiary',
             ]);
             $currentCycle = $tontine->currentCycle;
-            $user         = Auth::user();
-            $userId       = $user->id;
+            $user = Auth::user();
+            $userId = $user->id;
 
             $hasPaid = $currentCycle
                 && Transaction::success()->forCycle($currentCycle->id)->forUser($userId)->exists();
@@ -162,31 +166,31 @@ class TontineController extends Controller
                 : collect();
 
             $drawBlockReason = $currentCycle ? $this->drawService->canDraw($currentCycle) : null;
-            $canDraw         = $currentCycle
-                && !$currentCycle->beneficiary_id
+            $canDraw = $currentCycle
+                && ! $currentCycle->beneficiary_id
                 && $drawBlockReason === null;
 
-            $canVeto     = $currentCycle && $this->drawService->canVeto($currentCycle, $userId);
-            $hasVetoed   = $currentCycle && $this->drawService->hasVoted($currentCycle, $userId);
-            $vetoCount   = $currentCycle ? $this->drawService->vetoCount($currentCycle) : 0;
+            $canVeto = $currentCycle && $this->drawService->canVeto($currentCycle, $userId);
+            $hasVetoed = $currentCycle && $this->drawService->hasVoted($currentCycle, $userId);
+            $vetoCount = $currentCycle ? $this->drawService->vetoCount($currentCycle) : 0;
             $vetoRequired = $currentCycle && $tontine->veto_threshold
                 ? (int) ceil($tontine->activeMembers()->count() * $tontine->veto_threshold / 100)
                 : 0;
 
             $myMember = $tontine->members->firstWhere('id', $userId);
             $myMemberStatus = $myMember?->pivot->status;
-            $myPosition     = $myMember?->pivot->position;
+            $myPosition = $myMember?->pivot->position;
 
             $totalCollecte = $tontine->cycles->sum('total_collected');
-            $cyclesPaids   = $tontine->cycles->where('status', 'paid')->count();
-            $myPastWin     = $tontine->cycles->firstWhere('beneficiary_id', $userId);
-            $turnEstimate  = $myMemberStatus === 'active'
+            $cyclesPaids = $tontine->cycles->where('status', 'paid')->count();
+            $myPastWin = $tontine->cycles->firstWhere('beneficiary_id', $userId);
+            $turnEstimate = $myMemberStatus === 'active'
                 ? $tontine->turnEstimateFor($userId)
                 : null;
 
-            $inviteUrl          = route('tontines.join.form', ['code' => $tontine->code]);
-            $acceptsNewMembers  = $tontine->acceptsNewMembers();
-            $bidDeadlinePassed  = $currentCycle && $currentCycle->due_date->isPast();
+            $inviteUrl = route('tontines.join.form', ['code' => $tontine->code]);
+            $acceptsNewMembers = $tontine->acceptsNewMembers();
+            $bidDeadlinePassed = $currentCycle && $currentCycle->due_date->isPast();
 
             $pastCycles = $tontine->cycles
                 ->where('status', 'paid')
@@ -197,9 +201,9 @@ class TontineController extends Controller
                 ? Transaction::success()->forCycle($currentCycle->id)->forUser($userId)->latest('paid_at')->first()
                 : null;
 
-            $mySaved      = null;
+            $mySaved = null;
             $myWithdrawal = null;
-            $withdrawals  = collect();
+            $withdrawals = collect();
 
             if ($tontine->type === 'forced_saving') {
                 $mySaved = Transaction::success()->forTontine($tontine->id)->forUser($userId)
@@ -226,6 +230,7 @@ class TontineController extends Controller
             ));
         } catch (\Throwable $e) {
             Log::error('Erreur affichage tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors du chargement de la tontine.']);
         }
     }
@@ -233,6 +238,7 @@ class TontineController extends Controller
     public function edit(Tontine $tontine)
     {
         $this->authorize('update', $tontine);
+
         return view('tontines.edit', compact('tontine'));
     }
 
@@ -248,9 +254,10 @@ class TontineController extends Controller
             $tontine->update($request->validated());
 
             return redirect()->route('tontines.show', $tontine)
-                             ->with('success', 'Tontine mise à jour.');
+                ->with('success', 'Tontine mise à jour.');
         } catch (\Throwable $e) {
             Log::error('Erreur mise à jour tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de la mise à jour de la tontine.']);
         }
     }
@@ -272,13 +279,16 @@ class TontineController extends Controller
 
             if (config('queue.default') === 'sync') {
                 $this->cycleService->createCycles($tontine);
-                return back()->with('success', 'Tontine activée et ' . $tontine->cycles()->count() . ' cycles générés.');
+
+                return back()->with('success', 'Tontine activée et '.$tontine->cycles()->count().' cycles générés.');
             }
 
             ProcessCycle::dispatch($tontine)->afterResponse();
+
             return back()->with('success', 'Tontine activée. Les cycles sont en cours de génération (quelques secondes).');
         } catch (\Throwable $e) {
             Log::error('Erreur activation tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['activate' => 'Erreur lors de l\'activation.']);
         }
     }
@@ -290,7 +300,7 @@ class TontineController extends Controller
         $preview = null;
         if ($code) {
             $preview = Tontine::where('code', $code)
-                ->withCount(['members as active_members_count' => fn($q) => $q->where('tontine_members.status', 'active')])
+                ->withCount(['members as active_members_count' => fn ($q) => $q->where('tontine_members.status', 'active')])
                 ->first();
         }
 
@@ -301,15 +311,17 @@ class TontineController extends Controller
     {
         try {
             $tontine = Tontine::where('code', strtoupper($code))->first();
-            if (!$tontine) abort(404);
+            if (! $tontine) {
+                abort(404);
+            }
 
             // Stocker le code en session pour redirection post-auth
             session(['invite_code' => strtoupper($code)]);
 
             $inviteUrl = route('tontines.join.form', ['code' => $tontine->code]);
-            $ogImage   = route('tontines.og', ['code' => $tontine->code]);
-            $excerpt   = $tontine->description ?: "Rejoignez cette tontine avec le code {$tontine->code}.";
-            $title     = $tontine->name;
+            $ogImage = route('tontines.og', ['code' => $tontine->code]);
+            $excerpt = $tontine->description ?: "Rejoignez cette tontine avec le code {$tontine->code}.";
+            $title = $tontine->name;
 
             return view('tontines.invite', compact('tontine', 'inviteUrl', 'ogImage', 'excerpt', 'title'));
         } catch (\Throwable $e) {
@@ -322,11 +334,15 @@ class TontineController extends Controller
     {
         try {
             $tontine = Tontine::where('code', strtoupper($code))->first();
-            if (!$tontine) abort(404);
+            if (! $tontine) {
+                abort(404);
+            }
 
-            $amount  = number_format($tontine->amount, 0, ',', ' ');
+            $amount = number_format($tontine->amount, 0, ',', ' ');
             $members = $tontine->activeMembers()->count();
-            $status  = match ($tontine->status) { 'active' => 'Active', 'completed' => 'Terminée', default => 'En attente' };
+            $status = match ($tontine->status) {
+                'active' => 'Active', 'completed' => 'Terminée', default => 'En attente'
+            };
 
             $svg = <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
@@ -351,7 +367,7 @@ SVG;
 
             return response($svg, 200, [
                 'Cache-Control' => 'public, max-age=604800, immutable',
-                'Content-Type'  => 'image/svg+xml',
+                'Content-Type' => 'image/svg+xml',
             ]);
         } catch (\Throwable $e) {
             Log::error('Erreur génération OG image', ['code' => $code, 'error' => $e->getMessage(), 'class' => get_class($e)]);
@@ -365,12 +381,13 @@ SVG;
 
         try {
             $tontine = Tontine::where('code', strtoupper($request->code))->first();
-            $result  = $this->service->joinTontine($tontine, Auth::id());
+            $result = $this->service->joinTontine($tontine, Auth::id());
 
-            if (!$result['ok']) {
-                if (!empty($result['already']) && $tontine) {
+            if (! $result['ok']) {
+                if (! empty($result['already']) && $tontine) {
                     return redirect()->route('tontines.show', $tontine)->with('success', $result['message']);
                 }
+
                 return back()->withErrors(['code' => $result['message']]);
             }
 
@@ -378,17 +395,19 @@ SVG;
             if ($tontine) {
                 $this->webhookOutbound->dispatch('member.joined', [
                     'tontine_id' => $tontine->id,
-                    'user_id'    => Auth::id(),
-                    'status'     => 'pending',
+                    'user_id' => Auth::id(),
+                    'status' => 'pending',
                 ]);
             }
 
             return redirect()->route('tontines.show', $tontine)->with('success', $result['message']);
         } catch (\Throwable $e) {
             \Log::error('Erreur adhésion tontine', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['code' => 'Erreur lors de l\'adhésion.']);
         }
     }
+
     public function confirmCashPayment(Tontine $tontine, Transaction $transaction)
     {
         $this->authorize('update', $tontine);
@@ -404,19 +423,21 @@ SVG;
                 $transaction->amount,
                 $tontine->name
             );
-            return back()->with('success', 'Paiement espèces de ' . ($transaction->user->name ?? '—') . ' confirmé.');
+
+            return back()->with('success', 'Paiement espèces de '.($transaction->user->name ?? '—').' confirmé.');
         } catch (\Throwable $e) {
             Log::error('Erreur confirmation cash', ['tx' => $transaction->id, 'error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => 'Erreur lors de la confirmation.']);
         }
     }
 
-    public function remindMember(Tontine $tontine, \App\Models\User $user)
+    public function remindMember(Tontine $tontine, User $user)
     {
         $this->authorize('update', $tontine);
 
         $currentCycle = $tontine->currentCycle;
-        if (!$currentCycle) {
+        if (! $currentCycle) {
             return back()->withErrors(['error' => 'Aucun cycle actif pour cette tontine.']);
         }
 
@@ -426,7 +447,7 @@ SVG;
             ->exists();
 
         if ($alreadyPaid) {
-            return back()->withErrors(['error' => $user->name . ' a déjà payé ce cycle.']);
+            return back()->withErrors(['error' => $user->name.' a déjà payé ce cycle.']);
         }
 
         try {
@@ -436,14 +457,16 @@ SVG;
                 $tontine->amount,
                 max(0, now()->diffInDays($currentCycle->due_date, false))
             );
-            return back()->with('success', 'Rappel envoyé à ' . $user->name . '.');
+
+            return back()->with('success', 'Rappel envoyé à '.$user->name.'.');
         } catch (\Throwable $e) {
             Log::error('Erreur relance membre', ['tontine' => $tontine->id, 'user' => $user->id, 'error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => 'Erreur lors de l\'envoi du rappel.']);
         }
     }
 
-    public function approveMember(Tontine $tontine, \App\Models\User $user)
+    public function approveMember(Tontine $tontine, User $user)
     {
         $this->authorize('update', $tontine);
 
@@ -452,23 +475,26 @@ SVG;
             Cache::forget("tontine_member_{$tontine->id}_{$user->id}");
             $this->notifier->notifyMemberApproved($user, $tontine->name);
 
-            return back()->with('success', $user->name . ' a été approuvé.');
+            return back()->with('success', $user->name.' a été approuvé.');
         } catch (\Throwable $e) {
             Log::error('Erreur approbation membre', ['tontine' => $tontine->id, 'user' => $user->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de l\'approbation.']);
         }
     }
 
-    public function rejectMember(Tontine $tontine, \App\Models\User $user)
+    public function rejectMember(Tontine $tontine, User $user)
     {
         $this->authorize('update', $tontine);
 
         try {
             $tontine->members()->updateExistingPivot($user->id, ['status' => 'excluded']);
             Cache::forget("tontine_member_{$tontine->id}_{$user->id}");
+
             return back()->with('success', 'Membre refusé.');
         } catch (\Throwable $e) {
             Log::error('Erreur refus membre', ['tontine' => $tontine->id, 'user' => $user->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors du refus.']);
         }
     }
@@ -488,18 +514,19 @@ SVG;
                 ->wherePivot('status', 'active')
                 ->exists();
 
-            if (!$member) {
+            if (! $member) {
                 return back()->withErrors(['beneficiary_id' => 'Le membre sélectionné n\'est pas un membre actif de cette tontine.']);
             }
 
             $cycle = $tontine->cycles()->first();
-            if ($cycle && !$cycle->beneficiary_id) {
+            if ($cycle && ! $cycle->beneficiary_id) {
                 $cycle->update(['beneficiary_id' => $request->beneficiary_id]);
             }
 
             return back()->with('success', 'Bénéficiaire mis à jour avec succès.');
         } catch (\Throwable $e) {
             Log::error('Erreur changement bénéficiaire', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors du changement de bénéficiaire.']);
         }
     }
@@ -512,9 +539,10 @@ SVG;
         try {
             $this->paymentService->confirmWithdrawal($withdrawal);
 
-            return back()->with('success', 'Versement confirmé pour ' . ($withdrawal->user->name ?? 'membre') . '.');
+            return back()->with('success', 'Versement confirmé pour '.($withdrawal->user->name ?? 'membre').'.');
         } catch (\Throwable $e) {
             Log::error('Erreur confirmation retrait', ['withdrawal' => $withdrawal->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de la confirmation du versement.']);
         }
     }
@@ -527,7 +555,7 @@ SVG;
             'new_owner_id' => ['required', 'exists:users,id'],
         ], [
             'new_owner_id.required' => 'Veuillez sélectionner un nouveau propriétaire.',
-            'new_owner_id.exists'   => 'Membre introuvable.',
+            'new_owner_id.exists' => 'Membre introuvable.',
         ]);
 
         $newOwnerId = (int) $request->new_owner_id;
@@ -541,21 +569,23 @@ SVG;
             ->wherePivot('status', 'active')
             ->exists();
 
-        if (!$isMember) {
+        if (! $isMember) {
             return back()->withErrors(['new_owner_id' => 'Le membre sélectionné n\'est pas un membre actif de cette tontine.']);
         }
 
         try {
             $tontine->update(['created_by' => $newOwnerId]);
-            $newOwner = \App\Models\User::find($newOwnerId);
+            $newOwner = User::find($newOwnerId);
             $this->notifier->send(
                 $newOwner,
                 'general',
                 "Vous êtes maintenant propriétaire de la tontine \u00ab\ {$tontine->name}\ \u00bb. Bonne gestion !"
             );
-            return back()->with('success', 'Propriété transférée à ' . ($newOwner?->name ?? 'ce membre') . '.');
+
+            return back()->with('success', 'Propriété transférée à '.($newOwner?->name ?? 'ce membre').'.');
         } catch (\Throwable $e) {
             Log::error('Erreur transfert propriété', ['tontine' => $tontine->id, 'error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => 'Erreur lors du transfert.']);
         }
     }
@@ -569,7 +599,7 @@ SVG;
                 ->where('users.id', $user->id)
                 ->first()?->pivot?->status;
 
-            if (!$memberStatus) {
+            if (! $memberStatus) {
                 return back()->withErrors(['leave' => 'Vous n\'êtes pas membre de cette tontine.']);
             }
 
@@ -587,9 +617,10 @@ SVG;
             $tontine->members()->detach($user->id);
             Cache::forget("tontine_member_{$tontine->id}_{$user->id}");
 
-            return redirect()->route('tontines.index')->with('success', 'Vous avez quitté la tontine « ' . $tontine->name . ' ».');
+            return redirect()->route('tontines.index')->with('success', 'Vous avez quitté la tontine « '.$tontine->name.' ».');
         } catch (\Throwable $e) {
             Log::error('Erreur départ tontine', ['tontine' => $tontine->id, 'user' => $user->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['leave' => 'Erreur lors du départ de la tontine.']);
         }
     }
@@ -600,9 +631,11 @@ SVG;
 
         try {
             $tontine->delete();
+
             return redirect()->route('tontines.index')->with('success', 'Tontine supprimée.');
         } catch (\Throwable $e) {
             Log::error('Erreur suppression tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de la suppression.']);
         }
     }

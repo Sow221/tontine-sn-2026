@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\AuctionBid;
 use App\Models\Cycle;
 use App\Models\CycleVeto;
+use App\Models\User;
 use App\Services\CycleService;
 use App\Services\DrawService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CycleController extends Controller
@@ -45,6 +45,7 @@ class CycleController extends Controller
             return back()->with('success', 'Tirage effectué avec succès.');
         } catch (\Throwable $e) {
             Log::error('Erreur tirage', ['cycle' => $cycle->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['draw' => 'Erreur lors du tirage. Veuillez réessayer.']);
         }
     }
@@ -69,8 +70,8 @@ class CycleController extends Controller
             'bid_rate' => ['required', 'numeric', 'min:0.5', 'max:30'],
         ], [
             'bid_rate.required' => 'Le taux d\'enchère est obligatoire.',
-            'bid_rate.min'      => 'Le taux minimum est 0.5%.',
-            'bid_rate.max'      => 'Le taux maximum est 30%.',
+            'bid_rate.min' => 'Le taux minimum est 0.5%.',
+            'bid_rate.max' => 'Le taux maximum est 30%.',
         ]);
 
         try {
@@ -79,9 +80,10 @@ class CycleController extends Controller
                 ['bid_rate' => $request->bid_rate]
             );
 
-            return back()->with('success', 'Votre enchère de ' . $request->bid_rate . '% a été enregistrée.');
+            return back()->with('success', 'Votre enchère de '.$request->bid_rate.'% a été enregistrée.');
         } catch (\Throwable $e) {
             Log::error('Erreur enchère', ['cycle' => $cycle->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['bid_rate' => 'Erreur lors de l\'enregistrement de l\'enchère.']);
         }
     }
@@ -90,11 +92,11 @@ class CycleController extends Controller
     {
         $this->authorize('view', $cycle->tontine);
 
-        if (!$cycle->beneficiary_id) {
+        if (! $cycle->beneficiary_id) {
             return back()->withErrors(['veto' => 'Aucun bénéficiaire désigné pour ce cycle.']);
         }
 
-        if (!$this->drawService->canVeto($cycle, Auth::id())) {
+        if (! $this->drawService->canVeto($cycle, Auth::id())) {
             return back()->withErrors(['veto' => 'Vous n\'êtes pas autorisé à voter un veto sur ce cycle.']);
         }
 
@@ -109,24 +111,26 @@ class CycleController extends Controller
         try {
             CycleVeto::create([
                 'cycle_id' => $cycle->id,
-                'user_id'  => Auth::id(),
+                'user_id' => Auth::id(),
             ]);
 
             if ($this->drawService->isVetoed($cycle)) {
                 $this->drawService->applyVetoIfThresholdReached($cycle);
                 $cycle->refresh();
                 $newBeneficiary = $cycle->beneficiary?->name ?? 'inconnu';
+
                 return back()->with('success', "Véto activé ! Nouveau bénéficiaire tiré : {$newBeneficiary}.");
             }
 
-            $tontine   = $cycle->tontine;
-            $required  = (int) ceil($tontine->activeMembers()->count() * $tontine->veto_threshold / 100);
+            $tontine = $cycle->tontine;
+            $required = (int) ceil($tontine->activeMembers()->count() * $tontine->veto_threshold / 100);
             $remaining = max(0, $required - $this->drawService->vetoCount($cycle));
 
             return back()->with('success', "Vote de véto enregistré. Encore {$remaining} vote(s) requis pour annuler le tirage.");
         } catch (\Throwable $e) {
             Log::error('Erreur veto', ['cycle' => $cycle->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
-            return back()->withErrors(['veto' => "Erreur lors du vote de véto."]);
+
+            return back()->withErrors(['veto' => 'Erreur lors du vote de véto.']);
         }
     }
 
@@ -142,7 +146,7 @@ class CycleController extends Controller
             $memberIds = $tontine->activeMembers()->pluck('users.id');
             foreach ($withdrawals as $w) {
                 if ($memberIds->contains($w['user_id'])) {
-                    $member = \App\Models\User::find($w['user_id']);
+                    $member = User::find($w['user_id']);
                     if ($member) {
                         $this->notifier->notifySavingsWithdrawal($member, $tontine->name, $w['amount']);
                     }
@@ -150,12 +154,13 @@ class CycleController extends Controller
             }
 
             $summary = collect($withdrawals)
-                ->map(fn($w) => $w['user'] . ' : ' . number_format($w['amount'], 0, ',', ' ') . ' FCFA')
+                ->map(fn ($w) => $w['user'].' : '.number_format($w['amount'], 0, ',', ' ').' FCFA')
                 ->join(' | ');
 
-            return back()->with('success', 'Épargne clôturée. Retraits à effectuer : ' . $summary);
+            return back()->with('success', 'Épargne clôturée. Retraits à effectuer : '.$summary);
         } catch (\Throwable $e) {
             Log::error('Erreur cloture epargne', ['cycle' => $cycle->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de la clôture de l\'épargne.']);
         }
     }

@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Services\Concerns\SanitizesData;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class LoggingService
 {
-    use \App\Services\Concerns\SanitizesData;
+    use SanitizesData;
+
     private string $correlationId;
 
     public function __construct()
@@ -29,13 +31,6 @@ class LoggingService
 
     /**
      * Log payment initiation
-     *
-     * @param int $userId
-     * @param float $amount
-     * @param string $currency
-     * @param string $reference
-     * @param array $metadata
-     * @return void
      */
     public function logPaymentInitiation(
         int $userId,
@@ -58,13 +53,6 @@ class LoggingService
 
     /**
      * Log payment verification
-     *
-     * @param int $userId
-     * @param float $amount
-     * @param string $reference
-     * @param string $externalToken
-     * @param array $metadata
-     * @return void
      */
     public function logPaymentVerification(
         int $userId,
@@ -87,13 +75,6 @@ class LoggingService
 
     /**
      * Log payment confirmation
-     *
-     * @param int $userId
-     * @param float $amount
-     * @param string $reference
-     * @param string $externalToken
-     * @param array $metadata
-     * @return void
      */
     public function logPaymentConfirmation(
         int $userId,
@@ -116,14 +97,6 @@ class LoggingService
 
     /**
      * Log payment error
-     *
-     * @param int|null $userId
-     * @param float|null $amount
-     * @param string|null $reference
-     * @param string $errorCode
-     * @param string $errorMessage
-     * @param array $context
-     * @return void
      */
     public function logPaymentError(
         ?int $userId,
@@ -148,12 +121,6 @@ class LoggingService
 
     /**
      * Log webhook event
-     *
-     * @param string $event
-     * @param string $externalToken
-     * @param array $payload
-     * @param bool $success
-     * @return void
      */
     public function logWebhookEvent(
         string $event,
@@ -173,13 +140,6 @@ class LoggingService
 
     /**
      * Log payment status change
-     *
-     * @param int $userId
-     * @param string $reference
-     * @param string $fromStatus
-     * @param string $toStatus
-     * @param array $metadata
-     * @return void
      */
     public function logPaymentStatusChange(
         int $userId,
@@ -201,9 +161,6 @@ class LoggingService
 
     /**
      * Sanitize payload by removing sensitive data
-     *
-     * @param array $payload
-     * @return array
      */
     private function sanitizePayload(array $payload): array
     {

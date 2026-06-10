@@ -29,14 +29,14 @@ class SmartTontineTest extends TestCase
     {
         $tontine = Tontine::factory()->create([
             'weighted_draw' => true,
-            'draw_method'   => 'sequential',
+            'draw_method' => 'sequential',
         ]);
 
-        $lowScore  = User::factory()->create();
+        $lowScore = User::factory()->create();
         $highScore = User::factory()->create();
 
         $tontine->members()->attach([
-            $lowScore->id  => ['status' => 'active', 'position' => 1],
+            $lowScore->id => ['status' => 'active', 'position' => 1],
             $highScore->id => ['status' => 'active', 'position' => 2],
         ]);
 
@@ -45,7 +45,7 @@ class SmartTontineTest extends TestCase
 
         $cycle = Cycle::factory()->create([
             'tontine_id' => $tontine->id,
-            'status'     => 'paid',
+            'status' => 'paid',
             'total_collected' => $tontine->amount * 2,
         ]);
 
@@ -67,7 +67,7 @@ class SmartTontineTest extends TestCase
 
         $cycle = Cycle::factory()->create([
             'tontine_id' => $tontine->id,
-            'status'     => 'pending',
+            'status' => 'pending',
             'total_collected' => 0,
         ]);
 
@@ -78,11 +78,11 @@ class SmartTontineTest extends TestCase
     public function test_can_veto_returns_true_for_active_member(): void
     {
         $tontine = Tontine::factory()->create(['veto_threshold' => 50]);
-        $member  = User::factory()->create();
+        $member = User::factory()->create();
         $tontine->members()->attach($member->id, ['status' => 'active']);
 
         $cycle = Cycle::factory()->create([
-            'tontine_id'     => $tontine->id,
+            'tontine_id' => $tontine->id,
             'beneficiary_id' => User::factory()->create()->id,
         ]);
 
@@ -96,7 +96,7 @@ class SmartTontineTest extends TestCase
         $tontine->members()->attach($members->pluck('id'), ['status' => 'active']);
 
         $cycle = Cycle::factory()->create([
-            'tontine_id'     => $tontine->id,
+            'tontine_id' => $tontine->id,
             'beneficiary_id' => User::factory()->create()->id,
         ]);
 
@@ -104,7 +104,7 @@ class SmartTontineTest extends TestCase
         foreach ($members->take(2) as $member) {
             CycleVeto::create([
                 'cycle_id' => $cycle->id,
-                'user_id'  => $member->id,
+                'user_id' => $member->id,
             ]);
         }
 

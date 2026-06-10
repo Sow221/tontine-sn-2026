@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Cycle;
+use App\Models\Tontine;
+use App\Models\Transaction;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -89,7 +91,7 @@ class DatabaseSeeder extends Seeder
             $u = $this->create($email, $name, $phone, $pw, 'member', $kyc, $active, $months);
             // Ajouter des parrainages aléatoires pour enrichir l'arbre
             if (in_array($email, ['diaz.salome@tontinesn.test', 'leroux.alexandre@tontinesn.test',
-                                   'garnier.alphonse@tontinesn.test', 'guerin.marc@tontinesn.test'])) {
+                'garnier.alphonse@tontinesn.test', 'guerin.marc@tontinesn.test'])) {
                 $u->update(['referred_by' => $fatou->id]);
             }
         }
@@ -117,15 +119,15 @@ class DatabaseSeeder extends Seeder
         $this->command?->info('║  (Admin: Admin2024!)                     ║');
         $this->command?->info('╚══════════════════════════════════════════╝');
         $this->command?->info('');
-        $this->command?->info('stats → ' . User::count() . ' users · '
-            . \App\Models\Tontine::count() . ' tontines · '
-            . \App\Models\Cycle::count() . ' cycles · '
-            . \App\Models\Transaction::count() . ' transactions');
+        $this->command?->info('stats → '.User::count().' users · '
+            .Tontine::count().' tontines · '
+            .Cycle::count().' cycles · '
+            .Transaction::count().' transactions');
     }
 
     private function create(string $email, string $name, string $phone,
-                            string $password, string $role, string $kycStatus,
-                            bool $active, int $monthsAgo): User
+        string $password, string $role, string $kycStatus,
+        bool $active, int $monthsAgo): User
     {
         return User::updateOrCreate(
             ['email' => $email],

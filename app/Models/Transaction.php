@@ -21,8 +21,8 @@ class Transaction extends Model
     ];
 
     protected $casts = [
-        'amount'   => 'integer',
-        'paid_at'  => 'datetime',
+        'amount' => 'integer',
+        'paid_at' => 'datetime',
         'metadata' => 'array',
     ];
 
@@ -62,14 +62,14 @@ class Transaction extends Model
 
     public function scopeForTontine(Builder $q, int $tontineId): Builder
     {
-        return $q->whereHas('cycle', fn($q) => $q->where('tontine_id', $tontineId));
+        return $q->whereHas('cycle', fn ($q) => $q->where('tontine_id', $tontineId));
     }
 
     public function scopeExcludeRedistribution(Builder $q): Builder
     {
         return $q->where(function ($q) {
             $q->whereNull('external_reference')
-              ->orWhere('external_reference', 'not like', 'redistribution-%');
+                ->orWhere('external_reference', 'not like', 'redistribution-%');
         });
     }
 
@@ -84,6 +84,7 @@ class Transaction extends Model
     public function isReversible(): bool
     {
         $fresh = $this->fresh();
+
         return $fresh
             && $fresh->status === 'success'
             && $fresh->paid_at
@@ -99,26 +100,26 @@ class Transaction extends Model
 
     public function getMethodLabelAttribute(): string
     {
-        return match($this->method) {
-            'wave'            => 'Wave',
-            'orange_money'    => 'Orange Money',
-            'free_money'      => 'Free Money',
-            'card'            => 'Carte bancaire',
-            'cash'            => 'Espèces',
+        return match ($this->method) {
+            'wave' => 'Wave',
+            'orange_money' => 'Orange Money',
+            'free_money' => 'Free Money',
+            'card' => 'Carte bancaire',
+            'cash' => 'Espèces',
             'direct_transfer' => 'Transfert P2P',
-            default           => ucfirst($this->method),
+            default => ucfirst($this->method),
         };
     }
 
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
-            'success'   => 'Payé',
-            'pending'   => 'En attente',
-            'failed'    => 'Échoué',
-            'reversed'  => 'Remboursé',
+        return match ($this->status) {
+            'success' => 'Payé',
+            'pending' => 'En attente',
+            'failed' => 'Échoué',
+            'reversed' => 'Remboursé',
             'cancelled' => 'Annulé',
-            default     => ucfirst((string) $this->status),
+            default => ucfirst((string) $this->status),
         };
     }
 }

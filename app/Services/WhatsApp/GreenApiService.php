@@ -10,19 +10,21 @@ use Illuminate\Support\Facades\Log;
 class GreenApiService
 {
     private ?string $idInstance;
+
     private ?string $apiToken;
+
     private string $apiUrl;
 
     public function __construct()
     {
         $this->idInstance = config('services.greenapi.id_instance');
-        $this->apiToken   = config('services.greenapi.api_token');
-        $this->apiUrl     = config('services.greenapi.api_url', 'https://api.greenapi.com');
+        $this->apiToken = config('services.greenapi.api_token');
+        $this->apiUrl = config('services.greenapi.api_url', 'https://api.greenapi.com');
     }
 
     public function isConfigured(): bool
     {
-        return !empty($this->idInstance) && !empty($this->apiToken);
+        return ! empty($this->idInstance) && ! empty($this->apiToken);
     }
 
     /**
@@ -31,15 +33,16 @@ class GreenApiService
      */
     public function sendText(string $phone, string $message): bool
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             Log::warning('Green API not configured', ['phone' => $phone]);
+
             return false;
         }
 
         $phone = $this->normalizePhone($phone);
 
         $payload = [
-            'chatId'  => $phone . '@c.us',
+            'chatId' => $phone.'@c.us',
             'message' => $message,
         ];
 
@@ -49,16 +52,19 @@ class GreenApiService
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return ($data['idMessage'] ?? true) !== false;
             }
 
             Log::error('Green API sendMessage failed', [
-                'status'   => $response->status(),
+                'status' => $response->status(),
                 'response' => $response->body(),
             ]);
+
             return false;
         } catch (\Throwable $e) {
             Log::error('Green API exception', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
@@ -85,7 +91,7 @@ class GreenApiService
      */
     public function getState(): ?string
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return null;
         }
 
@@ -110,11 +116,11 @@ class GreenApiService
         $type = $payload['typeWebhook'] ?? 'unknown';
 
         return [
-            'type'      => $type,
-            'message'   => $payload['messageData'] ?? null,
-            'sender'    => $payload['senderData'] ?? null,
+            'type' => $type,
+            'message' => $payload['messageData'] ?? null,
+            'sender' => $payload['senderData'] ?? null,
             'timestamp' => $payload['timestamp'] ?? null,
-            'raw'       => $payload,
+            'raw' => $payload,
         ];
     }
 
@@ -127,11 +133,11 @@ class GreenApiService
         }
 
         if (str_starts_with($phone, '0')) {
-            $phone = '221' . substr($phone, 1);
+            $phone = '221'.substr($phone, 1);
         }
 
-        if (!str_starts_with($phone, '221')) {
-            $phone = '221' . $phone;
+        if (! str_starts_with($phone, '221')) {
+            $phone = '221'.$phone;
         }
 
         return $phone;

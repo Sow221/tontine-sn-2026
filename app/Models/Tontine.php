@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tontine extends Model
 {
@@ -22,11 +22,11 @@ class Tontine extends Model
     ];
 
     protected $casts = [
-        'start_date'    => 'date',
-        'end_date'      => 'date',
-        'penalty_rate'  => 'float',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'penalty_rate' => 'float',
         'weighted_draw' => 'boolean',
-        'veto_threshold'=> 'integer',
+        'veto_threshold' => 'integer',
     ];
 
     // ── Relations ──────────────────────────────────────────────────────────
@@ -39,8 +39,8 @@ class Tontine extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'tontine_members')
-                    ->withPivot('status', 'position', 'joined_at', 'start_cycle_number')
-                    ->withTimestamps();
+            ->withPivot('status', 'position', 'joined_at', 'start_cycle_number')
+            ->withTimestamps();
     }
 
     public function activeMembers(): BelongsToMany
@@ -56,8 +56,8 @@ class Tontine extends Model
     public function currentCycle(): HasOne
     {
         return $this->hasOne(Cycle::class)
-                    ->whereIn('status', ['pending', 'partial', 'overdue'])
-                    ->orderBy('cycle_number');
+            ->whereIn('status', ['pending', 'partial', 'overdue'])
+            ->orderBy('cycle_number');
     }
 
     public function latestMessage(): HasOne
@@ -75,7 +75,7 @@ class Tontine extends Model
     public function scopePubliclyVisible($query)
     {
         return $query->where('visibility', 'public')
-                     ->whereIn('status', ['pending', 'active']);
+            ->whereIn('status', ['pending', 'active']);
     }
 
     public function isActive(): bool
@@ -90,7 +90,7 @@ class Tontine extends Model
 
     public function acceptsNewMembers(): bool
     {
-        return in_array($this->status, ['pending', 'active'], true) && !$this->isFull();
+        return in_array($this->status, ['pending', 'active'], true) && ! $this->isFull();
     }
 
     /**
@@ -105,7 +105,7 @@ class Tontine extends Model
         }
 
         // Charger la relation si absente pour éviter les requêtes implicites multiples
-        if (!$this->relationLoaded('members')) {
+        if (! $this->relationLoaded('members')) {
             $this->load('members');
         }
 
@@ -130,10 +130,10 @@ class Tontine extends Model
         }
 
         return [
-            'status'          => 'waiting',
-            'queue_position'  => $index + 1,
-            'members_ahead'   => $index,
-            'total_in_queue'  => $remaining->count(),
+            'status' => 'waiting',
+            'queue_position' => $index + 1,
+            'members_ahead' => $index,
+            'total_in_queue' => $remaining->count(),
         ];
     }
 

@@ -9,6 +9,7 @@ use App\Jobs\RecalculateCreditScore;
 use App\Models\CreditScore;
 use App\Models\Cycle;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\CreditScoringService;
 use App\Services\GamificationService;
 use Illuminate\Support\Collection;
@@ -32,20 +33,20 @@ class DashboardController extends Controller
             }
 
             $activeTontines = $this->loadActiveTontines($user);
-            $paidCycleIds   = $this->paidCycleIds($activeTontines, $user);
+            $paidCycleIds = $this->paidCycleIds($activeTontines, $user);
             $pendingCycleIds = $this->pendingCycleIds($activeTontines, $user);
 
             $activeTontines = $this->mapPaymentStatuses($activeTontines, $paidCycleIds, $pendingCycleIds);
 
             $upcomingPayments = $this->upcomingPayments($activeTontines, $user);
-            $overduePayments  = $upcomingPayments->filter(fn($c) => $c->isOverdue());
+            $overduePayments = $upcomingPayments->filter(fn ($c) => $c->isOverdue());
 
             $pendingMemberships = $user->memberships()->wherePivot('status', 'pending')->get();
 
             $creditScore = $user->creditScore;
             $scoreCalculating = false;
 
-            if (!$creditScore) {
+            if (! $creditScore) {
                 $scoreCalculating = true;
                 RecalculateCreditScore::dispatch($user->id)->afterResponse();
 
@@ -58,20 +59,20 @@ class DashboardController extends Controller
 
             // Badges : vérification toutes les heures, notification via session flash
             $newBadges = collect();
-            $badgeKey  = 'badges_checked_' . $user->id;
+            $badgeKey = 'badges_checked_'.$user->id;
             if (now()->timestamp - (int) session($badgeKey, 0) > 3600) {
                 $earned = $this->gamification->checkAndAwardBadges($user);
                 if ($earned->isNotEmpty()) {
-                    session()->flash('new_badges', $earned->map(fn($b) => ['name' => $b->name, 'icon' => $b->icon])->toArray());
+                    session()->flash('new_badges', $earned->map(fn ($b) => ['name' => $b->name, 'icon' => $b->icon])->toArray());
                 }
                 session()->put($badgeKey, now()->timestamp);
             }
             if (session()->has('new_badges')) {
-                $newBadges = collect(session('new_badges'))->map(fn($b) => (object) $b);
+                $newBadges = collect(session('new_badges'))->map(fn ($b) => (object) $b);
             }
             $gamification = $this->gamification->getUserStats($user);
-            $leaderboard  = $this->gamification->getLeaderboardForUser($user, 5);
-            $chartData    = $this->chartData($user);
+            $leaderboard = $this->gamification->getLeaderboardForUser($user, 5);
+            $chartData = $this->chartData($user);
 
             return view('dashboard.index', compact(
                 'user', 'activeTontines', 'upcomingPayments', 'overduePayments',
@@ -81,8 +82,9 @@ class DashboardController extends Controller
             ));
         } catch (\Throwable $e) {
             Log::error('Erreur dashboard', ['user_id' => Auth::id(), 'error' => $e->getMessage(), 'class' => get_class($e)]);
-            $user        = $user ?? Auth::user() ?? new \App\Models\User();
+            $user = $user ?? Auth::user() ?? new User;
             $creditScore = new CreditScore(['score' => 0, 'badge' => 'none']);
+
             return view('dashboard.index', compact('user') + [
                 'activeTontines' => collect(), 'upcomingPayments' => collect(),
                 'overduePayments' => collect(), 'pendingMemberships' => collect(),
@@ -101,13 +103,14 @@ class DashboardController extends Controller
         return $user->memberships()
             ->wherePivot('status', 'active')
             ->with('currentCycle')
-            ->withCount(['cycles', 'members as active_members_count' => fn($q) => $q->where('tontine_members.status', 'active')])
+            ->withCount(['cycles', 'members as active_members_count' => fn ($q) => $q->where('tontine_members.status', 'active')])
             ->get();
     }
 
     private function paidCycleIds(Collection $activeTontines, $user): array
     {
-        $ids = $activeTontines->map(fn($t) => $t->currentCycle?->id)->filter()->values();
+        $ids = $activeTontines->map(fn ($t) => $t->currentCycle?->id)->filter()->values();
+
         return Transaction::success()->whereIn('cycle_id', $ids)
             ->forUser($user->id)
             ->pluck('cycle_id')
@@ -116,7 +119,8 @@ class DashboardController extends Controller
 
     private function pendingCycleIds(Collection $activeTontines, $user): array
     {
-        $ids = $activeTontines->map(fn($t) => $t->currentCycle?->id)->filter()->values();
+        $ids = $activeTontines->map(fn ($t) => $t->currentCycle?->id)->filter()->values();
+
         return Transaction::pending()->whereIn('cycle_id', $ids)
             ->forUser($user->id)
             ->pluck('cycle_id')
@@ -127,10 +131,11 @@ class DashboardController extends Controller
     {
         return $tontines->map(function ($t) use ($paidIds, $pendingIds) {
             $cycleId = $t->currentCycle?->id;
-            $t->has_paid_current  = $cycleId && in_array($cycleId, $paidIds, true);
-            $t->payment_pending   = $cycleId && in_array($cycleId, $pendingIds, true);
-            $t->my_position       = $t->pivot->position ?? null;
-            $t->pot_total         = $t->amount * $t->active_members_count;
+            $t->has_paid_current = $cycleId && in_array($cycleId, $paidIds, true);
+            $t->payment_pending = $cycleId && in_array($cycleId, $pendingIds, true);
+            $t->my_position = $t->pivot->position ?? null;
+            $t->pot_total = $t->amount * $t->active_members_count;
+
             return $t;
         });
     }
@@ -138,7 +143,7 @@ class DashboardController extends Controller
     private function upcomingPayments(Collection $activeTontines, $user): Collection
     {
         // Batch la vérification des paiements pour éviter le N+1
-        $cycles = $activeTontines->map(fn($t) => $t->currentCycle)->filter();
+        $cycles = $activeTontines->map(fn ($t) => $t->currentCycle)->filter();
         $cycleIds = $cycles->pluck('id')->values();
 
         $alreadyPaidIds = Transaction::success()
@@ -148,7 +153,7 @@ class DashboardController extends Controller
             ->flip();
 
         return $cycles
-            ->reject(fn($c) => $alreadyPaidIds->has($c->id))
+            ->reject(fn ($c) => $alreadyPaidIds->has($c->id))
             ->sortBy('due_date')
             ->values();
     }
@@ -156,18 +161,18 @@ class DashboardController extends Controller
     private function beneficiaryCycles($user): Collection
     {
         return Cycle::where('beneficiary_id', $user->id)
-            ->whereHas('tontine', fn($q) => $q->whereHas('members', fn($q2) => $q2->where('users.id', $user->id)))
+            ->whereHas('tontine', fn ($q) => $q->whereHas('members', fn ($q2) => $q2->where('users.id', $user->id)))
             ->where('status', '!=', 'paid')
             ->whereNotNull('drawn_at')
-            ->with(['tontine' => fn($q) => $q->withCount(['members as active_members_count' => fn($q2) => $q2->where('tontine_members.status', 'active')])])
+            ->with(['tontine' => fn ($q) => $q->withCount(['members as active_members_count' => fn ($q2) => $q2->where('tontine_members.status', 'active')])])
             ->get();
     }
 
     private function chartData($user): array
     {
         // DATE_FORMAT est MySQL-specific — utilisation de strftime pour SQLite en test, DATE_FORMAT en prod
-        $driver   = config('database.default');
-        $dateFmt  = $driver === 'sqlite'
+        $driver = config('database.default');
+        $dateFmt = $driver === 'sqlite'
             ? "strftime('%Y-%m', paid_at) as month"
             : "DATE_FORMAT(paid_at, '%Y-%m') as month";
 
@@ -177,7 +182,7 @@ class DashboardController extends Controller
             ->groupBy('month')
             ->pluck('total', 'month');
 
-        $chartMonths   = collect();
+        $chartMonths = collect();
         $chartPayments = collect();
 
         for ($i = 11; $i >= 0; $i--) {

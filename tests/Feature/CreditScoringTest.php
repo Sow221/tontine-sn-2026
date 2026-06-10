@@ -13,7 +13,7 @@ class CreditScoringTest extends TestCase
 
     public function test_new_user_gets_zero_score(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $score = app(CreditScoringService::class)->calculate($user);
 
         $this->assertEquals(0.0, $score->score);

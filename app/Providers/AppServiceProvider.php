@@ -13,6 +13,7 @@ use App\Services\GamificationService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\TontineService;
+use App\Services\WebhookOutboundService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
@@ -31,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(DrawService::class);
         $this->app->singleton(PaymentService::class);
         $this->app->singleton(GamificationService::class);
-        $this->app->singleton(\App\Services\WebhookOutboundService::class);
+        $this->app->singleton(WebhookOutboundService::class);
     }
 
     public function boot(): void
@@ -43,8 +44,8 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.app', function ($view) {
             $unreadCount = 0;
             if (Auth::check()) {
-                $cacheKey = 'unread_notifications_' . Auth::id();
-                $unreadCount = \Illuminate\Support\Facades\Cache::remember($cacheKey, 30, function () {
+                $cacheKey = 'unread_notifications_'.Auth::id();
+                $unreadCount = Cache::remember($cacheKey, 30, function () {
                     return NotificationLog::where('user_id', Auth::id())->unread()->count();
                 });
             }

@@ -33,19 +33,19 @@ class CreditScoringService
             ->first();
 
         $totalContributed = (int) $aggregate->total_contributed;
-        $totalCycles      = (int) $aggregate->total_cycles;
-        $onTime           = (int) $aggregate->on_time;
+        $totalCycles = (int) $aggregate->total_cycles;
+        $onTime = (int) $aggregate->on_time;
 
         $seniorityMonths = (int) $user->created_at->diffInMonths(now());
 
         // Bonus parrainage : +0.1 par filleul actif, plafonné à 0.5
         $referralBonus = min($user->referrals()->count() * 0.1, 0.5);
 
-        $scoreAmount      = min(($totalContributed / $cfg['base_amount']) * $cfg['weight_amount'], $cfg['weight_amount']);
+        $scoreAmount = min(($totalContributed / $cfg['base_amount']) * $cfg['weight_amount'], $cfg['weight_amount']);
         $scorePunctuality = $totalCycles > 0
             ? ($onTime / $totalCycles) * $cfg['weight_punctuality']
             : 0;
-        $scoreSeniority   = min(($seniorityMonths / $cfg['seniority_base']) * $cfg['weight_seniority'], $cfg['weight_seniority']);
+        $scoreSeniority = min(($seniorityMonths / $cfg['seniority_base']) * $cfg['weight_seniority'], $cfg['weight_seniority']);
 
         $score = round(($scoreAmount + $scorePunctuality + $scoreSeniority + $referralBonus) * 10, 2);
         $score = min(max($score, 0), 10);
@@ -56,13 +56,13 @@ class CreditScoringService
             return CreditScore::updateOrCreate(
                 ['user_id' => $user->id],
                 [
-                    'score'             => $score,
+                    'score' => $score,
                     'total_contributed' => $totalContributed,
-                    'on_time_payments'  => $onTime,
-                    'total_cycles'      => $totalCycles,
-                    'seniority_months'  => $seniorityMonths,
-                    'badge'             => $badge,
-                    'calculated_at'     => now(),
+                    'on_time_payments' => $onTime,
+                    'total_cycles' => $totalCycles,
+                    'seniority_months' => $seniorityMonths,
+                    'badge' => $badge,
+                    'calculated_at' => now(),
                 ]
             );
         });
@@ -72,9 +72,15 @@ class CreditScoringService
     {
         $badges = config('tontine.credit_score.badges');
 
-        if ($score >= $badges['gold'])   return 'gold';
-        if ($score >= $badges['silver']) return 'silver';
-        if ($score >= $badges['bronze']) return 'bronze';
+        if ($score >= $badges['gold']) {
+            return 'gold';
+        }
+        if ($score >= $badges['silver']) {
+            return 'silver';
+        }
+        if ($score >= $badges['bronze']) {
+            return 'bronze';
+        }
 
         return 'none';
     }

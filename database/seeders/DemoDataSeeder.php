@@ -1,11 +1,16 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\{
-    AuctionBid, ChatMessage, Cycle, CycleVeto, Tontine, Transaction, User
-};
+use App\Models\AuctionBid;
+use App\Models\ChatMessage;
+use App\Models\Cycle;
+use App\Models\CycleVeto;
+use App\Models\Tontine;
+use App\Models\Transaction;
+use App\Models\User;
 use App\Services\CreditScoringService;
 use App\Services\GamificationService;
 use Carbon\Carbon;
@@ -14,6 +19,7 @@ use Illuminate\Database\Seeder;
 class DemoDataSeeder extends Seeder
 {
     private Carbon $now;
+
     private array $users = [];
 
     public function run(): void
@@ -80,7 +86,7 @@ class DemoDataSeeder extends Seeder
                 $this->users[$email] = $user;
             }
         }
-        $this->command?->info('  ✓ ' . count($this->users) . ' utilisateurs chargés');
+        $this->command?->info('  ✓ '.count($this->users).' utilisateurs chargés');
     }
 
     private function user(string $email): ?User
@@ -108,11 +114,15 @@ class DemoDataSeeder extends Seeder
                 'created_by' => $this->user('admin@tontinesn.test')->id,
             ]
         );
-        if (!$t->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+        if (! $t->wasRecentlyCreated) {
+            $this->command?->info('  ✓ existe déjà');
+
+            return;
+        }
 
         $members = ['admin@tontinesn.test', 'fatou@tontinesn.test', 'membre@tontinesn.test',
-                     'tessier@tontinesn.test', 'nbonnin@tontinesn.test', 'hugues@tontinesn.test',
-                     'jlemonnier@tontinesn.test', 'pierre@tontinesn.test'];
+            'tessier@tontinesn.test', 'nbonnin@tontinesn.test', 'hugues@tontinesn.test',
+            'jlemonnier@tontinesn.test', 'pierre@tontinesn.test'];
         $this->attachMembers($t, $members);
 
         // 5 cycles terminés (mois 1-5), 1 cycle en cours (mois 6)
@@ -127,7 +137,9 @@ class DemoDataSeeder extends Seeder
                 $isCurrent ? null : $drawn);
 
             foreach ($members as $email) {
-                if ($isCurrent && $email === 'pierre@tontinesn.test') continue;
+                if ($isCurrent && $email === 'pierre@tontinesn.test') {
+                    continue;
+                }
 
                 $isLate = ($email === 'membre@tontinesn.test' && $i === 4);
                 Transaction::create([
@@ -161,10 +173,14 @@ class DemoDataSeeder extends Seeder
                 'created_by' => $this->user('manager@tontinesn.test')->id,
             ]
         );
-        if (!$t->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+        if (! $t->wasRecentlyCreated) {
+            $this->command?->info('  ✓ existe déjà');
+
+            return;
+        }
 
         $members = ['manager@tontinesn.test', 'tessier@tontinesn.test', 'rbousquet@tontinesn.test',
-                     'npaul@tontinesn.test', 'bleroy@tontinesn.test'];
+            'npaul@tontinesn.test', 'bleroy@tontinesn.test'];
         $this->attachMembers($t, $members);
 
         for ($i = 1; $i <= 12; $i++) {
@@ -183,7 +199,9 @@ class DemoDataSeeder extends Seeder
                 if ($isOverdue) {
                     // Semaine 11 : 3/5 payés, semaine 12 : 2/5 payés
                     $payCount = ($i === 11) ? 3 : 2;
-                    if (array_search($email, $members, true) >= $payCount) continue;
+                    if (array_search($email, $members, true) >= $payCount) {
+                        continue;
+                    }
                 }
 
                 $isLate = ($email === 'bleroy@tontinesn.test' && $i === 8);
@@ -218,7 +236,11 @@ class DemoDataSeeder extends Seeder
                 'created_by' => $this->user('juliette@tontinesn.test')->id,
             ]
         );
-        if (!$t->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+        if (! $t->wasRecentlyCreated) {
+            $this->command?->info('  ✓ existe déjà');
+
+            return;
+        }
 
         $members = ['fatou@tontinesn.test', 'juliette@tontinesn.test', 'maurice@tontinesn.test'];
         $this->attachMembers($t, $members);
@@ -266,10 +288,14 @@ class DemoDataSeeder extends Seeder
                 'created_by' => $this->user('admin@tontinesn.test')->id,
             ]
         );
-        if (!$t->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+        if (! $t->wasRecentlyCreated) {
+            $this->command?->info('  ✓ existe déjà');
+
+            return;
+        }
 
         $members = ['admin@tontinesn.test', 'fatou@tontinesn.test', 'membre@tontinesn.test',
-                     'tessier@tontinesn.test', 'rbousquet@tontinesn.test', 'nbonnin@tontinesn.test'];
+            'tessier@tontinesn.test', 'rbousquet@tontinesn.test', 'nbonnin@tontinesn.test'];
         $this->attachMembers($t, $members);
 
         for ($i = 1; $i <= 6; $i++) {
@@ -312,10 +338,14 @@ class DemoDataSeeder extends Seeder
                 'created_by' => $this->user('rbousquet@tontinesn.test')->id,
             ]
         );
-        if (!$t->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+        if (! $t->wasRecentlyCreated) {
+            $this->command?->info('  ✓ existe déjà');
+
+            return;
+        }
 
         $members = ['rbousquet@tontinesn.test', 'npaul@tontinesn.test', 'bleroy@tontinesn.test',
-                     'gilles.guillaume@tontinesn.test', 'renaud.nicolas@tontinesn.test'];
+            'gilles.guillaume@tontinesn.test', 'renaud.nicolas@tontinesn.test'];
         $this->attachMembers($t, $members);
 
         // Cycle 1 : terminé (gbagné par rbousquet à 12%)
@@ -370,10 +400,14 @@ class DemoDataSeeder extends Seeder
                 'created_by' => $this->user('nbonnin@tontinesn.test')->id,
             ]
         );
-        if (!$t->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+        if (! $t->wasRecentlyCreated) {
+            $this->command?->info('  ✓ existe déjà');
+
+            return;
+        }
 
         $members = ['nbonnin@tontinesn.test', 'hugues@tontinesn.test',
-                     'leroux.alexandre@tontinesn.test', 'garnier.alphonse@tontinesn.test'];
+            'leroux.alexandre@tontinesn.test', 'garnier.alphonse@tontinesn.test'];
         $this->attachMembers($t, $members);
 
         // Cycle 1 : terminé (gagné par nbonnin à 10%)
@@ -416,10 +450,14 @@ class DemoDataSeeder extends Seeder
                 'created_by' => $this->user('tessier@tontinesn.test')->id,
             ]
         );
-        if (!$t->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+        if (! $t->wasRecentlyCreated) {
+            $this->command?->info('  ✓ existe déjà');
+
+            return;
+        }
 
         $members = ['tessier@tontinesn.test', 'manager@tontinesn.test', 'fatou@tontinesn.test',
-                     'membre@tontinesn.test', 'lacombe.franck@tontinesn.test', 'diaz.salome@tontinesn.test'];
+            'membre@tontinesn.test', 'lacombe.franck@tontinesn.test', 'diaz.salome@tontinesn.test'];
         $this->attachMembers($t, $members);
 
         for ($i = 1; $i <= 5; $i++) {
@@ -430,7 +468,9 @@ class DemoDataSeeder extends Seeder
             $c = $this->makeCycle($t, $i, $status, $due, null, null);
 
             foreach ($members as $email) {
-                if ($isPartial && $email === 'membre@tontinesn.test') continue;
+                if ($isPartial && $email === 'membre@tontinesn.test') {
+                    continue;
+                }
                 Transaction::create([
                     'cycle_id' => $c->id, 'user_id' => $this->user($email)->id,
                     'amount' => 40000, 'method' => 'orange_money', 'status' => 'success',
@@ -462,10 +502,14 @@ class DemoDataSeeder extends Seeder
                 'created_by' => $this->user('manager@tontinesn.test')->id,
             ]
         );
-        if (!$t->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+        if (! $t->wasRecentlyCreated) {
+            $this->command?->info('  ✓ existe déjà');
+
+            return;
+        }
 
         $members = ['manager@tontinesn.test', 'jlemonnier@tontinesn.test',
-                     'leclerc.sabine@tontinesn.test', 'fournier.amedee@tontinesn.test'];
+            'leclerc.sabine@tontinesn.test', 'fournier.amedee@tontinesn.test'];
         $this->attachMembers($t, $members);
 
         for ($i = 1; $i <= 3; $i++) {
@@ -496,10 +540,14 @@ class DemoDataSeeder extends Seeder
                 'created_by' => $this->user('membre@tontinesn.test')->id,
             ]
         );
-        if (!$t->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+        if (! $t->wasRecentlyCreated) {
+            $this->command?->info('  ✓ existe déjà');
+
+            return;
+        }
 
         $members = ['membre@tontinesn.test', 'fatou@tontinesn.test', 'admin@tontinesn.test',
-                     'tessier@tontinesn.test', 'maryse@tontinesn.test'];
+            'tessier@tontinesn.test', 'maryse@tontinesn.test'];
         $this->attachMembers($t, $members);
 
         // Cycle 1 : payé
@@ -535,10 +583,14 @@ class DemoDataSeeder extends Seeder
                 'created_by' => $this->user('hugues@tontinesn.test')->id,
             ]
         );
-        if (!$t->wasRecentlyCreated) { $this->command?->info('  ✓ existe déjà'); return; }
+        if (! $t->wasRecentlyCreated) {
+            $this->command?->info('  ✓ existe déjà');
+
+            return;
+        }
 
         $members = ['membre@tontinesn.test', 'tessier@tontinesn.test', 'nbonnin@tontinesn.test',
-                     'hugues@tontinesn.test', 'menard.chantal@tontinesn.test', 'guerin.marc@tontinesn.test'];
+            'hugues@tontinesn.test', 'menard.chantal@tontinesn.test', 'guerin.marc@tontinesn.test'];
         $this->attachMembers($t, $members);
 
         // Cycle 1 : tirage contesté — 2 vetos
@@ -568,35 +620,41 @@ class DemoDataSeeder extends Seeder
     {
         $this->command?->info("\n--- Transactions QR P2P ---");
         $anyCycleId = Cycle::inRandomOrder()->value('id');
-        if (!$anyCycleId) { $this->command?->info('  ⚠ Aucun cycle trouvé'); return; }
+        if (! $anyCycleId) {
+            $this->command?->info('  ⚠ Aucun cycle trouvé');
+
+            return;
+        }
 
         $p2ps = [
             ['from' => 'membre@tontinesn.test',  'amount' => 15000, 'desc' => 'Remboursement course',
-             'method' => 'direct_transfer', 'days_ago' => 5, 'meta' => ['receiver' => 'admin@tontinesn.test']],
+                'method' => 'direct_transfer', 'days_ago' => 5, 'meta' => ['receiver' => 'admin@tontinesn.test']],
             ['from' => 'jlemonnier@tontinesn.test', 'amount' => 25000, 'desc' => 'Cotisation repas famille',
-             'method' => 'direct_transfer', 'days_ago' => 3, 'meta' => ['receiver' => 'pierre@tontinesn.test']],
+                'method' => 'direct_transfer', 'days_ago' => 3, 'meta' => ['receiver' => 'pierre@tontinesn.test']],
             ['from' => 'hugues@tontinesn.test', 'amount' => 10000, 'desc' => 'Cadeau anniversaire',
-             'method' => 'free_money', 'days_ago' => 1, 'meta' => ['receiver' => 'maryse@tontinesn.test']],
+                'method' => 'free_money', 'days_ago' => 1, 'meta' => ['receiver' => 'maryse@tontinesn.test']],
             ['from' => 'fatou@tontinesn.test', 'amount' => 50000, 'desc' => 'Contribution cérémonie',
-             'method' => 'direct_transfer', 'days_ago' => 0, 'meta' => ['receiver' => 'membre@tontinesn.test']],
+                'method' => 'direct_transfer', 'days_ago' => 0, 'meta' => ['receiver' => 'membre@tontinesn.test']],
             ['from' => 'tessier@tontinesn.test', 'amount' => 7500, 'desc' => 'Part taxi groupe',
-             'method' => 'direct_transfer', 'days_ago' => 7, 'meta' => ['receiver' => 'rbousquet@tontinesn.test']],
+                'method' => 'direct_transfer', 'days_ago' => 7, 'meta' => ['receiver' => 'rbousquet@tontinesn.test']],
             ['from' => 'manager@tontinesn.test', 'amount' => 20000, 'desc' => 'Prêt remboursé',
-             'method' => 'direct_transfer', 'days_ago' => 2, 'meta' => ['receiver' => 'tessier@tontinesn.test']],
+                'method' => 'direct_transfer', 'days_ago' => 2, 'meta' => ['receiver' => 'tessier@tontinesn.test']],
         ];
         $count = 0;
         foreach ($p2ps as $p2p) {
             $user = $this->user($p2p['from']);
-            if (!$user) continue;
+            if (! $user) {
+                continue;
+            }
             $exists = Transaction::where('type', 'qr_p2p')
                 ->where('user_id', $user->id)
                 ->where('amount', $p2p['amount'])
                 ->exists();
-            if (!$exists) {
+            if (! $exists) {
                 Transaction::create([
                     'cycle_id' => $anyCycleId, 'user_id' => $user->id,
                     'amount' => $p2p['amount'], 'method' => $p2p['method'],
-                    'type' => 'qr_p2p', 'description' => 'Paiement QR P2P — ' . $p2p['desc'],
+                    'type' => 'qr_p2p', 'description' => 'Paiement QR P2P — '.$p2p['desc'],
                     'metadata' => json_encode($p2p['meta']),
                     'status' => 'success', 'paid_at' => $this->now->copy()->subDays($p2p['days_ago']),
                 ]);
@@ -615,7 +673,9 @@ class DemoDataSeeder extends Seeder
         $tontines = Tontine::whereIn('code', ['FAM001', 'THI001'])->get();
         foreach ($tontines as $tontine) {
             $members = $tontine->activeMembers->pluck('id')->toArray();
-            if (count($members) < 3) continue;
+            if (count($members) < 3) {
+                continue;
+            }
 
             $msgs = match ($tontine->code) {
                 'FAM001' => [
@@ -641,7 +701,7 @@ class DemoDataSeeder extends Seeder
             foreach ($msgs as $i => [$msg, $mi]) {
                 $exists = ChatMessage::where('tontine_id', $tontine->id)
                     ->where('message', $msg)->exists();
-                if (!$exists) {
+                if (! $exists) {
                     ChatMessage::create([
                         'tontine_id' => $tontine->id, 'user_id' => $members[$mi] ?? $members[0],
                         'message' => $msg, 'created_at' => $this->now->copy()->subDays(14 - $i * 2),
@@ -687,7 +747,7 @@ class DemoDataSeeder extends Seeder
         foreach ($this->users as $email => $user) {
             $badges = $gamification->checkAndAwardBadges($user);
             if ($badges->isNotEmpty()) {
-                $this->command?->info("  🏅 $email : " . $badges->pluck('slug')->implode(', '));
+                $this->command?->info("  🏅 $email : ".$badges->pluck('slug')->implode(', '));
             }
         }
 
@@ -707,7 +767,11 @@ class DemoDataSeeder extends Seeder
         $data = [];
         foreach ($emails as $i => $email) {
             $user = $this->user($email);
-            if (!$user) { $this->command?->warn("  ⚠ Utilisateur introuvable : $email"); continue; }
+            if (! $user) {
+                $this->command?->warn("  ⚠ Utilisateur introuvable : $email");
+
+                continue;
+            }
             $data[$user->id] = [
                 'status' => 'active', 'position' => $i + 1,
                 'joined_at' => $tontine->start_date->copy()->addDays($i),
@@ -718,13 +782,13 @@ class DemoDataSeeder extends Seeder
     }
 
     private function makeCycle(Tontine $t, int $num, string $status, Carbon $dueDate,
-                                ?User $benef = null, ?Carbon $drawnAt = null): Cycle
+        ?User $benef = null, ?Carbon $drawnAt = null): Cycle
     {
         return Cycle::create([
             'tontine_id' => $t->id, 'cycle_number' => $num,
             'beneficiary_id' => $benef?->id, 'due_date' => $dueDate,
             'status' => $status, 'total_collected' => 0,
-            'draw_hash' => $drawnAt ? hash('sha256', $t->code . "-$num-{$benef?->id}-" . $drawnAt->timestamp) : null,
+            'draw_hash' => $drawnAt ? hash('sha256', $t->code."-$num-{$benef?->id}-".$drawnAt->timestamp) : null,
             'drawn_at' => $drawnAt,
         ]);
     }
@@ -733,7 +797,9 @@ class DemoDataSeeder extends Seeder
     {
         foreach ($emails as $email) {
             $user = $this->user($email);
-            if (!$user) continue;
+            if (! $user) {
+                continue;
+            }
             Transaction::create([
                 'cycle_id' => $cycle->id, 'user_id' => $user->id,
                 'amount' => $amount, 'method' => 'wave', 'status' => 'success',

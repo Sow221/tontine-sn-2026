@@ -10,14 +10,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Cycle extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'tontine_id', 'cycle_number', 'beneficiary_id',
         'due_date', 'status', 'total_collected', 'bid_amount', 'draw_hash', 'drawn_at',
     ];
 
     protected $casts = [
-        'due_date'  => 'date',
-        'drawn_at'  => 'datetime',
+        'due_date' => 'date',
+        'drawn_at' => 'datetime',
     ];
 
     // ── Relations ──────────────────────────────────────────────────────────
@@ -67,7 +68,7 @@ class Cycle extends Model
     public function expectedTotal(): int
     {
         // Utilise les données déjà chargées si disponibles, sinon requête
-        $amount  = $this->tontine->amount;
+        $amount = $this->tontine->amount;
         $members = $this->tontine->relationLoaded('members')
             ? $this->tontine->members->where('pivot.status', 'active')->count()
             : $this->tontine->activeMembers()->count();
@@ -78,6 +79,7 @@ class Cycle extends Model
     public function completionRate(): float
     {
         $expected = $this->expectedTotal();
+
         return $expected > 0 ? round(($this->total_collected / $expected) * 100, 1) : 0;
     }
 }

@@ -16,15 +16,16 @@ class AdminTransactionController extends Controller
     {
         try {
             $transactions = Transaction::with('user', 'cycle.tontine')
-                ->when($request->status,     fn($q) => $q->where('status', $request->status))
-                ->when($request->method,     fn($q) => $q->where('method', $request->method))
-                ->when($request->suspicious, fn($q) => $q->where('amount', '>', config('tontine.transaction.daily_limit')))
+                ->when($request->status, fn ($q) => $q->where('status', $request->status))
+                ->when($request->method, fn ($q) => $q->where('method', $request->method))
+                ->when($request->suspicious, fn ($q) => $q->where('amount', '>', config('tontine.transaction.daily_limit')))
                 ->latest()
                 ->paginate(25);
 
             return view('admin.transactions', compact('transactions'));
         } catch (\Throwable $e) {
             Log::error('Erreur liste transactions admin', ['error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => 'Erreur lors du chargement des transactions.']);
         }
     }
@@ -44,6 +45,7 @@ class AdminTransactionController extends Controller
             return back()->with('success', "Transaction #{$transaction->id} confirmée manuellement.");
         } catch (\Throwable $e) {
             Log::error('Erreur confirmation forcée transaction', ['tx' => $transaction->id, 'error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => 'Erreur lors de la confirmation.']);
         }
     }
@@ -52,13 +54,13 @@ class AdminTransactionController extends Controller
     {
         try {
             $headers = [
-                'Content-Type'        => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="transactions-tontinesn-' . now()->format('Y-m-d') . '.csv"',
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="transactions-tontinesn-'.now()->format('Y-m-d').'.csv"',
             ];
 
             return response()->stream(function () {
                 $file = fopen('php://output', 'w');
-                fputs($file, "\xEF\xBB\xBF");
+                fwrite($file, "\xEF\xBB\xBF");
                 fputcsv($file, ['ID', 'Utilisateur', 'Email', 'Tontine', 'Cycle', 'Montant (FCFA)', 'Méthode', 'Statut', 'Date'], ';');
 
                 Transaction::with('user', 'cycle.tontine')->latest()->chunk(500, function ($txs) use ($file) {
@@ -81,6 +83,7 @@ class AdminTransactionController extends Controller
             }, 200, $headers);
         } catch (\Throwable $e) {
             Log::error('Erreur export CSV transactions', ['error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => "Erreur lors de l'export."]);
         }
     }

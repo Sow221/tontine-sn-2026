@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
-use Illuminate\Http\Request;
+use Intervention\Image\ImageManagerStatic;
 
 class PostController extends Controller
 {
@@ -38,12 +38,12 @@ class PostController extends Controller
         $title = $post->title ?? 'Post';
 
         // destination path in storage/app/public/og
-        $filename = "post-{$post->id}-" . md5($post->updated_at ?? $post->created_at ?? $post->id) . '.png';
+        $filename = "post-{$post->id}-".md5($post->updated_at ?? $post->created_at ?? $post->id).'.png';
         $relative = "og/{$filename}";
 
         // if exists locally, serve it directly
-        if (file_exists(storage_path('app/public/' . $relative))) {
-            return response()->file(storage_path('app/public/' . $relative), [
+        if (file_exists(storage_path('app/public/'.$relative))) {
+            return response()->file(storage_path('app/public/'.$relative), [
                 'Cache-Control' => 'public, max-age=604800, immutable',
                 'Content-Type' => 'image/png',
             ]);
@@ -55,7 +55,7 @@ class PostController extends Controller
         // Prefer Intervention Image if available and local font exists
         $fontPath = public_path('fonts/Inter-Regular.ttf');
         if (class_exists('Intervention\\Image\\ImageManagerStatic') && file_exists($fontPath)) {
-            $img = \Intervention\Image\ImageManagerStatic::canvas($width, $height, '#ffffff');
+            $img = ImageManagerStatic::canvas($width, $height, '#ffffff');
             // background accent
             $img->rectangle(0, $height - 120, $width, $height, function ($draw) {
                 $draw->background('#009639');
@@ -79,12 +79,12 @@ class PostController extends Controller
             });
 
             // ensure directory
-            if (!is_dir(storage_path('app/public/og'))) {
+            if (! is_dir(storage_path('app/public/og'))) {
                 mkdir(storage_path('app/public/og'), 0755, true);
             }
-            $img->save(storage_path('app/public/' . $relative));
+            $img->save(storage_path('app/public/'.$relative));
 
-            return response()->file(storage_path('app/public/' . $relative), [
+            return response()->file(storage_path('app/public/'.$relative), [
                 'Cache-Control' => 'public, max-age=604800, immutable',
                 'Content-Type' => 'image/png',
             ]);
@@ -102,21 +102,20 @@ class PostController extends Controller
         $y = 80;
         foreach (explode("\n", $lines) as $line) {
             $bbox = imagefontwidth($fontSize) * strlen($line);
-            $x = (int)(($width - $bbox) / 2);
+            $x = (int) (($width - $bbox) / 2);
             imagestring($im, $fontSize, $x, $y, $line, $textColor);
             $y += imagefontheight($fontSize) + 10;
         }
 
-        if (!is_dir(storage_path('app/public/og'))) {
+        if (! is_dir(storage_path('app/public/og'))) {
             mkdir(storage_path('app/public/og'), 0755, true);
         }
-        imagepng($im, storage_path('app/public/' . $relative));
+        imagepng($im, storage_path('app/public/'.$relative));
         imagedestroy($im);
 
-        return response()->file(storage_path('app/public/' . $relative), [
+        return response()->file(storage_path('app/public/'.$relative), [
             'Cache-Control' => 'public, max-age=604800, immutable',
             'Content-Type' => 'image/png',
         ]);
     }
 }
-

@@ -9,7 +9,6 @@ use App\Models\CreditScore;
 use App\Models\Cycle;
 use App\Models\CycleVeto;
 use App\Models\Transaction;
-use App\Models\User;
 
 class DrawService
 {
@@ -26,19 +25,19 @@ class DrawService
                 return 'Aucune enchère soumise pour ce cycle.';
             }
         } else {
-            $paidCount   = $cycle->successfulTransactions()->count();
+            $paidCount = $cycle->successfulTransactions()->count();
             $memberCount = $tontine->activeMembers()->count();
 
             // Si un quorum est configuré, vérifier uniquement le quorum
             if ($tontine->quorum > 1) {
                 $required = (int) ceil($memberCount * $tontine->quorum / 100);
                 if ($paidCount < $required) {
-                    return 'Quorum non atteint : ' . $paidCount . '/' . $required . ' paiements requis.';
+                    return 'Quorum non atteint : '.$paidCount.'/'.$required.' paiements requis.';
                 }
             } else {
                 // Sans quorum configuré, on exige 100%
                 if ($cycle->completionRate() < 100) {
-                    return 'Tirage impossible : ' . $cycle->completionRate() . '% collecté seulement.';
+                    return 'Tirage impossible : '.$cycle->completionRate().'% collecté seulement.';
                 }
             }
         }
@@ -48,7 +47,9 @@ class DrawService
 
     public function drawBeneficiary(Cycle $cycle): void
     {
-        if (in_array($cycle->tontine->type, ['forced_saving', 'ceremonial'])) return;
+        if (in_array($cycle->tontine->type, ['forced_saving', 'ceremonial'])) {
+            return;
+        }
 
         $tontine = $cycle->tontine;
 
@@ -60,7 +61,9 @@ class DrawService
             ->whereNotIn('users.id', $alreadyWon)
             ->get();
 
-        if ($eligible->isEmpty()) return;
+        if ($eligible->isEmpty()) {
+            return;
+        }
 
         if ($tontine->type === 'auction') {
             $winner = $this->resolveAuctionWinner($cycle, $eligible);
@@ -69,15 +72,15 @@ class DrawService
         } else {
             $winner = $tontine->draw_method === 'random'
                 ? $eligible->random()
-                : $eligible->sortBy(fn($u) => $u->pivot->position)->first();
+                : $eligible->sortBy(fn ($u) => $u->pivot->position)->first();
         }
 
-        $hash = hash('sha256', $tontine->id . $cycle->cycle_number . $winner->id . now()->timestamp);
+        $hash = hash('sha256', $tontine->id.$cycle->cycle_number.$winner->id.now()->timestamp);
 
         $cycle->update([
             'beneficiary_id' => $winner->id,
-            'draw_hash'      => $hash,
-            'drawn_at'       => now(),
+            'draw_hash' => $hash,
+            'drawn_at' => now(),
         ]);
     }
 
@@ -87,7 +90,9 @@ class DrawService
      */
     public function applyVetoIfThresholdReached(Cycle $cycle): bool
     {
-        if (!$this->isVetoed($cycle)) return false;
+        if (! $this->isVetoed($cycle)) {
+            return false;
+        }
 
         // Sauvegarder le bénéficiaire veté avant de l'effacer
         $vetoedUserId = $cycle->beneficiary_id;
@@ -97,23 +102,24 @@ class DrawService
         CycleVeto::where('cycle_id', $cycle->id)->delete();
 
         // Vérifier qu'il reste des membres éligibles avant le re-tirage
-        $tontine    = $cycle->tontine;
+        $tontine = $cycle->tontine;
         $alreadyWon = Cycle::where('tontine_id', $tontine->id)
             ->whereNotNull('beneficiary_id')
             ->pluck('beneficiary_id');
         $eligible = $tontine->activeMembers()
             ->whereNotIn('users.id', $alreadyWon)
-            ->when($vetoedUserId, fn($q) => $q->where('users.id', '!=', $vetoedUserId))
+            ->when($vetoedUserId, fn ($q) => $q->where('users.id', '!=', $vetoedUserId))
             ->count();
 
         if ($eligible === 0) {
             // Aucun membre éligible : marquer le cycle comme bloqué via un statut
             // On laisse beneficiary_id null et on notifie le créateur
-            app(\App\Services\NotificationService::class)->send(
+            app(NotificationService::class)->send(
                 $tontine->creator,
                 'general',
                 "⚠️ Tous les membres ont déjà reçu le pot dans la tontine \u00ab {$tontine->name} \u00bb. Le tirage ne peut pas être rellancé. Contactez les membres."
             );
+
             return true;
         }
 
@@ -126,9 +132,13 @@ class DrawService
     public function canVeto(Cycle $cycle, int $userId): bool
     {
         $tontine = $cycle->tontine;
-        if (!$tontine->veto_threshold) return false;
+        if (! $tontine->veto_threshold) {
+            return false;
+        }
 
-        if ($cycle->beneficiary_id === $userId) return false;
+        if ($cycle->beneficiary_id === $userId) {
+            return false;
+        }
 
         $member = $tontine->members()
             ->where('users.id', $userId)
@@ -151,7 +161,9 @@ class DrawService
     public function isVetoed(Cycle $cycle): bool
     {
         $tontine = $cycle->tontine;
-        if (!$tontine->veto_threshold) return false;
+        if (! $tontine->veto_threshold) {
+            return false;
+        }
 
         $total = $tontine->activeMembers()->count();
         $vetos = $this->vetoCount($cycle);
@@ -168,12 +180,14 @@ class DrawService
             ->get()
             ->keyBy('user_id');
 
-        $weights = $eligible->mapWithKeys(fn($u) => [
+        $weights = $eligible->mapWithKeys(fn ($u) => [
             $u->id => max(1, (int) (($scores->get($u->id)?->score ?? 0) * 10)),
         ]);
 
         $totalWeight = $weights->sum();
-        if ($totalWeight <= 0) return $eligible->first();
+        if ($totalWeight <= 0) {
+            return $eligible->first();
+        }
         $rand = random_int(1, $totalWeight);
         $cumulative = 0;
 
@@ -196,18 +210,18 @@ class DrawService
             ->keyBy('user_id');
 
         $winner = $eligible
-            ->sortByDesc(fn($u) => $bids->get($u->id)?->bid_rate ?? 0)
+            ->sortByDesc(fn ($u) => $bids->get($u->id)?->bid_rate ?? 0)
             ->first();
 
         $winnerBid = $bids->get($winner->id);
-        $pot       = $cycle->tontine->amount * $eligible->count();
+        $pot = $cycle->tontine->amount * $eligible->count();
 
         if ($winnerBid) {
-            $netAmount     = (int) round($pot * (1 - $winnerBid->bid_rate / 100));
+            $netAmount = (int) round($pot * (1 - $winnerBid->bid_rate / 100));
             $totalInterest = $pot - $netAmount;
 
             $cycle->update([
-                'bid_amount'      => $netAmount,
+                'bid_amount' => $netAmount,
                 'total_collected' => $pot,
             ]);
 
@@ -221,18 +235,18 @@ class DrawService
 
                 foreach ($others as $member) {
                     $amount = $first ? $sharePerMember + $remainder : $sharePerMember;
-                    $first  = false;
+                    $first = false;
 
                     Transaction::updateOrCreate(
                         [
-                            'cycle_id'           => $cycle->id,
-                            'user_id'            => $member->id,
-                            'external_reference' => 'redistribution-' . $cycle->id . '-' . $member->id,
+                            'cycle_id' => $cycle->id,
+                            'user_id' => $member->id,
+                            'external_reference' => 'redistribution-'.$cycle->id.'-'.$member->id,
                         ],
                         [
-                            'amount'  => $amount,
-                            'method'  => 'cash',
-                            'status'  => 'success',
+                            'amount' => $amount,
+                            'method' => 'cash',
+                            'status' => 'success',
                             'paid_at' => now(),
                         ]
                     );
@@ -240,20 +254,21 @@ class DrawService
             }
 
             // Notifier les membres dont l'enchère n'a pas été retenue
-            $notifier = app(\App\Services\NotificationService::class);
+            $notifier = app(NotificationService::class);
             $tontineName = $cycle->tontine->name;
-            $cycleNum    = $cycle->cycle_number;
+            $cycleNum = $cycle->cycle_number;
             foreach ($eligible->where('id', '!=', $winner->id) as $loser) {
                 try {
                     $notifier->sendEmail(
                         $loser,
                         "🏷️ Résultat enchère — {$tontineName}",
                         "Bonjour <strong>{$loser->name}</strong>,<br><br>"
-                        . "L'enchère du cycle {$cycleNum} de la tontine <strong>{$tontineName}</strong> a été remportée par un autre membre.<br><br>"
-                        . "Votre part d'intérêts vous a été redistribuée. Consultez votre historique pour le détail.",
+                        ."L'enchère du cycle {$cycleNum} de la tontine <strong>{$tontineName}</strong> a été remportée par un autre membre.<br><br>"
+                        ."Votre part d'intérêts vous a été redistribuée. Consultez votre historique pour le détail.",
                         'auction_lost'
                     );
-                } catch (\Throwable) {}
+                } catch (\Throwable) {
+                }
             }
         }
 

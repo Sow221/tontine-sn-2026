@@ -15,7 +15,8 @@ class ProcessCycle implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $timeout = 60;
 
     public function __construct(public Tontine $tontine) {}
@@ -28,7 +29,7 @@ class ProcessCycle implements ShouldQueue
         } catch (\Throwable $e) {
             Log::error('Erreur création cycles', [
                 'tontine_id' => $this->tontine->id,
-                'error'      => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             throw $e; // permet le retry automatique
         }
@@ -38,7 +39,7 @@ class ProcessCycle implements ShouldQueue
     {
         Log::error('ProcessCycle job échoué définitivement', [
             'tontine_id' => $this->tontine->id,
-            'error'      => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
 
         // Repasser la tontine en pending pour éviter état incohérent

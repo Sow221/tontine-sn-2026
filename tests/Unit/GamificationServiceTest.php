@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Models\Badge;
 use App\Models\Cycle;
 use App\Models\Tontine;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\GamificationService;
+use Database\Seeders\BadgeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,7 +22,7 @@ class GamificationServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\BadgeSeeder::class);
+        $this->seed(BadgeSeeder::class);
         $this->service = $this->app->make(GamificationService::class);
     }
 
@@ -78,7 +78,7 @@ class GamificationServiceTest extends TestCase
     {
         $user = User::factory()->create(['payment_streak' => 5]);
 
-        $this->service->updatePaymentStreak($user, new Cycle(), false);
+        $this->service->updatePaymentStreak($user, new Cycle, false);
 
         $this->assertEquals(0, $user->fresh()->payment_streak);
     }

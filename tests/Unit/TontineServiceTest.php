@@ -17,7 +17,9 @@ class TontineServiceTest extends TestCase
     use RefreshDatabase;
 
     private CycleService $cycleService;
+
     private DrawService $drawService;
+
     private PaymentService $paymentService;
 
     protected function setUp(): void
@@ -81,7 +83,7 @@ class TontineServiceTest extends TestCase
         $members = User::factory()->count(3)->create();
         $startDate = now()->startOfDay();
         $tontine = Tontine::factory()->create([
-            'frequency'  => 'weekly',
+            'frequency' => 'weekly',
             'start_date' => $startDate,
         ]);
 
@@ -106,7 +108,7 @@ class TontineServiceTest extends TestCase
         $members = User::factory()->count(3)->create();
         $startDate = now()->startOfDay();
         $tontine = Tontine::factory()->create([
-            'frequency'  => 'monthly',
+            'frequency' => 'monthly',
             'start_date' => $startDate,
         ]);
 
@@ -131,7 +133,7 @@ class TontineServiceTest extends TestCase
         $members = User::factory()->count(3)->create();
         $startDate = now()->startOfDay();
         $tontine = Tontine::factory()->create([
-            'frequency'  => 'daily',
+            'frequency' => 'daily',
             'start_date' => $startDate,
         ]);
 
@@ -234,7 +236,7 @@ class TontineServiceTest extends TestCase
     {
         $members = User::factory()->count(5)->create();
         $tontine = Tontine::factory()->create([
-            'frequency'   => 'weekly',
+            'frequency' => 'weekly',
             'draw_method' => 'random',
         ]);
 
@@ -267,7 +269,7 @@ class TontineServiceTest extends TestCase
         $member3 = User::factory()->create();
 
         $tontine = Tontine::factory()->create([
-            'frequency'   => 'weekly',
+            'frequency' => 'weekly',
             'draw_method' => 'sequential',
         ]);
 
@@ -389,10 +391,10 @@ class TontineServiceTest extends TestCase
 
         // Manually create a third cycle
         $cycle3 = Cycle::create([
-            'tontine_id'   => $tontine->id,
+            'tontine_id' => $tontine->id,
             'cycle_number' => 3,
-            'due_date'     => now(),
-            'status'       => 'pending',
+            'due_date' => now(),
+            'status' => 'pending',
         ]);
 
         $this->drawService->drawBeneficiary($cycle3);
@@ -462,8 +464,8 @@ class TontineServiceTest extends TestCase
         $tontine = Tontine::factory()->create(['penalty_rate' => 10]);
         $cycle = Cycle::factory()->create([
             'tontine_id' => $tontine->id,
-            'due_date'   => now()->subDays(3),
-            'status'     => 'overdue',
+            'due_date' => now()->subDays(3),
+            'status' => 'overdue',
         ]);
 
         $user = User::factory()->create();
@@ -475,7 +477,7 @@ class TontineServiceTest extends TestCase
             'cash'
         );
 
-        $expectedAmount = 100000 + (int)round(100000 * 10 / 100);
+        $expectedAmount = 100000 + (int) round(100000 * 10 / 100);
 
         $this->assertEquals($expectedAmount, $transaction->amount);
     }
@@ -488,8 +490,8 @@ class TontineServiceTest extends TestCase
         $tontine = Tontine::factory()->create(['penalty_rate' => 10]);
         $cycle = Cycle::factory()->create([
             'tontine_id' => $tontine->id,
-            'due_date'   => now()->addDays(3),
-            'status'     => 'pending',
+            'due_date' => now()->addDays(3),
+            'status' => 'pending',
         ]);
 
         $user = User::factory()->create();
@@ -512,8 +514,8 @@ class TontineServiceTest extends TestCase
         $tontine = Tontine::factory()->create(['penalty_rate' => 0]);
         $cycle = Cycle::factory()->create([
             'tontine_id' => $tontine->id,
-            'due_date'   => now()->subDays(5),
-            'status'     => 'overdue',
+            'due_date' => now()->subDays(5),
+            'status' => 'overdue',
         ]);
 
         $user = User::factory()->create();
@@ -538,8 +540,8 @@ class TontineServiceTest extends TestCase
         $cycle = Cycle::factory()->create();
         $transaction = Transaction::factory()->create([
             'cycle_id' => $cycle->id,
-            'status'   => 'pending',
-            'paid_at'  => null,
+            'status' => 'pending',
+            'paid_at' => null,
         ]);
 
         $this->paymentService->confirmPayment($transaction);
@@ -560,8 +562,8 @@ class TontineServiceTest extends TestCase
 
         $transaction = Transaction::factory()->create([
             'cycle_id' => $cycle->id,
-            'status'   => 'success',
-            'paid_at'  => $paidAt,
+            'status' => 'success',
+            'paid_at' => $paidAt,
         ]);
 
         $this->paymentService->confirmPayment($transaction);
@@ -580,13 +582,13 @@ class TontineServiceTest extends TestCase
     {
         $cycle = Cycle::factory()->create([
             'total_collected' => 0,
-            'status'          => 'pending',
+            'status' => 'pending',
         ]);
 
         $transaction = Transaction::factory()->create([
             'cycle_id' => $cycle->id,
-            'amount'   => 150000,
-            'status'   => 'pending',
+            'amount' => 150000,
+            'status' => 'pending',
         ]);
 
         $this->paymentService->confirmPayment($transaction);
@@ -611,16 +613,16 @@ class TontineServiceTest extends TestCase
 
         $t1 = Transaction::factory()->create([
             'cycle_id' => $cycle->id,
-            'user_id'  => $member1->id,
-            'amount'   => 100000,
-            'status'   => 'pending',
+            'user_id' => $member1->id,
+            'amount' => 100000,
+            'status' => 'pending',
         ]);
 
         $t2 = Transaction::factory()->create([
             'cycle_id' => $cycle->id,
-            'user_id'  => $member2->id,
-            'amount'   => 100000,
-            'status'   => 'pending',
+            'user_id' => $member2->id,
+            'amount' => 100000,
+            'status' => 'pending',
         ]);
 
         $this->paymentService->confirmPayment($t1);

@@ -14,20 +14,20 @@ class ProfileControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $this->actingAs($user)
-             ->get(route('profile.show'))
-             ->assertOk();
+            ->get(route('profile.show'))
+            ->assertOk();
     }
 
     public function test_update_profile(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user)
-             ->put(route('profile.update'), [
-                 'name'  => 'New Name',
-                 'email' => $user->email,
-             ])
-             ->assertRedirect()
-             ->assertSessionHas('success');
+            ->put(route('profile.update'), [
+                'name' => 'New Name',
+                'email' => $user->email,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
 
         $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'New Name']);
     }

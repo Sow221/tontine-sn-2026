@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ProfileController extends Controller
 {
@@ -17,6 +18,7 @@ class ProfileController extends Controller
         $user = Auth::user()->load('creditScore', 'badges');
         $referralLink = route('auth.register', ['ref' => $user->referral_code]);
         $referralsCount = $user->referrals()->count();
+
         return view('profile.show', compact('user', 'referralLink', 'referralsCount'));
     }
 
@@ -25,28 +27,28 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'name'         => ['required', 'string', 'max:100'],
-            'email'        => ['required', 'email', 'unique:users,email,' . $user->id],
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'unique:users,email,'.$user->id],
             'phone_number' => ['nullable', 'string', 'regex:/^\+?[0-9\s\-]{7,20}$/'],
-            'avatar'       => ['nullable', 'image', 'max:2048'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
         ], [
-            'name.required'       => 'Le nom est obligatoire.',
-            'email.required'      => "L'email est obligatoire.",
-            'email.unique'        => 'Cet email est déjà utilisé.',
-            'avatar.image'        => 'Le fichier doit être une image.',
-            'avatar.max'          => "L'image ne doit pas dépasser 2 Mo.",
-            'phone_number.regex'  => 'Format de téléphone invalide (ex: +221 77 000 00 00).',
+            'name.required' => 'Le nom est obligatoire.',
+            'email.required' => "L'email est obligatoire.",
+            'email.unique' => 'Cet email est déjà utilisé.',
+            'avatar.image' => 'Le fichier doit être une image.',
+            'avatar.max' => "L'image ne doit pas dépasser 2 Mo.",
+            'phone_number.regex' => 'Format de téléphone invalide (ex: +221 77 000 00 00).',
         ]);
 
         try {
             $data = [
-                'name'         => $request->name,
-                'email'        => $request->email,
+                'name' => $request->name,
+                'email' => $request->email,
                 'phone_number' => $request->phone_number,
             ];
 
             if ($request->hasFile('avatar')) {
-                if ($user->avatar && !str_starts_with($user->avatar, 'http')) {
+                if ($user->avatar && ! str_starts_with($user->avatar, 'http')) {
                     Storage::disk('public')->delete($user->avatar);
                 }
                 $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
@@ -57,6 +59,7 @@ class ProfileController extends Controller
             return back()->with('success', 'Profil mis à jour.');
         } catch (\Throwable $e) {
             Log::error('Erreur mise à jour profil', ['user_id' => $user->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de la mise à jour du profil.']);
         }
     }
@@ -71,15 +74,15 @@ class ProfileController extends Controller
 
         $request->validate([
             'current_password' => ['required'],
-            'password'         => ['required', 'min:8', 'confirmed'],
+            'password' => ['required', 'min:8', 'confirmed'],
         ], [
             'current_password.required' => 'Le mot de passe actuel est obligatoire.',
-            'password.min'              => 'Le nouveau mot de passe doit contenir au moins 8 caractères.',
-            'password.confirmed'        => 'Les mots de passe ne correspondent pas.',
+            'password.min' => 'Le nouveau mot de passe doit contenir au moins 8 caractères.',
+            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
         ]);
 
         try {
-            if (!Hash::check($request->current_password, $user->password)) {
+            if (! Hash::check($request->current_password, $user->password)) {
                 return back()->withErrors(['current_password' => 'Mot de passe actuel incorrect.']);
             }
 
@@ -88,6 +91,7 @@ class ProfileController extends Controller
             return back()->with('success', 'Mot de passe mis à jour.');
         } catch (\Throwable $e) {
             Log::error('Erreur mise à jour mot de passe', ['user_id' => $user->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de la mise à jour du mot de passe.']);
         }
     }
@@ -98,7 +102,7 @@ class ProfileController extends Controller
             'confirm_delete' => ['required', 'in:SUPPRIMER'],
         ], [
             'confirm_delete.required' => 'Veuillez taper SUPPRIMER pour confirmer.',
-            'confirm_delete.in'       => 'Veuillez taper exactement SUPPRIMER pour confirmer.',
+            'confirm_delete.in' => 'Veuillez taper exactement SUPPRIMER pour confirmer.',
         ]);
 
         $user = Auth::user();
@@ -119,14 +123,14 @@ class ProfileController extends Controller
             }
 
             $user->update([
-                'name'              => 'Anonyme-' . $user->id,
-                'email'             => 'anonyme-' . $user->id . '@deleted.tontine.sn',
-                'phone_number'      => null,
-                'avatar'            => null,
-                'kyc_document'      => null,
+                'name' => 'Anonyme-'.$user->id,
+                'email' => 'anonyme-'.$user->id.'@deleted.tontine.sn',
+                'phone_number' => null,
+                'avatar' => null,
+                'kyc_document' => null,
                 'kyc_document_hash' => null,
-                'google_id'         => null,
-                'password'          => \Illuminate\Support\Str::random(64),
+                'google_id' => null,
+                'password' => Str::random(64),
             ]);
 
             // Révoquer tous les tokens API avant suppression
@@ -141,13 +145,14 @@ class ProfileController extends Controller
             return redirect()->route('home')->with('status', 'Votre compte a été supprimé. Vos données seront effacées conformément à notre politique de confidentialité.');
         } catch (\Throwable $e) {
             Log::error('Erreur suppression compte', ['user_id' => $user->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de la suppression du compte.']);
         }
     }
 
     public function publicProfile(User $user)
     {
-        abort_if(!$user->is_active, 404);
+        abort_if(! $user->is_active, 404);
 
         $activeTontinesCount = $user->memberships()
             ->wherePivot('status', 'active')
@@ -187,6 +192,7 @@ class ProfileController extends Controller
             return back()->with('success', 'Préférences de notification mises à jour.');
         } catch (\Throwable $e) {
             Log::error('Erreur mise à jour notifications', ['user_id' => $user->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors de la mise à jour des préférences.']);
         }
     }
@@ -195,13 +201,13 @@ class ProfileController extends Controller
     {
         $request->validate([
             'kyc_document' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
-            'kyc_consent'  => ['required', 'accepted'],
+            'kyc_consent' => ['required', 'accepted'],
         ], [
             'kyc_document.required' => 'Veuillez sélectionner un document.',
-            'kyc_document.mimes'    => 'Formats acceptés : JPG, PNG, PDF.',
-            'kyc_document.max'      => 'Le fichier ne doit pas dépasser 5 Mo.',
-            'kyc_consent.required'  => 'Vous devez accepter les conditions de traitement de vos données.',
-            'kyc_consent.accepted'  => 'Vous devez accepter les conditions de traitement de vos données.',
+            'kyc_document.mimes' => 'Formats acceptés : JPG, PNG, PDF.',
+            'kyc_document.max' => 'Le fichier ne doit pas dépasser 5 Mo.',
+            'kyc_consent.required' => 'Vous devez accepter les conditions de traitement de vos données.',
+            'kyc_consent.accepted' => 'Vous devez accepter les conditions de traitement de vos données.',
         ]);
 
         $user = Auth::user();
@@ -225,9 +231,9 @@ class ProfileController extends Controller
             // Stockage privé (non accessible publiquement)
             $path = $request->file('kyc_document')->store('kyc', 'local');
             $user->update([
-                'kyc_document'      => $path,
-                'kyc_verified'      => false,
-                'kyc_status'        => 'pending',
+                'kyc_document' => $path,
+                'kyc_verified' => false,
+                'kyc_status' => 'pending',
                 'kyc_rejected_reason' => null,
                 'kyc_document_hash' => $hash,
             ]);
@@ -235,6 +241,7 @@ class ProfileController extends Controller
             return back()->with('success', 'Document soumis. Votre identité sera vérifiée sous 24-48h.');
         } catch (\Throwable $e) {
             Log::error('Erreur upload KYC', ['user_id' => $user->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['kyc_document' => 'Erreur lors de l\'upload du document.']);
         }
     }
@@ -244,50 +251,50 @@ class ProfileController extends Controller
         $user = Auth::user()->load('creditScore', 'badges', 'transactions.cycle.tontine', 'memberships', 'referrals');
 
         $data = [
-            'exported_at'  => now()->toIso8601String(),
-            'profile'      => [
-                'name'                 => $user->name,
-                'email'                => $user->email,
-                'phone_number'         => $user->phone_number,
-                'role'                 => $user->role,
-                'kyc_verified'         => $user->kyc_verified,
-                'kyc_status'           => $user->kyc_status,
-                'kyc_rejected_reason'  => $user->kyc_rejected_reason,
-                'referral_code'        => $user->referral_code,
-                'referrals'            => $user->referrals->count(),
-                'created_at'           => $user->created_at->toIso8601String(),
+            'exported_at' => now()->toIso8601String(),
+            'profile' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone_number' => $user->phone_number,
+                'role' => $user->role,
+                'kyc_verified' => $user->kyc_verified,
+                'kyc_status' => $user->kyc_status,
+                'kyc_rejected_reason' => $user->kyc_rejected_reason,
+                'referral_code' => $user->referral_code,
+                'referrals' => $user->referrals->count(),
+                'created_at' => $user->created_at->toIso8601String(),
             ],
             'credit_score' => $user->creditScore ? [
-                'score'            => $user->creditScore->score,
-                'badge'            => $user->creditScore->badge,
+                'score' => $user->creditScore->score,
+                'badge' => $user->creditScore->badge,
                 'on_time_payments' => $user->creditScore->on_time_payments,
-                'total_cycles'     => $user->creditScore->total_cycles,
+                'total_cycles' => $user->creditScore->total_cycles,
             ] : null,
-            'transactions' => $user->transactions->map(fn($tx) => [
-                'amount'      => $tx->amount,
-                'method'      => $tx->method,
-                'status'      => $tx->status,
-                'tontine'     => $tx->cycle?->tontine?->name,
-                'cycle'       => $tx->cycle?->cycle_number,
-                'created_at'  => $tx->created_at->toIso8601String(),
+            'transactions' => $user->transactions->map(fn ($tx) => [
+                'amount' => $tx->amount,
+                'method' => $tx->method,
+                'status' => $tx->status,
+                'tontine' => $tx->cycle?->tontine?->name,
+                'cycle' => $tx->cycle?->cycle_number,
+                'created_at' => $tx->created_at->toIso8601String(),
             ]),
-            'tontines'     => $user->memberships->map(fn($t) => [
-                'name'      => $t->name,
-                'code'      => $t->code,
-                'status'    => $t->status,
-                'role'      => $t->pivot->status,
+            'tontines' => $user->memberships->map(fn ($t) => [
+                'name' => $t->name,
+                'code' => $t->code,
+                'status' => $t->status,
+                'role' => $t->pivot->status,
                 'joined_at' => $t->pivot->joined_at,
             ]),
-            'badges'       => $user->badges->map(fn($b) => [
-                'name'      => $b->name,
-                'tier'      => $b->tier,
+            'badges' => $user->badges->map(fn ($b) => [
+                'name' => $b->name,
+                'tier' => $b->tier,
                 'earned_at' => $b->pivot->earned_at,
             ]),
         ];
 
         return response()->json($data, 200, [
             'Content-Disposition' => 'attachment; filename="mes-donnees-tontinesn.json"',
-            'Content-Type'        => 'application/json',
+            'Content-Type' => 'application/json',
         ]);
     }
 }

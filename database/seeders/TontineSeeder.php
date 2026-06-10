@@ -7,11 +7,11 @@ use App\Models\Tontine;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Collection;
 
 class TontineSeeder extends Seeder
 {
     private User $membreTest1;
+
     private User $membreTest2;
 
     public function run(
@@ -22,18 +22,18 @@ class TontineSeeder extends Seeder
         $this->membreTest2 = $membreTest2;
 
         $tontine = Tontine::create([
-            'name'        => 'Tontine Sandaga',
-            'code'        => 'SAN001',
+            'name' => 'Tontine Sandaga',
+            'code' => 'SAN001',
             'description' => 'Tontine mensuelle — Tontine Sandaga.',
-            'amount'      => 25000,
-            'frequency'   => 'monthly',
-            'type'        => 'fixed',
-            'status'      => 'pending',
-            'start_date'  => Carbon::now()->addWeek(),
+            'amount' => 25000,
+            'frequency' => 'monthly',
+            'type' => 'fixed',
+            'status' => 'pending',
+            'start_date' => Carbon::now()->addWeek(),
             'max_members' => 8,
-            'penalty_rate'=> 0,
+            'penalty_rate' => 0,
             'draw_method' => 'sequential',
-            'created_by'  => $membreTest1->id,
+            'created_by' => $membreTest1->id,
         ]);
 
         $tontine->members()->attach($membreTest1->id, [

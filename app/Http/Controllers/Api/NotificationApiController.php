@@ -14,8 +14,8 @@ class NotificationApiController extends Controller
     {
         $validated = $request->validate([
             'endpoint' => 'required|string|url',
-            'p256dh'   => 'required|string',
-            'auth'     => 'required|string',
+            'p256dh' => 'required|string',
+            'auth' => 'required|string',
         ]);
 
         $user = Auth::user();
@@ -23,9 +23,9 @@ class NotificationApiController extends Controller
         FcmToken::updateOrCreate(
             ['endpoint' => $validated['endpoint']],
             [
-                'user_id'    => $user->id,
-                'p256dh'     => $validated['p256dh'],
-                'auth'       => $validated['auth'],
+                'user_id' => $user->id,
+                'p256dh' => $validated['p256dh'],
+                'auth' => $validated['auth'],
                 'user_agent' => $request->userAgent(),
                 'last_used_at' => now(),
             ]
@@ -33,7 +33,7 @@ class NotificationApiController extends Controller
 
         return response()->json([
             'message' => 'Token FCM enregistré avec succès',
-            'status'  => 'registered',
+            'status' => 'registered',
         ], 200);
     }
 }

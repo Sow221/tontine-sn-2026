@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CreditScore extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'user_id', 'score', 'total_contributed',
         'on_time_payments', 'total_cycles', 'seniority_months',
@@ -16,7 +17,7 @@ class CreditScore extends Model
     ];
 
     protected $casts = [
-        'score'         => 'float',
+        'score' => 'float',
         'calculated_at' => 'datetime',
     ];
 
@@ -27,21 +28,21 @@ class CreditScore extends Model
 
     public function badgeLabel(): string
     {
-        return match($this->badge) {
-            'gold'   => '🥇 Or',
+        return match ($this->badge) {
+            'gold' => '🥇 Or',
             'silver' => '🥈 Argent',
             'bronze' => '🥉 Bronze',
-            default  => '—',
+            default => '—',
         };
     }
 
     public function badgeColor(): string
     {
-        return match($this->badge) {
-            'gold'   => 'warning',
+        return match ($this->badge) {
+            'gold' => 'warning',
             'silver' => 'secondary',
             'bronze' => 'warning',
-            default  => 'light',
+            default => 'light',
         };
     }
 }

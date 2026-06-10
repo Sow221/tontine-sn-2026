@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Badge;
 use App\Models\CreditScore;
 use App\Models\User;
 use App\Services\CreditScoringService;
@@ -26,7 +27,7 @@ class CheckAndNotifyBadges implements ShouldQueue
         NotificationService $notifier
     ): void {
         $user = User::find($this->userId);
-        if (!$user) {
+        if (! $user) {
             return;
         }
 
@@ -53,19 +54,19 @@ class CheckAndNotifyBadges implements ShouldQueue
         User $user,
         string $badgeSlug,
         ?float $score = null,
-        ?\App\Models\Badge $badge = null
+        ?Badge $badge = null
     ): void {
         $badgeNames = [
             'bronze' => 'Bronze',
             'silver' => 'Argent',
-            'gold'   => 'Or',
+            'gold' => 'Or',
             'parrain_boost' => 'Parrain Boost',
         ];
 
         $icons = [
             'bronze' => '🥉',
             'silver' => '🥈',
-            'gold'   => '🥇',
+            'gold' => '🥇',
             'parrain_boost' => '⚡',
         ];
 
@@ -73,7 +74,7 @@ class CheckAndNotifyBadges implements ShouldQueue
         $icon = $icons[$badgeSlug] ?? $badge?->icon ?? '🏆';
 
         $title = "{$icon} Badge débloqué : {$name} !";
-        $body  = $score !== null
+        $body = $score !== null
             ? "Votre score crédit a atteint {$score}/10 — vous décrochez le badge {$name} !"
             : ($badge?->description ?? "Nouveau badge obtenu : {$name}");
 
@@ -81,8 +82,8 @@ class CheckAndNotifyBadges implements ShouldQueue
 
         Log::info('Badge notification sent', [
             'user_id' => $user->id,
-            'badge'   => $badgeSlug,
-            'score'   => $score,
+            'badge' => $badgeSlug,
+            'score' => $score,
         ]);
     }
 }

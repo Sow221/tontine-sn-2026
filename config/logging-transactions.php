@@ -1,7 +1,6 @@
 <?php
 
 use Monolog\Formatter\JsonFormatter;
-use Monolog\Handler\RotatingFileHandler;
 
 return [
 

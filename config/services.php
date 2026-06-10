@@ -36,21 +36,21 @@ return [
     ],
 
     'google' => [
-        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect'      => env('GOOGLE_REDIRECT_URI'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
     'greenapi' => [
         'id_instance' => env('GREENAPI_ID_INSTANCE'),
-        'api_token'   => env('GREENAPI_API_TOKEN'),
-        'api_url'     => env('GREENAPI_API_URL', 'https://api.greenapi.com'),
-        'media_url'   => env('GREENAPI_MEDIA_URL', 'https://api.greenapi.com'),
+        'api_token' => env('GREENAPI_API_TOKEN'),
+        'api_url' => env('GREENAPI_API_URL', 'https://api.greenapi.com'),
+        'media_url' => env('GREENAPI_MEDIA_URL', 'https://api.greenapi.com'),
         'webhook_url' => env('GREENAPI_WEBHOOK_URL'),
     ],
 
     'webhook_outbound' => [
-        'url'    => env('WEBHOOK_OUTBOUND_URL'),
+        'url' => env('WEBHOOK_OUTBOUND_URL'),
         'secret' => env('WEBHOOK_OUTBOUND_SECRET'),
     ],
 

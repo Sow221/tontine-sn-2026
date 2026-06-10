@@ -21,11 +21,11 @@ class PayTechServiceTest extends TestCase
         parent::setUp();
 
         config([
-            'mobilemoney.paytech.api_key'    => 'test_api_key',
-            'mobilemoney.paytech.api_secret'  => 'test_api_secret',
-            'mobilemoney.paytech.base_url'    => 'https://paytech-test.sn',
-            'mobilemoney.paytech.timeout'     => 30,
-            'mobilemoney.paytech.currency'    => 'XOF',
+            'mobilemoney.paytech.api_key' => 'test_api_key',
+            'mobilemoney.paytech.api_secret' => 'test_api_secret',
+            'mobilemoney.paytech.base_url' => 'https://paytech-test.sn',
+            'mobilemoney.paytech.timeout' => 30,
+            'mobilemoney.paytech.currency' => 'XOF',
         ]);
 
         $loggingService = $this->createMock(LoggingService::class);
@@ -44,7 +44,7 @@ class PayTechServiceTest extends TestCase
         Http::fake([
             'https://paytech-test.sn/api/payment/request-payment' => Http::response([
                 'success' => 1,
-                'token'   => 'test_payment_token_123',
+                'token' => 'test_payment_token_123',
             ]),
         ]);
 
@@ -67,7 +67,7 @@ class PayTechServiceTest extends TestCase
         Http::fake([
             'https://paytech-test.sn/api/payment/request-payment' => Http::response([
                 'success' => 0,
-                'errors'  => ['Erreur de configuration PayTech'],
+                'errors' => ['Erreur de configuration PayTech'],
             ]),
         ]);
 
@@ -105,7 +105,7 @@ class PayTechServiceTest extends TestCase
         $transaction = Transaction::factory()->create(['amount' => 50000]);
 
         Http::fake([
-            'https://paytech-test.sn/api/payment/request-payment' => fn() => throw new \Exception('Network timeout'),
+            'https://paytech-test.sn/api/payment/request-payment' => fn () => throw new \Exception('Network timeout'),
         ]);
 
         $result = $this->service->initiatePayment($transaction);
@@ -121,7 +121,7 @@ class PayTechServiceTest extends TestCase
     {
         $cycle = Cycle::factory()->create();
         $transaction = Transaction::factory()->create([
-            'amount'   => 75000,
+            'amount' => 75000,
             'cycle_id' => $cycle->id,
         ]);
 
@@ -155,7 +155,7 @@ class PayTechServiceTest extends TestCase
         Http::fake([
             'https://paytech-test.sn/api/payment/request-payment' => Http::response([
                 'success' => 1,
-                'token'   => null,
+                'token' => null,
             ]),
         ]);
 
@@ -176,9 +176,9 @@ class PayTechServiceTest extends TestCase
 
         Http::fake([
             'https://paytech-test.sn/api/payment/details/token_123' => Http::response([
-                'success'        => 1,
+                'success' => 1,
                 'payment_status' => 'completed',
-                'amount'         => 50000,
+                'amount' => 50000,
             ]),
         ]);
 
@@ -193,7 +193,7 @@ class PayTechServiceTest extends TestCase
     {
         Http::fake([
             'https://paytech-test.sn/api/payment/details/token_123' => Http::response([
-                'success'        => 1,
+                'success' => 1,
                 'payment_status' => 'pending',
             ]),
         ]);
@@ -211,7 +211,7 @@ class PayTechServiceTest extends TestCase
         Http::fake([
             'https://paytech-test.sn/api/payment/details/token_123' => Http::response([
                 'success' => 0,
-                'error'   => 'Payment not found',
+                'error' => 'Payment not found',
             ]),
         ]);
 
@@ -243,7 +243,7 @@ class PayTechServiceTest extends TestCase
     public function test_verify_webhook_exception(): void
     {
         Http::fake([
-            'https://paytech-test.sn/api/payment/details/token_123' => fn() => throw new \Exception('Connection refused'),
+            'https://paytech-test.sn/api/payment/details/token_123' => fn () => throw new \Exception('Connection refused'),
         ]);
 
         $result = $this->service->verifyWebhook(['token' => 'token_123']);
@@ -283,6 +283,7 @@ class PayTechServiceTest extends TestCase
 
         Http::assertSent(function ($request) {
             $data = json_decode($request->body(), true);
+
             return $data['env'] === 'prod';
         });
     }

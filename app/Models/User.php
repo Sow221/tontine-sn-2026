@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -24,13 +25,13 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'password'          => 'hashed',
-        'kyc_verified'      => 'boolean',
-        'is_active'         => 'boolean',
-        'last_seen_at'      => 'datetime',
+        'password' => 'hashed',
+        'kyc_verified' => 'boolean',
+        'is_active' => 'boolean',
+        'last_seen_at' => 'datetime',
         'email_verified_at' => 'datetime',
-        'payment_streak'        => 'integer',
-        'max_streak'            => 'integer',
+        'payment_streak' => 'integer',
+        'max_streak' => 'integer',
         'notification_settings' => 'array',
     ];
 
@@ -46,8 +47,8 @@ class User extends Authenticatable
     public function memberships(): BelongsToMany
     {
         return $this->belongsToMany(Tontine::class, 'tontine_members')
-                    ->withPivot('status', 'position', 'joined_at')
-                    ->withTimestamps();
+            ->withPivot('status', 'position', 'joined_at')
+            ->withTimestamps();
     }
 
     public function transactions(): HasMany
@@ -67,17 +68,17 @@ class User extends Authenticatable
 
     public function activityLogs(): HasMany
     {
-        return $this->hasMany(\App\Models\ActivityLog::class);
+        return $this->hasMany(ActivityLog::class);
     }
 
     public function badges(): BelongsToMany
     {
-        return $this->belongsToMany(\App\Models\Badge::class, 'user_badges')
+        return $this->belongsToMany(Badge::class, 'user_badges')
             ->withPivot('earned_at')
             ->withTimestamps();
     }
 
-    public function referrer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function referrer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'referred_by');
     }

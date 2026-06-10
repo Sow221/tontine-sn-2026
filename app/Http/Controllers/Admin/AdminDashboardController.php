@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Post;
 use App\Models\Tontine;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AdminDashboardController extends Controller
 {
@@ -17,13 +19,13 @@ class AdminDashboardController extends Controller
         try {
             $stats = Cache::remember('admin.stats', 120, function () {
                 return [
-                    'total_users'        => User::count(),
-                    'active_users'       => User::where('is_active', true)->count(),
-                    'active_tontines'    => Tontine::where('status', 'active')->count(),
-                    'pending_tontines'   => Tontine::where('status', 'pending')->count(),
+                    'total_users' => User::count(),
+                    'active_users' => User::where('is_active', true)->count(),
+                    'active_tontines' => Tontine::where('status', 'active')->count(),
+                    'pending_tontines' => Tontine::where('status', 'pending')->count(),
                     'total_transactions' => Transaction::where('status', 'success')->sum('amount'),
-                    'pending_kyc'        => User::kycPending()->count(),
-                    'pending_tx'         => Transaction::where('status', 'pending')->count(),
+                    'pending_kyc' => User::kycPending()->count(),
+                    'pending_tx' => Transaction::where('status', 'pending')->count(),
                 ];
             });
 
@@ -36,7 +38,7 @@ class AdminDashboardController extends Controller
                 ->orderBy('month')
                 ->pluck('total', 'month');
 
-            $chartMonths  = collect();
+            $chartMonths = collect();
             $chartAmounts = collect();
             for ($i = 5; $i >= 0; $i--) {
                 $key = now()->subMonths($i)->format('Y-m');
@@ -44,12 +46,11 @@ class AdminDashboardController extends Controller
                 $chartAmounts->push((int) ($chartRaw[$key] ?? 0));
             }
 
-            $recentTontines = Cache::remember('admin.recent_tontines', 120, fn() =>
-                Tontine::with('creator')->latest()->take(8)->get()
+            $recentTontines = Cache::remember('admin.recent_tontines', 120, fn () => Tontine::with('creator')->latest()->take(8)->get()
             );
 
             $blockedTontines = Tontine::where('status', 'active')
-                ->whereHas('cycles', fn($q) => $q
+                ->whereHas('cycles', fn ($q) => $q
                     ->where('status', 'overdue')
                     ->where('due_date', '<', now()->subDays(7))
                 )
@@ -71,6 +72,7 @@ class AdminDashboardController extends Controller
             ));
         } catch (\Throwable $e) {
             Log::error('Erreur admin dashboard', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Erreur lors du chargement du dashboard.']);
         }
     }
@@ -78,15 +80,15 @@ class AdminDashboardController extends Controller
     public function referrals()
     {
         try {
-            $topReferrers = \App\Models\User::withCount('referrals')
+            $topReferrers = User::withCount('referrals')
                 ->having('referrals_count', '>', 0)
                 ->orderByDesc('referrals_count')
                 ->take(20)
                 ->get();
 
-            $totalReferrals    = \App\Models\User::whereNotNull('referred_by')->count();
-            $convertedReferrals = \App\Models\User::whereNotNull('referred_by')
-                ->whereHas('transactions', fn($q) => $q->where('status', 'success'))
+            $totalReferrals = User::whereNotNull('referred_by')->count();
+            $convertedReferrals = User::whereNotNull('referred_by')
+                ->whereHas('transactions', fn ($q) => $q->where('status', 'success'))
                 ->count();
 
             $conversionRate = $totalReferrals > 0
@@ -98,6 +100,7 @@ class AdminDashboardController extends Controller
             ));
         } catch (\Throwable $e) {
             Log::error('Erreur stats parrainage', ['error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => 'Erreur lors du chargement.']);
         }
     }
@@ -123,9 +126,9 @@ class AdminDashboardController extends Controller
                 ->get()
                 ->keyBy('month');
 
-            $months  = collect();
+            $months = collect();
             $regData = collect();
-            $txData  = collect();
+            $txData = collect();
             $txCount = collect();
 
             for ($i = 5; $i >= 0; $i--) {
@@ -142,7 +145,7 @@ class AdminDashboardController extends Controller
 
             $topMembers = User::where('role', 'member')
                 ->where('is_active', true)
-                ->withCount(['transactions as success_tx_count' => fn($q) => $q->where('status', 'success')])
+                ->withCount(['transactions as success_tx_count' => fn ($q) => $q->where('status', 'success')])
                 ->orderByDesc('success_tx_count')
                 ->take(5)
                 ->get();
@@ -153,46 +156,50 @@ class AdminDashboardController extends Controller
             ));
         } catch (\Throwable $e) {
             Log::error('Erreur stats admin', ['error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => 'Erreur lors du chargement des statistiques.']);
         }
     }
 
     public function posts()
     {
-        $posts = \App\Models\Post::with('author')->latest()->paginate(20);
+        $posts = Post::with('author')->latest()->paginate(20);
+
         return view('admin.posts', compact('posts'));
     }
 
     public function storePost(Request $request)
     {
         $request->validate([
-            'title'   => ['required', 'string', 'max:255'],
+            'title' => ['required', 'string', 'max:255'],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'content' => ['required', 'string'],
         ]);
 
-        \App\Models\Post::create([
-            'user_id'      => auth()->id(),
-            'title'        => $request->title,
-            'slug'         => \Illuminate\Support\Str::slug($request->title) . '-' . time(),
-            'excerpt'      => $request->excerpt,
-            'content'      => $request->content,
+        Post::create([
+            'user_id' => auth()->id(),
+            'title' => $request->title,
+            'slug' => Str::slug($request->title).'-'.time(),
+            'excerpt' => $request->excerpt,
+            'content' => $request->content,
             'published_at' => $request->boolean('publish_now') ? now() : null,
         ]);
 
         return back()->with('success', 'Article créé.');
     }
 
-    public function publishPost(\App\Models\Post $post)
+    public function publishPost(Post $post)
     {
         $wasPublished = (bool) $post->published_at;
         $post->update(['published_at' => $wasPublished ? null : now()]);
+
         return back()->with('success', $wasPublished ? 'Article dépublié.' : 'Article publié.');
     }
 
-    public function destroyPost(\App\Models\Post $post)
+    public function destroyPost(Post $post)
     {
         $post->delete();
+
         return back()->with('success', 'Article supprimé.');
     }
 }

@@ -10,15 +10,19 @@ class TontinePolicy
 {
     public function view(User $user, Tontine $tontine): bool
     {
-        if ($user->isAdmin() || $tontine->created_by === $user->id) return true;
+        if ($user->isAdmin() || $tontine->created_by === $user->id) {
+            return true;
+        }
 
         // Tontine publique visible par tous (pending/active)
-        if ($tontine->isPublic() && in_array($tontine->status, ['pending', 'active'])) return true;
+        if ($tontine->isPublic() && in_array($tontine->status, ['pending', 'active'])) {
+            return true;
+        }
 
         return Cache::remember(
             "tontine_member_{$tontine->id}_{$user->id}",
             now()->addMinutes(5),
-            fn() => $tontine->members()->where('users.id', $user->id)->exists()
+            fn () => $tontine->members()->where('users.id', $user->id)->exists()
         );
     }
 

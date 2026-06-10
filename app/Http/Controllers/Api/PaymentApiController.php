@@ -43,7 +43,7 @@ class PaymentApiController extends Controller
         if ($request->method === 'cash') {
             // Le cash reste pending — le créateur de la tontine le valide manuellement (cohérent avec le web)
             return response()->json([
-                'status'  => 'pending',
+                'status' => 'pending',
                 'message' => 'Paiement en espèces enregistré. En attente de confirmation par le gestionnaire.',
                 'transaction' => ['id' => $transaction->id, 'amount' => $transaction->amount],
             ]);
@@ -51,15 +51,16 @@ class PaymentApiController extends Controller
 
         $result = $this->payTechService->initiatePayment($transaction);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             $transaction->update(['status' => 'failed', 'failure_reason' => $result['error']]);
+
             return response()->json(['message' => $result['error']], 422);
         }
 
         return response()->json([
-            'status'       => 'pending',
+            'status' => 'pending',
             'redirect_url' => $result['redirect_url'],
-            'transaction'  => ['id' => $transaction->id, 'amount' => $transaction->amount],
+            'transaction' => ['id' => $transaction->id, 'amount' => $transaction->amount],
         ]);
     }
 
@@ -81,7 +82,7 @@ class PaymentApiController extends Controller
             ['bid_rate' => $request->bid_rate]
         );
 
-        return response()->json(['message' => 'Enchère de ' . $request->bid_rate . '% enregistrée.']);
+        return response()->json(['message' => 'Enchère de '.$request->bid_rate.'% enregistrée.']);
     }
 
     public function draw(Request $request, Cycle $cycle)
@@ -97,9 +98,9 @@ class PaymentApiController extends Controller
         $cycle->refresh();
 
         return response()->json([
-            'message'     => 'Tirage effectué.',
+            'message' => 'Tirage effectué.',
             'beneficiary' => $cycle->beneficiary?->name,
-            'draw_hash'   => $cycle->draw_hash,
+            'draw_hash' => $cycle->draw_hash,
         ]);
     }
 
@@ -108,10 +109,10 @@ class PaymentApiController extends Controller
         abort_if($transaction->user_id !== request()->user()->id, 403);
 
         return response()->json([
-            'id'      => $transaction->id,
-            'status'  => $transaction->status,
-            'amount'  => $transaction->amount,
-            'method'  => $transaction->method,
+            'id' => $transaction->id,
+            'status' => $transaction->status,
+            'amount' => $transaction->amount,
+            'method' => $transaction->method,
             'paid_at' => $transaction->paid_at?->toIso8601String(),
         ]);
     }
@@ -123,14 +124,14 @@ class PaymentApiController extends Controller
             ->latest()
             ->paginate(20);
 
-        return response()->json($transactions->through(fn($tx) => [
-            'id'      => $tx->id,
-            'amount'  => $tx->amount,
-            'method'  => $tx->method,
-            'status'  => $tx->status,
+        return response()->json($transactions->through(fn ($tx) => [
+            'id' => $tx->id,
+            'amount' => $tx->amount,
+            'method' => $tx->method,
+            'status' => $tx->status,
             'paid_at' => $tx->paid_at?->toIso8601String(),
             'tontine' => $tx->cycle?->tontine?->name,
-            'cycle'   => $tx->cycle?->cycle_number,
+            'cycle' => $tx->cycle?->cycle_number,
         ]));
     }
 }

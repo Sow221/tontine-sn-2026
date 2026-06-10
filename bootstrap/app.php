@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Middleware\ActivityLogger;
+use App\Http\Middleware\CheckUserActive;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,16 +18,16 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
-        $middleware->redirectGuestsTo(fn() => route('auth.login'));
+        $middleware->redirectGuestsTo(fn () => route('auth.login'));
         $middleware->web(append: [
-            \App\Http\Middleware\SetLocale::class,
-            \App\Http\Middleware\SecurityHeaders::class,
-            \App\Http\Middleware\CheckUserActive::class,
-            \App\Http\Middleware\ActivityLogger::class,
+            SetLocale::class,
+            SecurityHeaders::class,
+            CheckUserActive::class,
+            ActivityLogger::class,
         ]);
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
-            'check.user.active' => \App\Http\Middleware\CheckUserActive::class,
+            'role' => RoleMiddleware::class,
+            'check.user.active' => CheckUserActive::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'webhooks/paytech',

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\NotificationLog;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -22,7 +21,7 @@ class NotificationController extends Controller
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 
-        Cache::forget('unread_notifications_' . Auth::id());
+        Cache::forget('unread_notifications_'.Auth::id());
 
         return view('notifications.index', compact('notifications'));
     }

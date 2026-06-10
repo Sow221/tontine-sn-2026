@@ -1,8 +1,11 @@
 <?php
 
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
+use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
+use Monolog\Processor\IntrospectionProcessor;
 use Monolog\Processor\PsrLogMessageProcessor;
 
 return [
@@ -76,18 +79,18 @@ return [
         'transactions' => [
             'driver' => 'monolog',
             'name' => 'transactions',
-            'handler' => \Monolog\Handler\RotatingFileHandler::class,
+            'handler' => RotatingFileHandler::class,
             'handler_with' => [
                 'filename' => storage_path('logs/transactions/transactions.log'),
                 'maxFiles' => env('LOG_TRANSACTIONS_RETENTION', 30),
             ],
-            'formatter' => \Monolog\Formatter\JsonFormatter::class,
+            'formatter' => JsonFormatter::class,
             'formatter_with' => [
                 'dateFormat' => 'Y-m-d H:i:s.u',
             ],
             'processors' => [
-                \Monolog\Processor\PsrLogMessageProcessor::class,
-                \Monolog\Processor\IntrospectionProcessor::class,
+                PsrLogMessageProcessor::class,
+                IntrospectionProcessor::class,
             ],
             'level' => env('LOG_TRANSACTIONS_LEVEL', 'info'),
         ],

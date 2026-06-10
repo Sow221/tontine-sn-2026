@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AuctionBid extends Model
 {
     use HasFactory;
+
     protected $fillable = ['cycle_id', 'user_id', 'bid_rate'];
 
     protected $casts = ['bid_rate' => 'float'];
@@ -26,6 +27,7 @@ class AuctionBid extends Model
     public function netAmount(): int
     {
         $pot = $this->cycle->tontine->amount * $this->cycle->tontine->activeMembers()->count();
+
         return (int) round($pot * (1 - $this->bid_rate / 100));
     }
 }

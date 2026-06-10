@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('cycle_vetos')) {
+        if (! Schema::hasTable('cycle_vetos')) {
             Schema::create('cycle_vetos', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('cycle_id')->constrained()->cascadeOnDelete();

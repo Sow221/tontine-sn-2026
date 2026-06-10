@@ -23,7 +23,7 @@ class AuthControllerTest extends TestCase
         ]);
 
         $this->post(route('auth.login.post'), [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'password123',
         ])->assertRedirect(route('dashboard'));
     }
@@ -33,7 +33,7 @@ class AuthControllerTest extends TestCase
         $user = User::factory()->create(['is_active' => true]);
 
         $this->post(route('auth.login.post'), [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'wrongpassword',
         ])->assertSessionHasErrors('email');
     }
@@ -46,10 +46,10 @@ class AuthControllerTest extends TestCase
     public function test_user_can_register(): void
     {
         $this->post(route('auth.register.post'), [
-            'name'                  => 'Test User',
-            'email'                 => 'test@example.com',
-            'phone_number'          => '+221 77 123 45 67',
-            'password'              => 'password123',
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'phone_number' => '+221 77 123 45 67',
+            'password' => 'password123',
             'password_confirmation' => 'password123',
         ])->assertRedirect(route('dashboard'));
 
@@ -60,7 +60,7 @@ class AuthControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $this->actingAs($user)
-             ->post(route('auth.logout'))
-             ->assertRedirect(route('auth.login'));
+            ->post(route('auth.logout'))
+            ->assertRedirect(route('auth.login'));
     }
 }

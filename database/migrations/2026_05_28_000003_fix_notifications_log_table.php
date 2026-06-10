@@ -12,10 +12,10 @@ return new class extends Migration
         // 1. Ajouter les colonnes manquantes et rendre event nullable
         Schema::table('notifications_log', function (Blueprint $table) {
             $table->string('event')->nullable()->change();
-            if (!Schema::hasColumn('notifications_log', 'type')) {
+            if (! Schema::hasColumn('notifications_log', 'type')) {
                 $table->string('type')->nullable()->after('event');
             }
-            if (!Schema::hasColumn('notifications_log', 'sent_at')) {
+            if (! Schema::hasColumn('notifications_log', 'sent_at')) {
                 $table->timestamp('sent_at')->nullable()->after('status');
             }
         });

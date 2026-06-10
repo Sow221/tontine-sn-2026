@@ -24,41 +24,45 @@ class WebhookController extends Controller
     public function paytech(Request $request)
     {
         try {
-            $data  = $request->all();
+            $data = $request->all();
             $token = $data['token'] ?? '';
 
-            $webhookHash = hash('sha256', json_encode($data) . $token);
+            $webhookHash = hash('sha256', json_encode($data).$token);
 
             if (WebhookLog::where('webhook_hash', $webhookHash)->where('status', 'processed')->exists()) {
                 Log::info('Webhook PayTech déjà traité', ['token' => $token]);
+
                 return response()->json(['status' => 'ok', 'message' => 'already_processed']);
             }
 
             WebhookLog::create([
-                'provider'     => 'paytech',
+                'provider' => 'paytech',
                 'webhook_hash' => $webhookHash,
-                'payload'      => $data,
-                'status'       => 'received',
+                'payload' => $data,
+                'status' => 'received',
             ]);
 
-            if (!$this->payTechService->verifyWebhook($data)) {
+            if (! $this->payTechService->verifyWebhook($data)) {
                 Log::warning('Webhook PayTech verification echouee', ['token' => $token]);
                 WebhookLog::where('webhook_hash', $webhookHash)->update(['status' => 'failed', 'error' => 'Verification failed']);
+
                 return response()->json(['error' => 'Verification failed'], 401);
             }
 
-            $ref           = $data['ref_command'] ?? '';
+            $ref = $data['ref_command'] ?? '';
             $transactionId = str_replace('TontineSN-', '', $ref);
-            $transaction   = Transaction::find($transactionId);
+            $transaction = Transaction::find($transactionId);
 
-            if (!$transaction) {
+            if (! $transaction) {
                 Log::warning('Transaction introuvable pour webhook', ['ref' => $ref]);
                 WebhookLog::where('webhook_hash', $webhookHash)->update(['status' => 'failed', 'error' => 'Transaction not found']);
+
                 return response()->json(['status' => 'ok']);
             }
 
             if (in_array($transaction->status, ['success', 'reversed'])) {
                 WebhookLog::where('webhook_hash', $webhookHash)->update(['status' => 'processed']);
+
                 return response()->json(['status' => 'ok', 'message' => 'already_processed']);
             }
 
@@ -67,10 +71,11 @@ class WebhookController extends Controller
             if ($webhookAmount !== null && $webhookAmount !== $transaction->amount) {
                 Log::warning('Webhook PayTech : montant incohérent', [
                     'transaction_id' => $transaction->id,
-                    'expected'       => $transaction->amount,
-                    'received'       => $webhookAmount,
+                    'expected' => $transaction->amount,
+                    'received' => $webhookAmount,
                 ]);
                 WebhookLog::where('webhook_hash', $webhookHash)->update(['status' => 'failed', 'error' => 'Amount mismatch']);
+
                 return response()->json(['error' => 'Amount mismatch'], 422);
             }
 
@@ -90,6 +95,7 @@ class WebhookController extends Controller
             return response()->json(['status' => 'ok']);
         } catch (\Throwable $e) {
             Log::error('Erreur webhook PayTech', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return response()->json(['status' => 'error', 'message' => 'Internal error'], 500);
         }
     }
@@ -103,25 +109,26 @@ class WebhookController extends Controller
 
             if (WebhookLog::where('webhook_hash', $webhookHash)->where('status', 'processed')->exists()) {
                 Log::info('Webhook Green API déjà traité', ['hash' => $webhookHash]);
+
                 return response()->json(['status' => 'ok', 'message' => 'already_processed']);
             }
 
             WebhookLog::create([
-                'provider'     => 'greenapi',
+                'provider' => 'greenapi',
                 'webhook_hash' => $webhookHash,
-                'payload'      => $data,
-                'status'       => 'received',
+                'payload' => $data,
+                'status' => 'received',
             ]);
 
             $processed = $this->greenApi->processWebhook($data);
 
             if ($processed['type'] === 'incomingMessageReceived') {
                 $messageData = $processed['message'] ?? [];
-                $senderData  = $processed['sender'] ?? [];
+                $senderData = $processed['sender'] ?? [];
 
                 $fromPhone = $senderData['chatId'] ?? '';
-                $text      = $messageData['textMessageData']['textMessage'] ?? '';
-                $type      = $messageData['typeMessage'] ?? '';
+                $text = $messageData['textMessageData']['textMessage'] ?? '';
+                $type = $messageData['typeMessage'] ?? '';
 
                 Log::info('Green API message received', [
                     'from' => $fromPhone,
@@ -135,6 +142,7 @@ class WebhookController extends Controller
             return response()->json(['status' => 'ok']);
         } catch (\Throwable $e) {
             Log::error('Erreur webhook Green API', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return response()->json(['status' => 'error', 'message' => 'Internal error'], 500);
         }
     }

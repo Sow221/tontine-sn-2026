@@ -11,7 +11,7 @@ class TwoFactorSecret extends Model
 
     protected $casts = [
         'backup_codes' => 'array',
-        'enabled_at'   => 'datetime',
+        'enabled_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

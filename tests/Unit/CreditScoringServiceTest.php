@@ -2,9 +2,10 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\User;
 use App\Models\CreditScore;
+use App\Models\Cycle;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\CreditScoringService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,20 +22,20 @@ class CreditScoringServiceTest extends TestCase
 
         config([
             'tontine.credit_score' => [
-                'weight_amount'      => 0.3,
+                'weight_amount' => 0.3,
                 'weight_punctuality' => 0.5,
-                'weight_seniority'   => 0.2,
-                'base_amount'        => 100_000,
-                'seniority_base'     => 12,
+                'weight_seniority' => 0.2,
+                'base_amount' => 100_000,
+                'seniority_base' => 12,
                 'badges' => [
                     'bronze' => 4.0,
                     'silver' => 6.5,
-                    'gold'   => 8.5,
+                    'gold' => 8.5,
                 ],
             ],
         ]);
 
-        $this->service = new CreditScoringService();
+        $this->service = new CreditScoringService;
     }
 
     // ─── Basic Score Calculation ──────────────────────────────────────────────
@@ -66,17 +67,17 @@ class CreditScoringServiceTest extends TestCase
 
         // Create successful transactions but overdue (to test amount weight without punctuality bonus)
         for ($i = 0; $i < 3; $i++) {
-            $cycle = \App\Models\Cycle::factory()->create([
+            $cycle = Cycle::factory()->create([
                 'due_date' => now()->subDays(5),
-                'status'   => 'overdue',
+                'status' => 'overdue',
             ]);
 
             Transaction::factory()->create([
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'cycle_id' => $cycle->id,
-                'amount'   => 50000,
-                'status'   => 'success',
-                'paid_at'  => now(),
+                'amount' => 50000,
+                'status' => 'success',
+                'paid_at' => now(),
             ]);
         }
 
@@ -98,16 +99,16 @@ class CreditScoringServiceTest extends TestCase
 
         // Create successful on-time transactions
         for ($i = 0; $i < 4; $i++) {
-            $cycle = \App\Models\Cycle::factory()->create([
+            $cycle = Cycle::factory()->create([
                 'due_date' => now()->addDays(5),
             ]);
 
             Transaction::factory()->create([
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'cycle_id' => $cycle->id,
-                'amount'   => 100000,
-                'status'   => 'success',
-                'paid_at'  => now()->subDays(3),
+                'amount' => 100000,
+                'status' => 'success',
+                'paid_at' => now()->subDays(3),
             ]);
         }
 
@@ -127,16 +128,16 @@ class CreditScoringServiceTest extends TestCase
 
         // Create transactions exceeding base amount
         for ($i = 0; $i < 5; $i++) {
-            $cycle = \App\Models\Cycle::factory()->create([
+            $cycle = Cycle::factory()->create([
                 'due_date' => now()->subDays(5),
             ]);
 
             Transaction::factory()->create([
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'cycle_id' => $cycle->id,
-                'amount'   => 500000,
-                'status'   => 'success',
-                'paid_at'  => now(),
+                'amount' => 500000,
+                'status' => 'success',
+                'paid_at' => now(),
             ]);
         }
 
@@ -156,31 +157,31 @@ class CreditScoringServiceTest extends TestCase
 
         // Create 3 on-time transactions
         for ($i = 0; $i < 3; $i++) {
-            $cycle = \App\Models\Cycle::factory()->create([
+            $cycle = Cycle::factory()->create([
                 'due_date' => now()->addDays(5),
             ]);
 
             Transaction::factory()->create([
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'cycle_id' => $cycle->id,
-                'amount'   => 100000,
-                'status'   => 'success',
-                'paid_at'  => now()->subDays(2),
+                'amount' => 100000,
+                'status' => 'success',
+                'paid_at' => now()->subDays(2),
             ]);
         }
 
         // Create 2 late transactions
         for ($i = 0; $i < 2; $i++) {
-            $cycle = \App\Models\Cycle::factory()->create([
+            $cycle = Cycle::factory()->create([
                 'due_date' => now()->subDays(5),
             ]);
 
             Transaction::factory()->create([
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'cycle_id' => $cycle->id,
-                'amount'   => 100000,
-                'status'   => 'success',
-                'paid_at'  => now(),
+                'amount' => 100000,
+                'status' => 'success',
+                'paid_at' => now(),
             ]);
         }
 
@@ -201,16 +202,16 @@ class CreditScoringServiceTest extends TestCase
             'created_at' => now()->subMonths(12),
         ]);
 
-        $cycle = \App\Models\Cycle::factory()->create([
+        $cycle = Cycle::factory()->create([
             'due_date' => now()->addDays(5),
         ]);
 
         Transaction::factory()->create([
-            'user_id'  => $user->id,
+            'user_id' => $user->id,
             'cycle_id' => $cycle->id,
-            'amount'   => 100000,
-            'status'   => 'success',
-            'paid_at'  => now(),
+            'amount' => 100000,
+            'status' => 'success',
+            'paid_at' => now(),
         ]);
 
         $score = $this->service->calculate($user);
@@ -256,16 +257,16 @@ class CreditScoringServiceTest extends TestCase
 
         // Create transactions to reach bronze threshold
         for ($i = 0; $i < 3; $i++) {
-            $cycle = \App\Models\Cycle::factory()->create([
+            $cycle = Cycle::factory()->create([
                 'due_date' => now()->addDays(1),
             ]);
 
             Transaction::factory()->create([
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'cycle_id' => $cycle->id,
-                'amount'   => 150000,
-                'status'   => 'success',
-                'paid_at'  => now(),
+                'amount' => 150000,
+                'status' => 'success',
+                'paid_at' => now(),
             ]);
         }
 
@@ -285,16 +286,16 @@ class CreditScoringServiceTest extends TestCase
 
         // Create transactions with good record
         for ($i = 0; $i < 5; $i++) {
-            $cycle = \App\Models\Cycle::factory()->create([
+            $cycle = Cycle::factory()->create([
                 'due_date' => now()->addDays(3),
             ]);
 
             Transaction::factory()->create([
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'cycle_id' => $cycle->id,
-                'amount'   => 200000,
-                'status'   => 'success',
-                'paid_at'  => now()->subHours(12),
+                'amount' => 200000,
+                'status' => 'success',
+                'paid_at' => now()->subHours(12),
             ]);
         }
 
@@ -314,16 +315,16 @@ class CreditScoringServiceTest extends TestCase
 
         // Create excellent transaction record
         for ($i = 0; $i < 10; $i++) {
-            $cycle = \App\Models\Cycle::factory()->create([
+            $cycle = Cycle::factory()->create([
                 'due_date' => now()->addDays(3),
             ]);
 
             Transaction::factory()->create([
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'cycle_id' => $cycle->id,
-                'amount'   => 300000,
-                'status'   => 'success',
-                'paid_at'  => now()->subDays(1),
+                'amount' => 300000,
+                'status' => 'success',
+                'paid_at' => now()->subDays(1),
             ]);
         }
 
@@ -353,13 +354,13 @@ class CreditScoringServiceTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $cycle = \App\Models\Cycle::factory()->create();
+        $cycle = Cycle::factory()->create();
 
         Transaction::factory()->create([
-            'user_id'  => $user->id,
+            'user_id' => $user->id,
             'cycle_id' => $cycle->id,
-            'amount'   => 100000,
-            'status'   => 'success',
+            'amount' => 100000,
+            'status' => 'success',
         ]);
 
         $this->assertDatabaseMissing('credit_scores', ['user_id' => $user->id]);
@@ -368,7 +369,7 @@ class CreditScoringServiceTest extends TestCase
 
         $this->assertDatabaseHas('credit_scores', [
             'user_id' => $user->id,
-            'score'   => $score->score,
+            'score' => $score->score,
         ]);
     }
 
@@ -379,26 +380,26 @@ class CreditScoringServiceTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $cycle1 = \App\Models\Cycle::factory()->create();
+        $cycle1 = Cycle::factory()->create();
 
         Transaction::factory()->create([
-            'user_id'  => $user->id,
+            'user_id' => $user->id,
             'cycle_id' => $cycle1->id,
-            'amount'   => 50000,
-            'status'   => 'success',
+            'amount' => 50000,
+            'status' => 'success',
         ]);
 
         $score1 = $this->service->calculate($user);
         $initialScore = $score1->score;
 
         // Add more transactions
-        $cycle2 = \App\Models\Cycle::factory()->create();
+        $cycle2 = Cycle::factory()->create();
 
         Transaction::factory()->create([
-            'user_id'  => $user->id,
+            'user_id' => $user->id,
             'cycle_id' => $cycle2->id,
-            'amount'   => 100000,
-            'status'   => 'success',
+            'amount' => 100000,
+            'status' => 'success',
         ]);
 
         $score2 = $this->service->calculate($user);
@@ -430,13 +431,13 @@ class CreditScoringServiceTest extends TestCase
         $user = User::factory()->create();
 
         for ($i = 0; $i < 3; $i++) {
-            $cycle = \App\Models\Cycle::factory()->create();
+            $cycle = Cycle::factory()->create();
 
             Transaction::factory()->create([
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'cycle_id' => $cycle->id,
-                'amount'   => 500_000,
-                'status'   => 'success',
+                'amount' => 500_000,
+                'status' => 'success',
             ]);
         }
 
@@ -453,23 +454,23 @@ class CreditScoringServiceTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $cycle1 = \App\Models\Cycle::factory()->create();
-        $cycle2 = \App\Models\Cycle::factory()->create();
+        $cycle1 = Cycle::factory()->create();
+        $cycle2 = Cycle::factory()->create();
 
         // Successful transaction
         Transaction::factory()->create([
-            'user_id'  => $user->id,
+            'user_id' => $user->id,
             'cycle_id' => $cycle1->id,
-            'amount'   => 100000,
-            'status'   => 'success',
+            'amount' => 100000,
+            'status' => 'success',
         ]);
 
         // Failed transaction
         Transaction::factory()->create([
-            'user_id'  => $user->id,
+            'user_id' => $user->id,
             'cycle_id' => $cycle2->id,
-            'amount'   => 100000,
-            'status'   => 'failed',
+            'amount' => 100000,
+            'status' => 'failed',
         ]);
 
         $score = $this->service->calculate($user);
@@ -486,21 +487,21 @@ class CreditScoringServiceTest extends TestCase
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
 
-        $cycle1 = \App\Models\Cycle::factory()->create();
-        $cycle2 = \App\Models\Cycle::factory()->create();
+        $cycle1 = Cycle::factory()->create();
+        $cycle2 = Cycle::factory()->create();
 
         Transaction::factory()->create([
-            'user_id'  => $user1->id,
+            'user_id' => $user1->id,
             'cycle_id' => $cycle1->id,
-            'amount'   => 200000,
-            'status'   => 'success',
+            'amount' => 200000,
+            'status' => 'success',
         ]);
 
         Transaction::factory()->create([
-            'user_id'  => $user2->id,
+            'user_id' => $user2->id,
             'cycle_id' => $cycle2->id,
-            'amount'   => 50000,
-            'status'   => 'success',
+            'amount' => 50000,
+            'status' => 'success',
         ]);
 
         $score1 = $this->service->calculate($user1);

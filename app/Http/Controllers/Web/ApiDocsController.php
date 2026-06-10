@@ -16,6 +16,7 @@ class ApiDocsController extends Controller
     public function spec()
     {
         $path = resource_path('swagger/openapi.json');
+
         return response()->file($path, ['Content-Type' => 'application/json']);
     }
 }

@@ -11,7 +11,7 @@ class CheckUserActive
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && !Auth::user()->is_active) {
+        if (Auth::check() && ! Auth::user()->is_active) {
             Auth::logout();
 
             if ($request->expectsJson() || $request->is('api/*')) {

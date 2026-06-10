@@ -12,22 +12,25 @@ use App\Jobs\SendWebhook;
 class WebhookOutboundService
 {
     private ?string $url;
+
     private ?string $secret;
 
     public function __construct()
     {
-        $this->url    = config('services.webhook_outbound.url');
+        $this->url = config('services.webhook_outbound.url');
         $this->secret = config('services.webhook_outbound.secret');
     }
 
     public function dispatch(string $event, array $payload): void
     {
-        if (!$this->url) return;
+        if (! $this->url) {
+            return;
+        }
 
         $body = json_encode([
-            'event'     => $event,
+            'event' => $event,
             'timestamp' => now()->toIso8601String(),
-            'payload'   => $payload,
+            'payload' => $payload,
         ]);
 
         $signature = hash_hmac('sha256', $body, $this->secret ?? '');

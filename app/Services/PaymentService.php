@@ -8,7 +8,6 @@ use App\Jobs\RecalculateCreditScore;
 use App\Models\Cycle;
 use App\Models\SavingsWithdrawal;
 use App\Models\Transaction;
-use App\Services\CreditScoringService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -20,7 +19,7 @@ class PaymentService
         private NotificationService $notifier,
         private GamificationService $gamification,
         private CreditScoringService $scorer,
-        private \App\Services\WebhookOutboundService $webhookOutbound,
+        private WebhookOutboundService $webhookOutbound,
     ) {}
 
     public function hasActivePayment(Cycle $cycle, int $userId): bool
@@ -47,18 +46,18 @@ class PaymentService
             $finalAmount = $amount;
 
             if ($cycle->isOverdue() && $cycle->tontine->penalty_rate > 0) {
-                $penalty     = (int) round($amount * $cycle->tontine->penalty_rate / 100);
+                $penalty = (int) round($amount * $cycle->tontine->penalty_rate / 100);
                 $finalAmount = $amount + $penalty;
             }
 
             $transaction = Transaction::create([
-                'cycle_id'           => $cycle->id,
-                'user_id'            => $userId,
-                'amount'             => $finalAmount,
-                'method'             => $method,
+                'cycle_id' => $cycle->id,
+                'user_id' => $userId,
+                'amount' => $finalAmount,
+                'method' => $method,
                 'external_reference' => $ref,
-                'status'             => 'pending',
-                'paid_at'            => null,
+                'status' => 'pending',
+                'paid_at' => null,
             ]);
 
             return $transaction;
@@ -68,19 +67,21 @@ class PaymentService
     public function confirmPayment(Transaction $transaction, ?int $verifiedAmount = null): void
     {
         $transaction = $transaction->fresh();
-        if (!$transaction || $transaction->status === 'success') return;
+        if (! $transaction || $transaction->status === 'success') {
+            return;
+        }
 
         if ($verifiedAmount !== null && $verifiedAmount !== $transaction->amount) {
             Log::warning('Montant vérifié différent du montant attendu', [
                 'transaction_id' => $transaction->id,
-                'expected'       => $transaction->amount,
-                'received'       => $verifiedAmount,
+                'expected' => $transaction->amount,
+                'received' => $verifiedAmount,
             ]);
         }
 
-        $cycleWasPaid    = false;
+        $cycleWasPaid = false;
         $beneficiaryDrawn = false;
-        $beneficiaryId   = null;
+        $beneficiaryId = null;
         $beneficiaryAmount = 0;
 
         DB::transaction(function () use ($transaction, &$cycleWasPaid, &$beneficiaryDrawn, &$beneficiaryId, &$beneficiaryAmount) {
@@ -96,15 +97,15 @@ class PaymentService
 
             if (
                 $cycleWasPaid
-                && !$cycle->beneficiary_id
-                && !in_array($cycle->tontine->type, ['forced_saving', 'ceremonial'])
+                && ! $cycle->beneficiary_id
+                && ! in_array($cycle->tontine->type, ['forced_saving', 'ceremonial'])
             ) {
                 $this->drawService->drawBeneficiary($cycle);
                 $cycle->refresh();
 
                 if ($cycle->beneficiary_id) {
-                    $beneficiaryDrawn  = true;
-                    $beneficiaryId     = $cycle->beneficiary_id;
+                    $beneficiaryDrawn = true;
+                    $beneficiaryId = $cycle->beneficiary_id;
                     $beneficiaryAmount = $cycle->tontine->amount * $cycle->tontine->activeMembers()->count();
                 }
             }
@@ -115,15 +116,15 @@ class PaymentService
 
         $this->webhookOutbound->dispatch('payment.confirmed', [
             'transaction_id' => $transaction->id,
-            'user_id'        => $transaction->user_id,
-            'amount'         => $transaction->amount,
-            'method'         => $transaction->method,
-            'cycle_id'       => $transaction->cycle_id,
+            'user_id' => $transaction->user_id,
+            'amount' => $transaction->amount,
+            'method' => $transaction->method,
+            'cycle_id' => $transaction->cycle_id,
         ]);
 
         if ($transaction->user) {
             RecalculateCreditScore::dispatch($transaction->user->id)->afterResponse();
-            $this->gamification->updatePaymentStreak($transaction->user, $transaction->cycle, !$transaction->cycle->isOverdue());
+            $this->gamification->updatePaymentStreak($transaction->user, $transaction->cycle, ! $transaction->cycle->isOverdue());
         }
 
         $cycle = $transaction->cycle->fresh();
@@ -139,15 +140,15 @@ class PaymentService
                 );
             }
             $this->webhookOutbound->dispatch('cycle.beneficiary_drawn', [
-                'cycle_id'       => $cycle->id,
-                'tontine_id'     => $cycle->tontine_id,
+                'cycle_id' => $cycle->id,
+                'tontine_id' => $cycle->tontine_id,
                 'beneficiary_id' => $beneficiaryId,
-                'amount'         => $beneficiaryAmount,
+                'amount' => $beneficiaryAmount,
             ]);
         }
 
         if ($cycleWasPaid) {
-            $tontine   = $cycle->tontine;
+            $tontine = $cycle->tontine;
             $nextCycle = $tontine->currentCycle;
 
             if ($nextCycle && $nextCycle->id !== $cycle->id) {

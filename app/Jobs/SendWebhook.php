@@ -26,15 +26,15 @@ class SendWebhook implements ShouldQueue
     public function handle(): void
     {
         $body = json_encode([
-            'event'     => $this->event,
+            'event' => $this->event,
             'timestamp' => now()->toIso8601String(),
-            'payload'   => $this->payload,
+            'payload' => $this->payload,
         ]);
 
         Http::withHeaders([
-            'Content-Type'      => 'application/json',
+            'Content-Type' => 'application/json',
             'X-TontineSN-Event' => $this->event,
-            'X-TontineSN-Sig'   => $this->signature,
+            'X-TontineSN-Sig' => $this->signature,
         ])->timeout(5)->post($this->url, json_decode($body, true));
     }
 

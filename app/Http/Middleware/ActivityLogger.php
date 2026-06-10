@@ -20,10 +20,10 @@ class ActivityLogger
         try {
             if ($request->user() && $this->shouldLog($request)) {
                 ActivityLog::create([
-                    'user_id'    => $request->user()->id,
-                    'action'     => $request->method() . ' ' . $request->path(),
+                    'user_id' => $request->user()->id,
+                    'action' => $request->method().' '.$request->path(),
                     'ip_address' => $request->ip(),
-                    'payload'    => $this->sanitize($request->all()),
+                    'payload' => $this->sanitize($request->all()),
                 ]);
             }
         } catch (\Throwable) {
@@ -36,8 +36,11 @@ class ActivityLogger
     private function shouldLog(Request $request): bool
     {
         foreach (self::$sensitiveRoutes as $route) {
-            if (str_contains($request->path(), $route)) return true;
+            if (str_contains($request->path(), $route)) {
+                return true;
+            }
         }
+
         return false;
     }
 
@@ -49,6 +52,7 @@ class ActivityLogger
             'kyc_consent', 'bid_rate', 'amount',
             'new_owner_id', 'beneficiary_id',
         ];
+
         return array_diff_key($data, array_flip($sensitive));
     }
 }

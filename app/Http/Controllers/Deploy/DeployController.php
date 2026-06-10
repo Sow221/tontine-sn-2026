@@ -20,21 +20,21 @@ class DeployController
 
         try {
             Artisan::call('migrate', ['--force' => true]);
-            $output .= Artisan::output() . "\n";
+            $output .= Artisan::output()."\n";
 
             Artisan::call('db:seed', ['--force' => true]);
-            $output .= Artisan::output() . "\n";
+            $output .= Artisan::output()."\n";
 
             Artisan::call('storage:link');
-            $output .= Artisan::output() . "\n";
+            $output .= Artisan::output()."\n";
 
             Log::info('Déploiement terminé avec succès');
         } catch (\Throwable $e) {
-            $output .= 'ERREUR: ' . $e->getMessage();
+            $output .= 'ERREUR: '.$e->getMessage();
             Log::error('Erreur déploiement', ['error' => $e->getMessage()]);
         }
 
-        return response('<pre>' . htmlspecialchars($output) . '</pre>', 200)
+        return response('<pre>'.htmlspecialchars($output).'</pre>', 200)
             ->header('Content-Type', 'text/html');
     }
 }

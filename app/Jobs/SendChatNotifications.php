@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Models\ChatMessage;
 use App\Models\Tontine;
 use App\Models\User;
 use App\Services\NotificationService;
@@ -25,12 +24,12 @@ class SendChatNotifications implements ShouldQueue
     public function handle(NotificationService $notifier): void
     {
         $tontine = Tontine::find($this->tontineId);
-        if (!$tontine) {
+        if (! $tontine) {
             return;
         }
 
         $sender = User::find($this->senderId);
-        if (!$sender) {
+        if (! $sender) {
             return;
         }
 
@@ -38,15 +37,15 @@ class SendChatNotifications implements ShouldQueue
             ->where('users.id', '!=', $sender->id)
             ->get();
 
-        $preview = mb_strlen($this->message) > 60 
-            ? mb_substr($this->message, 0, 57) . '...' 
+        $preview = mb_strlen($this->message) > 60
+            ? mb_substr($this->message, 0, 57).'...'
             : $this->message;
 
         $subject = "💬 {$tontine->name} : message de {$sender->name}";
-        $body = "Bonjour,<br><br>"
-            . "<strong>{$sender->name}</strong> a envoyé un message dans <strong>{$tontine->name}</strong> :<br>"
-            . "<blockquote style='border-left:3px solid #009639;padding-left:12px;margin:8px 0;color:#374151;'>{$preview}</blockquote>"
-            . "Connectez-vous pour répondre.";
+        $body = 'Bonjour,<br><br>'
+            ."<strong>{$sender->name}</strong> a envoyé un message dans <strong>{$tontine->name}</strong> :<br>"
+            ."<blockquote style='border-left:3px solid #009639;padding-left:12px;margin:8px 0;color:#374151;'>{$preview}</blockquote>"
+            .'Connectez-vous pour répondre.';
 
         foreach ($members as $member) {
             $settings = $member->notification_settings ?? [];

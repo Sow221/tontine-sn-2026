@@ -1,10 +1,13 @@
 <?php
 
 use App\Jobs\SendReminders;
-use App\Models\MagicLink;
-use App\Models\Transaction;
-use App\Services\NotificationService;
 use App\Models\Cycle;
+use App\Models\MagicLink;
+use App\Models\Tontine;
+use App\Models\Transaction;
+use App\Models\User;
+use App\Services\CycleService;
+use App\Services\NotificationService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -20,23 +23,23 @@ Schedule::command('tontine:recalculate-scores')->weeklyOn(0, '03:00');
 Schedule::job(new SendReminders)->dailyAt('08:00');
 
 // Nettoyage des magic links expirés
-Schedule::call(fn() => MagicLink::where('expires_at', '<', now())->delete())->daily();
+Schedule::call(fn () => MagicLink::where('expires_at', '<', now())->delete())->daily();
 
 // Marquer les cycles en retard
 Schedule::command('tontine:process-overdue')->dailyAt('06:00');
 
 // Clôture automatique des tontines forced_saving dont la date de fin est dépassée
 Schedule::call(function () {
-    $cycleService = app(\App\Services\CycleService::class);
-    $notifier     = app(\App\Services\NotificationService::class);
+    $cycleService = app(CycleService::class);
+    $notifier = app(NotificationService::class);
 
-    \App\Models\Tontine::where('type', 'forced_saving')
+    Tontine::where('type', 'forced_saving')
         ->where('status', 'active')
         ->where('end_date', '<', now()->startOfDay())
         ->each(function ($tontine) use ($cycleService, $notifier) {
             $withdrawals = $cycleService->closeForcedSaving($tontine);
             foreach ($withdrawals as $w) {
-                $member = \App\Models\User::find($w['user_id']);
+                $member = User::find($w['user_id']);
                 if ($member) {
                     $notifier->notifySavingsWithdrawal($member, $tontine->name, $w['amount']);
                 }
@@ -53,7 +56,7 @@ Schedule::call(function () {
 
     foreach ($stale as $tx) {
         $tx->update([
-            'status'         => 'failed',
+            'status' => 'failed',
             'failure_reason' => 'Trop de temps écoulé depuis l\'initiation',
         ]);
     }
@@ -62,7 +65,7 @@ Schedule::call(function () {
 // Relances pour cycles en retard (J+1, J+3, J+7 après échéance)
 Schedule::call(function () {
     $overdueDays = config('tontine.notifications.overdue_days_after', [1, 3, 7]);
-    $notifier    = app(NotificationService::class);
+    $notifier = app(NotificationService::class);
 
     foreach ($overdueDays as $days) {
         $targetDate = now()->subDays($days)->startOfDay();

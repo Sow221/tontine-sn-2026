@@ -37,12 +37,13 @@ class PaymentController extends Controller
         );
 
         try {
-            $penalty     = $cycle->isOverdue() && $cycle->tontine->penalty_rate > 0
+            $penalty = $cycle->isOverdue() && $cycle->tontine->penalty_rate > 0
                 ? (int) round($cycle->tontine->amount * $cycle->tontine->penalty_rate / 100)
                 : 0;
             $totalAmount = $cycle->tontine->amount + $penalty;
         } catch (\Throwable $e) {
             Log::error('Erreur affichage formulaire paiement', ['cycle' => $cycle->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Impossible de charger le formulaire de paiement.']);
         }
 
@@ -68,7 +69,7 @@ class PaymentController extends Controller
         );
 
         try {
-            $amount      = $cycle->tontine->amount;
+            $amount = $cycle->tontine->amount;
             $transaction = $this->paymentService->recordPayment($cycle, $user->id, $amount, $request->method);
 
             if ($request->method === 'cash') {
@@ -77,10 +78,11 @@ class PaymentController extends Controller
 
             $result = $this->payTechService->initiatePayment($transaction);
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 $errorMsg = $result['error'] ?? 'Erreur de paiement. Veuillez réessayer.';
                 $transaction->update(['status' => 'failed', 'failure_reason' => $errorMsg]);
                 Log::error('Paiement échoué', ['transaction' => $transaction->id, 'error' => $errorMsg]);
+
                 return back()->withErrors(['payment' => 'Le paiement a échoué. Veuillez réessayer ou choisir un autre mode de paiement.']);
             }
 
@@ -89,6 +91,7 @@ class PaymentController extends Controller
             return back()->withErrors(['payment' => $e->getMessage()]);
         } catch (\Throwable $e) {
             Log::error('Erreur initiation paiement', ['cycle' => $cycle->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['payment' => 'Une erreur est survenue. Veuillez réessayer.']);
         }
     }
@@ -98,12 +101,12 @@ class PaymentController extends Controller
         abort_if($transaction->user_id !== Auth::id(), 403);
 
         try {
-            if (!$transaction->isReversible()) {
+            if (! $transaction->isReversible()) {
                 return back()->withErrors(['reverse' => 'Ce paiement ne peut plus être annulé (délai de 24h dépassé ou déjà traité).']);
             }
 
             $transaction->update([
-                'status'         => 'reversed',
+                'status' => 'reversed',
                 'failure_reason' => 'Annulé par l\'utilisateur',
             ]);
 
@@ -119,6 +122,7 @@ class PaymentController extends Controller
             return back()->with('success', 'Paiement annulé avec succès.');
         } catch (\Throwable $e) {
             Log::error('Erreur annulation paiement', ['transaction' => $transaction->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['reverse' => 'Erreur lors de l\'annulation du paiement.']);
         }
     }
@@ -127,6 +131,7 @@ class PaymentController extends Controller
     {
         abort_if($transaction->user_id !== Auth::id(), 403);
         $transaction->load('cycle.tontine');
+
         return view('cycles.payment-success-cash', compact('transaction'));
     }
 
@@ -134,6 +139,7 @@ class PaymentController extends Controller
     {
         abort_if($transaction->user_id !== Auth::id(), 403);
         $transaction->load('cycle.tontine');
+
         return view('cycles.payment-pending', compact('transaction'));
     }
 
@@ -143,11 +149,11 @@ class PaymentController extends Controller
 
         try {
             return response()->json([
-                'status'       => $transaction->status,
+                'status' => $transaction->status,
                 'redirect_url' => $transaction->status === 'success'
                     ? route('tontines.show', $transaction->cycle?->tontine_id)
                     : null,
-                'receipt_url'  => $transaction->status === 'success'
+                'receipt_url' => $transaction->status === 'success'
                     ? route('transactions.receipt', $transaction)
                     : null,
             ]);
@@ -156,14 +162,14 @@ class PaymentController extends Controller
         }
     }
 
-    public function receipt(\App\Models\Transaction $transaction)
+    public function receipt(Transaction $transaction)
     {
         abort_if($transaction->user_id !== Auth::id(), 403);
         abort_unless($transaction->status === 'success', 404);
         $transaction->load('cycle.tontine', 'user');
 
         try {
-            $options = new Options();
+            $options = new Options;
             $options->set('isRemoteEnabled', true);
             $options->set('isHtml5ParserEnabled', true);
 
@@ -173,11 +179,12 @@ class PaymentController extends Controller
             $dompdf->render();
 
             return response($dompdf->output(), 200, [
-                'Content-Type'        => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="recu-' . $transaction->id . '.pdf"',
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="recu-'.$transaction->id.'.pdf"',
             ]);
         } catch (\Throwable $e) {
             Log::error('Erreur génération reçu PDF', ['transaction' => $transaction->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
             return back()->withErrors(['error' => 'Impossible de générer le reçu.']);
         }
     }
@@ -186,7 +193,7 @@ class PaymentController extends Controller
     {
         try {
             $cycle = $request->cycle_id
-                ? \App\Models\Cycle::with('tontine')->find($request->cycle_id)
+                ? Cycle::with('tontine')->find($request->cycle_id)
                 : null;
         } catch (\Exception $e) {
             $cycle = null;
@@ -194,5 +201,4 @@ class PaymentController extends Controller
 
         return view('cycles.payment-failed', compact('cycle'));
     }
-
 }

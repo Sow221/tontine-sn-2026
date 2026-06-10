@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Cycle;
 use App\Models\Tontine;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\CycleService;
 use App\Services\NotificationService;
 use Illuminate\Console\Command;
@@ -12,11 +13,12 @@ use Illuminate\Console\Command;
 class ProcessOverdueCycles extends Command
 {
     protected $signature = 'tontine:process-overdue';
+
     protected $description = 'Marque les cycles en retard, notifie les membres, et clôture automatiquement les épargnes échües';
 
     public function handle(): int
     {
-        $notifier     = app(NotificationService::class);
+        $notifier = app(NotificationService::class);
         $cycleService = app(CycleService::class);
 
         // ── 1. Cycles en retard ─────────────────────────────────────────────────────
@@ -37,7 +39,7 @@ class ProcessOverdueCycles extends Command
                     ->toArray();
 
                 foreach ($cycle->tontine->activeMembers as $member) {
-                    if (!in_array($member->id, $paidMemberIds)) {
+                    if (! in_array($member->id, $paidMemberIds)) {
                         $notifier->notifyPaymentReminder(
                             $member,
                             $cycle->tontine->name,
@@ -61,7 +63,7 @@ class ProcessOverdueCycles extends Command
             try {
                 $withdrawals = $cycleService->closeForcedSaving($tontine);
                 foreach ($withdrawals as $w) {
-                    $member = \App\Models\User::find($w['user_id']);
+                    $member = User::find($w['user_id']);
                     if ($member) {
                         $notifier->notifySavingsWithdrawal($member, $tontine->name, $w['amount']);
                     }

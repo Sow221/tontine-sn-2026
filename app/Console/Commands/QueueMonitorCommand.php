@@ -7,13 +7,14 @@ use Illuminate\Support\Facades\DB;
 
 class QueueMonitorCommand extends Command
 {
-    protected $signature   = 'queue:monitor';
+    protected $signature = 'queue:monitor';
+
     protected $description = 'Affiche l\'état de la queue (jobs en attente, en cours, échoués)';
 
     public function handle(): int
     {
         $pending = DB::table('jobs')->count();
-        $failed  = DB::table('failed_jobs')->count();
+        $failed = DB::table('failed_jobs')->count();
 
         $this->table(
             ['Métrique', 'Valeur'],

@@ -3,24 +3,29 @@
 namespace App\Services;
 
 use App\Models\Transaction;
+use App\Services\Concerns\SanitizesData;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class PayTechService
 {
-    use \App\Services\Concerns\SanitizesData;
+    use SanitizesData;
+
     private string $apiKey;
+
     private string $apiSecret;
+
     private string $baseUrl;
+
     private LoggingService $loggingService;
 
     public function __construct(LoggingService $loggingService)
     {
-        $cfg                   = config('mobilemoney.paytech');
-        $this->apiKey          = $cfg['api_key'];
-        $this->apiSecret       = $cfg['api_secret'];
-        $this->baseUrl         = $cfg['base_url'];
-        $this->loggingService  = $loggingService;
+        $cfg = config('mobilemoney.paytech');
+        $this->apiKey = $cfg['api_key'];
+        $this->apiSecret = $cfg['api_secret'];
+        $this->baseUrl = $cfg['base_url'];
+        $this->loggingService = $loggingService;
     }
 
     public function initiatePayment(Transaction $transaction): array
@@ -42,22 +47,22 @@ class PayTechService
             );
 
             $response = Http::withHeaders([
-                'API_KEY'    => $this->apiKey,
+                'API_KEY' => $this->apiKey,
                 'API_SECRET' => $this->apiSecret,
             ])
-            ->timeout(config('mobilemoney.paytech.timeout'))
-            ->post("{$this->baseUrl}/api/payment/request-payment", [
-                'item_name'        => "Cotisation TontineSN #{$transaction->cycle_id}",
-                'item_price'       => $transaction->amount,
-                'currency'         => config('mobilemoney.paytech.currency'),
-                'ref_command'      => $reference,
-                'command_name'     => "Cotisation tontine",
-                'env'              => 'prod',
-                'fee_bearer'       => config('mobilemoney.paytech.fee_bearer'),
-                'ipn_url'          => route('webhooks.paytech'),
-                'success_url'      => route('payment.pending', $transaction) . '?paytech_return=1',
-                'cancel_url'       => route('payment.failed', ['cycle_id' => $transaction->cycle_id]),
-            ]);
+                ->timeout(config('mobilemoney.paytech.timeout'))
+                ->post("{$this->baseUrl}/api/payment/request-payment", [
+                    'item_name' => "Cotisation TontineSN #{$transaction->cycle_id}",
+                    'item_price' => $transaction->amount,
+                    'currency' => config('mobilemoney.paytech.currency'),
+                    'ref_command' => $reference,
+                    'command_name' => 'Cotisation tontine',
+                    'env' => 'prod',
+                    'fee_bearer' => config('mobilemoney.paytech.fee_bearer'),
+                    'ipn_url' => route('webhooks.paytech'),
+                    'success_url' => route('payment.pending', $transaction).'?paytech_return=1',
+                    'cancel_url' => route('payment.failed', ['cycle_id' => $transaction->cycle_id]),
+                ]);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -65,7 +70,7 @@ class PayTechService
                 if (($data['success'] ?? 0) === 1) {
                     $token = $data['token'] ?? null;
 
-                    if (!$token) {
+                    if (! $token) {
                         Log::error('PayTech response missing token', ['response' => $data]);
 
                         $this->loggingService->logPaymentError(
@@ -91,7 +96,7 @@ class PayTechService
                     );
 
                     return [
-                        'success'      => true,
+                        'success' => true,
                         'redirect_url' => "https://paytech.sn/payment/checkout/{$token}",
                     ];
                 }
@@ -132,8 +137,8 @@ class PayTechService
 
             Log::error('PayTech exception', [
                 'message' => $e->getMessage(),
-                'class'   => get_class($e),
-                'trace'   => $e->getTraceAsString(),
+                'class' => get_class($e),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             $this->loggingService->logPaymentError(
@@ -155,7 +160,7 @@ class PayTechService
 
         try {
             $response = Http::withHeaders([
-                'API_KEY'    => $this->apiKey,
+                'API_KEY' => $this->apiKey,
                 'API_SECRET' => $this->apiSecret,
             ])->get("{$this->baseUrl}/api/payment/details/{$token}");
 
@@ -198,8 +203,8 @@ class PayTechService
         } catch (\Throwable $e) {
             Log::error('PayTech webhook verification failed', [
                 'message' => $e->getMessage(),
-                'class'   => get_class($e),
-                'trace'   => $e->getTraceAsString(),
+                'class' => get_class($e),
+                'trace' => $e->getTraceAsString(),
             ]);
             $this->loggingService->logPaymentError(
                 $data['user_id'] ?? null,

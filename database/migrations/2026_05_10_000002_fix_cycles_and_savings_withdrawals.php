@@ -10,9 +10,9 @@ return new class extends Migration
     {
         // Corriger bid_amount sur cycles (était absent du fillable et mal utilisé)
         Schema::table('cycles', function (Blueprint $table) {
-            if (!Schema::hasColumn('cycles', 'bid_amount')) {
+            if (! Schema::hasColumn('cycles', 'bid_amount')) {
                 $table->unsignedBigInteger('bid_amount')->nullable()->after('total_collected')
-                      ->comment('Montant net reçu par le gagnant de l\'enchère');
+                    ->comment('Montant net reçu par le gagnant de l\'enchère');
             }
         });
 

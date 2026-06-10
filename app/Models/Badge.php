@@ -23,11 +23,11 @@ class Badge extends Model
 
     public function tierIndex(): int
     {
-        return match($this->tier) {
+        return match ($this->tier) {
             'bronze' => 0,
             'silver' => 1,
-            'gold'   => 2,
-            default  => 0,
+            'gold' => 2,
+            default => 0,
         };
     }
 

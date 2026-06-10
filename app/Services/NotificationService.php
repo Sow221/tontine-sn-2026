@@ -3,28 +3,38 @@
 namespace App\Services;
 
 use App\Jobs\SendChatNotifications;
+use App\Models\FcmToken;
 use App\Models\NotificationLog;
+use App\Models\Tontine;
 use App\Models\User;
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Twilio\Rest\Client as TwilioClient;
 
 class NotificationService
 {
-    const EVENT_BENEFICIARY    = 'beneficiary_notification';
-    const EVENT_PAYMENT        = 'payment_confirmed';
+    const EVENT_BENEFICIARY = 'beneficiary_notification';
+
+    const EVENT_PAYMENT = 'payment_confirmed';
+
     const EVENT_MEMBER_APPROVED = 'member_approved';
-    const EVENT_REMINDER       = 'payment_reminder';
-    const EVENT_CYCLE_START    = 'cycle_start';
-    const EVENT_SAVINGS        = 'savings_withdrawal';
-    const EVENT_KYC_APPROVED   = 'kyc_approved';
-    const EVENT_KYC_REJECTED   = 'kyc_rejected';
+
+    const EVENT_REMINDER = 'payment_reminder';
+
+    const EVENT_CYCLE_START = 'cycle_start';
+
+    const EVENT_SAVINGS = 'savings_withdrawal';
+
+    const EVENT_KYC_APPROVED = 'kyc_approved';
+
+    const EVENT_KYC_REJECTED = 'kyc_rejected';
 
     private ?TwilioClient $twilio = null;
 
     public function __construct()
     {
-        $sid   = config('services.twilio.sid');
+        $sid = config('services.twilio.sid');
         $token = config('services.twilio.token');
 
         if ($sid && $token) {
@@ -34,8 +44,8 @@ class NotificationService
 
     public function sendWebPush(User $user, string $title, string $body, string $url = '/dashboard'): bool
     {
-        $tokens = \App\Models\FcmToken::where('user_id', $user->id)->get();
-        
+        $tokens = FcmToken::where('user_id', $user->id)->get();
+
         if ($tokens->isEmpty()) {
             return false;
         }
@@ -43,15 +53,15 @@ class NotificationService
         $payload = json_encode([
             'notification' => [
                 'title' => $title,
-                'body'  => $body,
-                'icon'  => '/images/icon-192.png',
+                'body' => $body,
+                'icon' => '/images/icon-192.png',
             ],
             'data' => [
                 'url' => $url,
             ],
         ]);
 
-        $client = new \GuzzleHttp\Client();
+        $client = new Client;
         $success = false;
 
         foreach ($tokens as $token) {
@@ -59,14 +69,14 @@ class NotificationService
                 // Envoyer le push notification à l'endpoint Web Push
                 $response = $client->post($token->endpoint, [
                     'headers' => [
-                        'Content-Type'  => 'application/json',
-                        'TTL'           => '3600',
+                        'Content-Type' => 'application/json',
+                        'TTL' => '3600',
                     ],
                     'json' => [
                         'notification' => [
                             'title' => $title,
-                            'body'  => $body,
-                            'icon'  => '/images/icon-192.png',
+                            'body' => $body,
+                            'icon' => '/images/icon-192.png',
                         ],
                         'data' => [
                             'url' => $url,
@@ -98,6 +108,7 @@ class NotificationService
     {
         if (empty($user->phone_number)) {
             $this->logNotification($user, 'whatsapp', $event, $message, 'failed');
+
             return false;
         }
 
@@ -108,35 +119,38 @@ class NotificationService
                 $this->twilio->messages->create(
                     "whatsapp:+{$phone}",
                     [
-                        'from' => 'whatsapp:' . config('services.twilio.whatsapp_from'),
+                        'from' => 'whatsapp:'.config('services.twilio.whatsapp_from'),
                         'body' => $message,
                     ]
                 );
 
                 $this->logNotification($user, 'whatsapp', $event, $message, 'sent');
+
                 return true;
             } catch (\Exception $e) {
                 Log::error('Twilio WhatsApp failed', [
                     'user_id' => $user->id,
-                    'phone'   => $phone,
-                    'error'   => $e->getMessage(),
+                    'phone' => $phone,
+                    'error' => $e->getMessage(),
                 ]);
 
                 $this->logNotification($user, 'whatsapp', $event, $message, 'failed');
+
                 return false;
             }
         }
 
-        $waLink = 'https://wa.me/' . $phone . '?text=' . urlencode($message);
+        $waLink = 'https://wa.me/'.$phone.'?text='.urlencode($message);
 
         Log::channel('stack')->info('WhatsApp link (no Twilio configured)', [
             'user_id' => $user->id,
-            'phone'   => $phone,
+            'phone' => $phone,
             'message' => $message,
             'wa_link' => $waLink,
         ]);
 
         $this->logNotification($user, 'whatsapp', $event, $message, 'pending');
+
         return true;
     }
 
@@ -144,6 +158,7 @@ class NotificationService
     {
         if (empty($user->email)) {
             $this->logNotification($user, 'email', $event, strip_tags($body), 'failed');
+
             return false;
         }
 
@@ -151,21 +166,23 @@ class NotificationService
             Mail::send('emails.notification', ['subject' => $subject, 'body' => $body, 'user' => $user],
                 function ($message) use ($user, $subject) {
                     $message->to($user->email, $user->name ?? $user->email)
-                            ->subject($subject)
-                            ->from(config('mail.from.address'), config('mail.from.name'));
+                        ->subject($subject)
+                        ->from(config('mail.from.address'), config('mail.from.name'));
                 }
             );
 
             $this->logNotification($user, 'email', $event, strip_tags($body), 'sent');
+
             return true;
         } catch (\Exception $e) {
             Log::error('Email notification failed', [
                 'user_id' => $user->id,
                 'subject' => $subject,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             $this->logNotification($user, 'email', $event, strip_tags($body), 'failed');
+
             return false;
         }
     }
@@ -175,7 +192,7 @@ class NotificationService
         $event = match ($type) {
             'kyc_approved' => self::EVENT_KYC_APPROVED,
             'kyc_rejected' => self::EVENT_KYC_REJECTED,
-            default        => 'general',
+            default => 'general',
         };
 
         $this->sendEmail($user, $this->subjectFromType($type), "<p>{$message}</p>", $event);
@@ -185,91 +202,112 @@ class NotificationService
     private function wantsChannel(User $user, string $settingKey): bool
     {
         $settings = $user->notification_settings ?? [];
+
         return ($settings[$settingKey] ?? true) !== false;
     }
 
     public function notifyBeneficiary(User $user, string $tontineName, int $amount): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $msg     = "🎉 C'est votre tour ! Vous êtes bénéficiaire de la tontine {$tontineName}. Montant à recevoir : {$montant} FCFA. Connectez-vous sur TontineSN.";
+        $msg = "🎉 C'est votre tour ! Vous êtes bénéficiaire de la tontine {$tontineName}. Montant à recevoir : {$montant} FCFA. Connectez-vous sur TontineSN.";
 
-        if ($this->wantsChannel($user, 'beneficiary_whatsapp')) $this->sendWhatsApp($user, $msg, self::EVENT_BENEFICIARY);
-        if ($this->wantsChannel($user, 'beneficiary_email')) $this->sendEmail(
-            $user,
-            "🎉 C'est votre tour — {$tontineName}",
-            "Bonjour <strong>{$user->name}</strong>,<br><br>
+        if ($this->wantsChannel($user, 'beneficiary_whatsapp')) {
+            $this->sendWhatsApp($user, $msg, self::EVENT_BENEFICIARY);
+        }
+        if ($this->wantsChannel($user, 'beneficiary_email')) {
+            $this->sendEmail(
+                $user,
+                "🎉 C'est votre tour — {$tontineName}",
+                "Bonjour <strong>{$user->name}</strong>,<br><br>
             Vous avez été désigné(e) bénéficiaire de la tontine <strong>{$tontineName}</strong>.<br><br>
             <strong>Montant à recevoir : {$montant} FCFA</strong><br><br>
             Connectez-vous à TontineSN pour plus de détails.",
-            self::EVENT_BENEFICIARY
-        );
+                self::EVENT_BENEFICIARY
+            );
+        }
     }
 
     public function notifyPaymentConfirmed(User $user, int $amount, string $tontineName): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $msg     = "✅ Paiement confirmé ! Votre cotisation de {$montant} FCFA pour la tontine {$tontineName} a été enregistrée. Merci !";
+        $msg = "✅ Paiement confirmé ! Votre cotisation de {$montant} FCFA pour la tontine {$tontineName} a été enregistrée. Merci !";
 
-        if ($this->wantsChannel($user, 'payment_whatsapp')) $this->sendWhatsApp($user, $msg, self::EVENT_PAYMENT);
-        if ($this->wantsChannel($user, 'payment_email')) $this->sendEmail(
-            $user,
-            "✅ Paiement confirmé — {$tontineName}",
-            "Bonjour <strong>{$user->name}</strong>,<br><br>
+        if ($this->wantsChannel($user, 'payment_whatsapp')) {
+            $this->sendWhatsApp($user, $msg, self::EVENT_PAYMENT);
+        }
+        if ($this->wantsChannel($user, 'payment_email')) {
+            $this->sendEmail(
+                $user,
+                "✅ Paiement confirmé — {$tontineName}",
+                "Bonjour <strong>{$user->name}</strong>,<br><br>
             Votre paiement de <strong>{$montant} FCFA</strong>
             pour la tontine <strong>{$tontineName}</strong> a bien été confirmé.<br><br>
             Merci pour votre ponctualité !",
-            self::EVENT_PAYMENT
-        );
+                self::EVENT_PAYMENT
+            );
+        }
     }
 
     public function notifyMemberApproved(User $user, string $tontineName): void
     {
         $msg = "✅ Votre adhésion à la tontine {$tontineName} a été approuvée ! Bienvenue dans le groupe. Connectez-vous sur TontineSN.";
 
-        if ($this->wantsChannel($user, 'member_whatsapp')) $this->sendWhatsApp($user, $msg, self::EVENT_MEMBER_APPROVED);
-        if ($this->wantsChannel($user, 'member_email')) $this->sendEmail(
-            $user,
-            "✅ Adhésion approuvée — {$tontineName}",
-            "Bonjour <strong>{$user->name}</strong>,<br><br>
+        if ($this->wantsChannel($user, 'member_whatsapp')) {
+            $this->sendWhatsApp($user, $msg, self::EVENT_MEMBER_APPROVED);
+        }
+        if ($this->wantsChannel($user, 'member_email')) {
+            $this->sendEmail(
+                $user,
+                "✅ Adhésion approuvée — {$tontineName}",
+                "Bonjour <strong>{$user->name}</strong>,<br><br>
             Votre demande d'adhésion à la tontine <strong>{$tontineName}</strong> a été acceptée.<br><br>
             Bienvenue dans le groupe ! Connectez-vous pour voir les détails.",
-            self::EVENT_MEMBER_APPROVED
-        );
+                self::EVENT_MEMBER_APPROVED
+            );
+        }
     }
 
     public function notifyPaymentReminder(User $user, string $tontineName, int $amount, int $daysLeft): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $msg     = "🔔 Rappel : votre cotisation de {$montant} FCFA pour la tontine {$tontineName} est due dans {$daysLeft} jour(s). Payez à temps pour garder votre score crédit.";
+        $msg = "🔔 Rappel : votre cotisation de {$montant} FCFA pour la tontine {$tontineName} est due dans {$daysLeft} jour(s). Payez à temps pour garder votre score crédit.";
 
-        if ($this->wantsChannel($user, 'reminder_whatsapp')) $this->sendWhatsApp($user, $msg, self::EVENT_REMINDER);
-        if ($this->wantsChannel($user, 'reminder_email')) $this->sendEmail(
-            $user,
-            "🔔 Rappel de cotisation — {$tontineName}",
-            "Bonjour <strong>{$user->name}</strong>,<br><br>
+        if ($this->wantsChannel($user, 'reminder_whatsapp')) {
+            $this->sendWhatsApp($user, $msg, self::EVENT_REMINDER);
+        }
+        if ($this->wantsChannel($user, 'reminder_email')) {
+            $this->sendEmail(
+                $user,
+                "🔔 Rappel de cotisation — {$tontineName}",
+                "Bonjour <strong>{$user->name}</strong>,<br><br>
             Rappel : votre cotisation de <strong>{$montant} FCFA</strong>
             pour la tontine <strong>{$tontineName}</strong> est due dans <strong>{$daysLeft} jour(s)</strong>.<br><br>
             Payez maintenant pour maintenir votre score crédit.",
-            self::EVENT_REMINDER
-        );
+                self::EVENT_REMINDER
+            );
+        }
     }
 
     public function notifyCycleStart(User $user, string $tontineName, string $dueDate): void
     {
         $msg = "📅 Nouveau cycle démarré pour la tontine {$tontineName}. Date limite : {$dueDate}. Connectez-vous sur TontineSN pour payer.";
 
-        if ($this->wantsChannel($user, 'cycle_whatsapp')) $this->sendWhatsApp($user, $msg, self::EVENT_CYCLE_START);
-        if ($this->wantsChannel($user, 'cycle_email')) $this->sendEmail(
-            $user,
-            "📅 Nouveau cycle — {$tontineName}",
-            "Bonjour <strong>{$user->name}</strong>,<br><br>
+        if ($this->wantsChannel($user, 'cycle_whatsapp')) {
+            $this->sendWhatsApp($user, $msg, self::EVENT_CYCLE_START);
+        }
+        if ($this->wantsChannel($user, 'cycle_email')) {
+            $this->sendEmail(
+                $user,
+                "📅 Nouveau cycle — {$tontineName}",
+                "Bonjour <strong>{$user->name}</strong>,<br><br>
             Un nouveau cycle de cotisation a démarré pour <strong>{$tontineName}</strong>.<br><br>
             Date limite : <strong>{$dueDate}</strong>.",
-            self::EVENT_CYCLE_START
-        );
+                self::EVENT_CYCLE_START
+            );
+        }
     }
 
-    public function notifyNewChatMessage(\App\Models\Tontine $tontine, User $sender, string $message): void
+    public function notifyNewChatMessage(Tontine $tontine, User $sender, string $message): void
     {
         SendChatNotifications::dispatch($tontine->id, $sender->id, $message);
     }
@@ -277,7 +315,7 @@ class NotificationService
     public function notifySavingsWithdrawal(User $user, string $tontineName, int $amount): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $msg     = "💰 Votre épargne de {$montant} FCFA dans la tontine {$tontineName} est disponible. Contactez le gestionnaire pour récupérer votre argent.";
+        $msg = "💰 Votre épargne de {$montant} FCFA dans la tontine {$tontineName} est disponible. Contactez le gestionnaire pour récupérer votre argent.";
 
         $this->sendWhatsApp($user, $msg, self::EVENT_SAVINGS);
         $this->sendEmail(
@@ -296,7 +334,7 @@ class NotificationService
         return match ($type) {
             'kyc_approved' => '✅ Identité vérifiée — TontineSN',
             'kyc_rejected' => '❌ Document KYC refusé — TontineSN',
-            default        => 'Notification — TontineSN',
+            default => 'Notification — TontineSN',
         };
     }
 
@@ -306,14 +344,14 @@ class NotificationService
             NotificationLog::create([
                 'user_id' => $user->id,
                 'channel' => $channel,
-                'event'   => $event,
+                'event' => $event,
                 'message' => $message,
-                'status'  => $status,
+                'status' => $status,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to write notification_log', [
                 'user_id' => $user->id,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }

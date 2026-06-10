@@ -13,13 +13,13 @@ class ApiTest extends TestCase
     public function test_api_login_success(): void
     {
         $user = User::factory()->create([
-            'email'    => 'test@example.com',
+            'email' => 'test@example.com',
             'password' => bcrypt('password123'),
             'is_active' => true,
         ]);
 
         $response = $this->postJson('/api/v1/auth/login', [
-            'email'    => 'test@example.com',
+            'email' => 'test@example.com',
             'password' => 'password123',
         ]);
 
@@ -29,7 +29,7 @@ class ApiTest extends TestCase
     public function test_api_login_invalid_credentials(): void
     {
         $response = $this->postJson('/api/v1/auth/login', [
-            'email'    => 'wrong@example.com',
+            'email' => 'wrong@example.com',
             'password' => 'wrongpassword',
         ]);
 
@@ -55,8 +55,8 @@ class ApiTest extends TestCase
     public function test_api_register_creates_user(): void
     {
         $response = $this->postJson('/api/v1/auth/register', [
-            'name'     => 'Test User',
-            'email'    => 'newuser@example.com',
+            'name' => 'Test User',
+            'email' => 'newuser@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
         ]);

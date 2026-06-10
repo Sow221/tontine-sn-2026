@@ -22,35 +22,35 @@ class UserFactory extends Factory
         ];
 
         return [
-            'name'               => fake()->randomElement($senegaleseNames),
-            'email'              => fake()->unique()->safeEmail(),
-            'phone_number'       => '+221 7' . fake()->randomElement(['7','6','0','8']) . fake()->numerify(' ### ## ##'),
-            'password'           => bcrypt('password'),
-            'role'               => 'member',
+            'name' => fake()->randomElement($senegaleseNames),
+            'email' => fake()->unique()->safeEmail(),
+            'phone_number' => '+221 7'.fake()->randomElement(['7', '6', '0', '8']).fake()->numerify(' ### ## ##'),
+            'password' => bcrypt('password'),
+            'role' => 'member',
 
-            'kyc_verified'       => false,
-            'is_active'          => true,
-            'remember_token'     => Str::random(10),
+            'kyc_verified' => false,
+            'is_active' => true,
+            'remember_token' => Str::random(10),
         ];
     }
 
     public function admin(): static
     {
-        return $this->state(fn() => ['role' => 'admin']);
+        return $this->state(fn () => ['role' => 'admin']);
     }
 
     public function kycVerified(): static
     {
-        return $this->state(fn() => ['kyc_verified' => true]);
+        return $this->state(fn () => ['kyc_verified' => true]);
     }
 
     public function inactive(): static
     {
-        return $this->state(fn() => ['is_active' => false]);
+        return $this->state(fn () => ['is_active' => false]);
     }
 
     public function unverified(): static
     {
-        return $this->state(fn() => ['kyc_verified' => false, 'kyc_document' => null]);
+        return $this->state(fn () => ['kyc_verified' => false, 'kyc_document' => null]);
     }
 }

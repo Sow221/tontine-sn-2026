@@ -10,10 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SavingsWithdrawal extends Model
 {
     use HasFactory;
+
     protected $fillable = ['tontine_id', 'user_id', 'amount', 'status', 'paid_at'];
 
     protected $casts = [
-        'amount'  => 'integer',
+        'amount' => 'integer',
         'paid_at' => 'datetime',
     ];
 

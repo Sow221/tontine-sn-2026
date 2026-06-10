@@ -9,16 +9,17 @@ use Illuminate\Database\Eloquent\Model;
 class MagicLink extends Model
 {
     use HasFactory;
+
     protected $fillable = ['email', 'token', 'used', 'expires_at'];
 
     protected $casts = [
-        'used'       => 'boolean',
+        'used' => 'boolean',
         'expires_at' => 'datetime',
     ];
 
     public function isValid(): bool
     {
-        return !$this->used && $this->expires_at->isFuture();
+        return ! $this->used && $this->expires_at->isFuture();
     }
 
     public function scopeValid(Builder $query): Builder

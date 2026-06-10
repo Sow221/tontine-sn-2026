@@ -19,7 +19,7 @@ class RecalculateCreditScore implements ShouldQueue
     public function handle(CreditScoringService $scorer): void
     {
         $user = User::find($this->userId);
-        if (!$user) {
+        if (! $user) {
             return;
         }
 

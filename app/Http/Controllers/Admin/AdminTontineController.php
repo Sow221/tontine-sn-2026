@@ -17,19 +17,20 @@ class AdminTontineController extends Controller
     {
         try {
             $tontines = Tontine::with('creator')
-                ->withCount(['members as active_members_count' => fn($q) => $q->where('tontine_members.status', 'active')])
-                ->when($request->search, fn($q) => $q->where(function ($q2) use ($request) {
+                ->withCount(['members as active_members_count' => fn ($q) => $q->where('tontine_members.status', 'active')])
+                ->when($request->search, fn ($q) => $q->where(function ($q2) use ($request) {
                     $q2->where('name', 'like', "%{$request->search}%")
-                       ->orWhere('code', 'like', "%{$request->search}%");
+                        ->orWhere('code', 'like', "%{$request->search}%");
                 }))
-                ->when($request->status, fn($q) => $q->where('status', $request->status))
-                ->when($request->type,   fn($q) => $q->where('type', $request->type))
+                ->when($request->status, fn ($q) => $q->where('status', $request->status))
+                ->when($request->type, fn ($q) => $q->where('type', $request->type))
                 ->latest()
                 ->paginate(20);
 
             return view('admin.tontines', compact('tontines'));
         } catch (\Throwable $e) {
             Log::error('Erreur liste tontines admin', ['error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => 'Erreur lors du chargement des tontines.']);
         }
     }
@@ -39,12 +40,12 @@ class AdminTontineController extends Controller
         try {
             $tontine->load([
                 'creator',
-                'cycles' => fn($q) => $q->orderBy('cycle_number'),
+                'cycles' => fn ($q) => $q->orderBy('cycle_number'),
                 'cycles.beneficiary',
             ]);
             $tontine->loadCount([
-                'members as active_members_count'  => fn($q) => $q->where('tontine_members.status', 'active'),
-                'members as pending_members_count' => fn($q) => $q->where('tontine_members.status', 'pending'),
+                'members as active_members_count' => fn ($q) => $q->where('tontine_members.status', 'active'),
+                'members as pending_members_count' => fn ($q) => $q->where('tontine_members.status', 'pending'),
             ]);
 
             $members = $tontine->members()
@@ -52,11 +53,12 @@ class AdminTontineController extends Controller
                 ->get();
 
             $totalCollected = $tontine->cycles->sum('total_collected');
-            $cyclesPaid     = $tontine->cycles->where('status', 'paid')->count();
+            $cyclesPaid = $tontine->cycles->where('status', 'paid')->count();
 
             return view('admin.tontine-detail', compact('tontine', 'members', 'totalCollected', 'cyclesPaid'));
         } catch (\Throwable $e) {
             Log::error('Erreur détail tontine admin', ['tontine' => $tontine->id, 'error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => 'Erreur lors du chargement.']);
         }
     }
@@ -77,6 +79,7 @@ class AdminTontineController extends Controller
             return back()->with('success', "Tontine « {$tontine->name} » suspendue.");
         } catch (\Throwable $e) {
             Log::error('Erreur suspension tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => 'Erreur lors de la suspension.']);
         }
     }
@@ -97,6 +100,7 @@ class AdminTontineController extends Controller
             return back()->with('success', "Tontine « {$tontine->name} » réactivée.");
         } catch (\Throwable $e) {
             Log::error('Erreur réactivation tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage()]);
+
             return back()->withErrors(['error' => 'Erreur lors de la réactivation.']);
         }
     }
