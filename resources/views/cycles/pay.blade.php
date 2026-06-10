@@ -55,7 +55,7 @@
                 <input type="radio" name="method" value="wave" x-model="method" class="d-none">
                 <div class="d-flex align-items-center gap-3">
                     <div class="payment-logo wave-logo">
-                        <img src="{{ asset('images/logo wave.png') }}" alt="Wave" class="pay-method-icon">
+                        <img src="{{ asset('images/logo wave.webp') }}" alt="Wave" class="pay-method-icon">
                     </div>
                     <div>
                         <p class="fw-semibold mb-0">Wave</p>
@@ -71,7 +71,7 @@
                 <input type="radio" name="method" value="orange_money" x-model="method" class="d-none">
                 <div class="d-flex align-items-center gap-3">
                     <div class="payment-logo om-logo">
-                        <img src="{{ asset('images/logo orange money.png') }}" alt="Orange Money" class="pay-method-icon">
+                        <img src="{{ asset('images/logo orange money.webp') }}" alt="Orange Money" class="pay-method-icon">
                     </div>
                     <div>
                         <p class="fw-semibold mb-0">Orange Money</p>
@@ -86,7 +86,7 @@
                 <input type="radio" name="method" value="card" x-model="method" class="d-none">
                 <div class="d-flex align-items-center gap-3">
                     <div class="payment-logo card-logo">
-                        <img src="{{ asset('images/carte bancaire.png') }}" alt="Carte" class="pay-method-icon">
+                        <img src="{{ asset('images/carte bancaire.webp') }}" alt="Carte" class="pay-method-icon">
                     </div>
                     <div>
                         <p class="fw-semibold mb-0">Carte bancaire</p>

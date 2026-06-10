@@ -84,19 +84,20 @@
                 <small class="text-muted d-flex align-items-center gap-2 flex-wrap">
                     {{ $tx->cycle->tontine->name ?? '—' }} ·
                     @php
-                        $operatorConfig = [
-                            'wave'         => ['color' => '#00DCA5', 'bg' => '#f0fdf4', 'label' => 'Wave'],
-                            'orange_money' => ['color' => '#FF7900', 'bg' => '#fff7ed', 'label' => 'Orange Money'],
-                            'free_money'   => ['color' => '#E3000F', 'bg' => '#fef2f2', 'label' => 'Free Money'],
-                            'card'         => ['color' => '#6366f1', 'bg' => '#eef2ff', 'label' => 'Carte'],
-                            'cash'         => ['color' => '#009639', 'bg' => '#f0fdf4', 'label' => 'Espèces'],
+                        $operatorIcons = [
+                            'wave'         => ['img' => 'images/logo wave.webp', 'alt' => 'Wave'],
+                            'orange_money' => ['img' => 'images/logo orange money.webp', 'alt' => 'Orange Money'],
+                            'free_money'   => ['img' => null, 'label' => 'FM', 'color' => '#E3000F', 'bg' => '#fef2f2'],
+                            'card'         => ['img' => null, 'label' => 'CB', 'color' => '#6366f1', 'bg' => '#eef2ff'],
+                            'cash'         => ['img' => null, 'label' => 'Cash', 'color' => '#009639', 'bg' => '#f0fdf4'],
                         ];
-                        $op = $operatorConfig[$tx->method] ?? ['color' => '#64748b', 'bg' => '#f1f5f9', 'label' => ucfirst($tx->method)];
+                        $icon = $operatorIcons[$tx->method] ?? ['img' => null, 'label' => '?', 'color' => '#64748b', 'bg' => '#f1f5f9'];
                     @endphp
-                    <span style="display:inline-flex;align-items:center;gap:4px;background:{{ $op['bg'] }};border:1px solid {{ $op['color'] }}30;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:600;color:{{ $op['color'] }};">
-                        <span style="width:7px;height:7px;border-radius:50%;background:{{ $op['color'] }};display:inline-block;"></span>
-                        {{ $op['label'] }}
-                    </span>
+                    @if($icon['img'])
+                    <img src="{{ asset($icon['img']) }}" alt="{{ $icon['alt'] }}" style="height:16px;width:auto;border-radius:3px;">
+                    @else
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:{{ $icon['bg'] }};color:{{ $icon['color'] }};font-size:9px;font-weight:800;border:1px solid {{ $icon['color'] }}40;">{{ $icon['label'] }}</span>
+                    @endif
                     · {{ $tx->created_at->format('d/m/Y H:i') }}
                     · <span class="text-muted" style="font-family:monospace;font-size:10px;">#{{ $tx->id }}</span>
                 </small>

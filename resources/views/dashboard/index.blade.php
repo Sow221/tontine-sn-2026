@@ -99,8 +99,8 @@
         </div>
         <div class="d-flex flex-column align-items-end gap-1 flex-shrink-0">
             <div class="d-flex gap-1">
-                <img src="{{ asset('images/logo wave.png') }}" alt="Wave" title="Payer par Wave" style="width:22px;height:22px;border-radius:4px;object-fit:contain;border:1px solid #e2e8f0;">
-                <img src="{{ asset('images/logo orange money.png') }}" alt="Orange Money" title="Payer par Orange Money" style="width:22px;height:22px;border-radius:4px;object-fit:contain;border:1px solid #e2e8f0;">
+                <img src="{{ asset('images/logo wave.webp') }}" alt="Wave" title="Payer par Wave" style="width:22px;height:22px;border-radius:4px;object-fit:contain;border:1px solid #e2e8f0;">
+                <img src="{{ asset('images/logo orange money.webp') }}" alt="Orange Money" title="Payer par Orange Money" style="width:22px;height:22px;border-radius:4px;object-fit:contain;border:1px solid #e2e8f0;">
             </div>
             <a href="{{ route('cycles.pay', $cycle) }}" class="btn btn-sm btn-danger rounded-pill flex-shrink-0">Régulariser</a>
         </div>
@@ -173,8 +173,8 @@
                     <div class="d-flex flex-column align-items-end gap-1">
                         <span class="status-pill status-pill--due"><i class="fas fa-circle me-1"></i>À payer</span>
                         <div class="d-flex gap-1">
-                            <img src="{{ asset('images/logo wave.png') }}" alt="Wave" title="Wave" style="width:18px;height:18px;border-radius:3px;object-fit:contain;border:1px solid #e2e8f0;">
-                            <img src="{{ asset('images/logo orange money.png') }}" alt="OM" title="Orange Money" style="width:18px;height:18px;border-radius:3px;object-fit:contain;border:1px solid #e2e8f0;">
+                            <img src="{{ asset('images/logo wave.webp') }}" alt="Wave" title="Wave" style="width:18px;height:18px;border-radius:3px;object-fit:contain;border:1px solid #e2e8f0;">
+                            <img src="{{ asset('images/logo orange money.webp') }}" alt="OM" title="Orange Money" style="width:18px;height:18px;border-radius:3px;object-fit:contain;border:1px solid #e2e8f0;">
                         </div>
                     </div>
                 @endif
@@ -256,8 +256,8 @@
             <span class="pay-row__amount">{{ number_format($cycle->tontine->amount, 0, ',', ' ') }} F</span>
             {{-- Logos opérateurs visibles avant même de cliquer --}}
             <div class="d-flex justify-content-end gap-1 mt-1 mb-1">
-                <img src="{{ asset('images/logo wave.png') }}" alt="Wave" title="Wave" style="width:20px;height:20px;border-radius:4px;object-fit:contain;border:1px solid #e2e8f0;">
-                <img src="{{ asset('images/logo orange money.png') }}" alt="Orange Money" title="Orange Money" style="width:20px;height:20px;border-radius:4px;object-fit:contain;border:1px solid #e2e8f0;">
+                <img src="{{ asset('images/logo wave.webp') }}" alt="Wave" title="Wave" style="width:20px;height:20px;border-radius:4px;object-fit:contain;border:1px solid #e2e8f0;">
+                <img src="{{ asset('images/logo orange money.webp') }}" alt="Orange Money" title="Orange Money" style="width:20px;height:20px;border-radius:4px;object-fit:contain;border:1px solid #e2e8f0;">
                 <span title="Free Money" style="width:20px;height:20px;border-radius:4px;background:#fef2f2;border:1px solid #fca5a5;display:inline-flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;color:#E3000F;">FM</span>
             </div>
             <a href="{{ route('cycles.pay', $cycle) }}"
