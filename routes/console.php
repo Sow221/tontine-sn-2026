@@ -82,8 +82,7 @@ Schedule::call(function () {
                         $member,
                         $cycle->tontine->name,
                         $cycle->tontine->amount,
-                        $days,
-                        true
+                        $days
                     );
                 }
             });
