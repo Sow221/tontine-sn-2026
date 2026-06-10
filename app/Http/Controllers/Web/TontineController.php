@@ -421,7 +421,8 @@ SVG;
             $this->notifier->notifyPaymentConfirmed(
                 $transaction->user,
                 $transaction->amount,
-                $tontine->name
+                $tontine->name,
+                $transaction->cycle?->cycle_number
             );
 
             return back()->with('success', 'Paiement espèces de '.($transaction->user->name ?? '—').' confirmé.');

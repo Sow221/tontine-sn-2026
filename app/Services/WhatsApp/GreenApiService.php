@@ -136,6 +136,40 @@ class GreenApiService
     }
 
     /**
+     * Vérifie si un numéro est inscrit sur WhatsApp (gratuit, 100 vérifications/mois)
+     */
+    public function checkWhatsApp(string $phone): ?bool
+    {
+        if (! $this->isConfigured()) {
+            return null;
+        }
+
+        $phone = $this->normalizePhone($phone);
+
+        try {
+            $response = Http::timeout(10)
+                ->get("{$this->apiUrl}/waInstance{$this->idInstance}/checkWhatsapp/{$this->apiToken}", [
+                    'phoneNumber' => $phone,
+                ]);
+
+            if ($response->successful()) {
+                $exists = $response->json()['existsWhatsapp'] ?? false;
+
+                Log::info('Green API checkWhatsApp', [
+                    'phone' => $phone,
+                    'exists' => $exists,
+                ]);
+
+                return $exists;
+            }
+        } catch (\Throwable $e) {
+            Log::error('Green API checkWhatsApp failed', ['error' => $e->getMessage()]);
+        }
+
+        return null;
+    }
+
+    /**
      * Récupère l'état de l'instance (authorized, notAuthorized, etc.)
      */
     public function getState(): ?string

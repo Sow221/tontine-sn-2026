@@ -47,6 +47,7 @@ class SendWhatsAppNotification implements ShouldQueue
                 $this->receipt['amount'],
                 $this->receipt['tontineName'],
                 $this->receipt['date'],
+                $this->receipt['cycleNumber'] ?? null,
             );
 
             if ($receiptPath !== '') {

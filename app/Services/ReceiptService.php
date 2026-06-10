@@ -35,7 +35,7 @@ class ReceiptService
         }
     }
 
-    public function generatePaymentReceipt(string $userName, int $amount, string $tontineName, string $date): string
+    public function generatePaymentReceipt(string $userName, int $amount, string $tontineName, string $date, ?int $cycleNumber = null): string
     {
         if (! $this->manager) {
             return '';
@@ -43,7 +43,7 @@ class ReceiptService
 
         $montant = number_format($amount, 0, ',', ' ');
 
-        $img = $this->manager->canvas(520, 340, '#ffffff');
+        $img = $this->manager->canvas(520, 400, '#ffffff');
 
         $img->rectangle(0, 0, 519, 60, function ($draw) {
             $draw->background('#1a73e8');
@@ -72,9 +72,10 @@ class ReceiptService
         $lines = [
             ['label' => 'Membre', 'value' => $userName],
             ['label' => 'Tontine', 'value' => $tontineName],
+            ['label' => 'Cycle', 'value' => $cycleNumber ? "n°{$cycleNumber}" : '—'],
             ['label' => 'Montant', 'value' => $montant.' FCFA'],
             ['label' => 'Date', 'value' => $date],
-            ['label' => 'Statut', 'value' => 'Confirmé'],
+            ['label' => 'Statut', 'value' => 'Confirmé ✅'],
         ];
 
         $y = 140;
@@ -90,7 +91,7 @@ class ReceiptService
             $img->text($line['value'], 310, $y, function ($font) use ($line) {
                 $font->file($this->fontPath);
                 $font->size(14);
-                $font->color($line['label'] === 'Statut' ? '#2e7d32' : '#333333');
+                $font->color(in_array($line['label'], ['Statut', 'Cycle']) ? '#2e7d32' : '#333333');
                 $font->align('right');
                 $font->valign('middle');
             });
@@ -102,10 +103,10 @@ class ReceiptService
             $draw->background('#dddddd');
         });
 
-        $img->text('Merci pour votre ponctualité !', 260, 305, function ($font) {
+        $img->text('TontineSN — L\'épargne collective, enfin numérique', 260, 370, function ($font) {
             $font->file($this->fontPath);
-            $font->size(12);
-            $font->color('#999999');
+            $font->size(11);
+            $font->color('#1a73e8');
             $font->align('center');
             $font->valign('middle');
         });

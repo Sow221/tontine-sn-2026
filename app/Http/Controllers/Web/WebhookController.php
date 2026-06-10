@@ -86,7 +86,8 @@ class WebhookController extends Controller
                 $this->notifier->notifyPaymentConfirmed(
                     $transaction->user,
                     $transaction->amount,
-                    $transaction->cycle->tontine->name
+                    $transaction->cycle->tontine->name,
+                    $transaction->cycle->cycle_number
                 );
             }
 

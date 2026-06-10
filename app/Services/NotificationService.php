@@ -129,20 +129,33 @@ class NotificationService
 
         $phone = preg_replace('/[^0-9]/', '', $user->phone_number);
 
+        $appUrl = rtrim(config('app.url'), '/');
+        $link = match ($event) {
+            self::EVENT_PAYMENT => "\n\n📄 Reçu : {$appUrl}/transactions/{$user->id}/recu",
+            self::EVENT_REMINDER => "\n\n💳 Payer maintenant : {$appUrl}/dashboard",
+            self::EVENT_BENEFICIARY => "\n\n👤 Voir les détails : {$appUrl}/dashboard",
+            self::EVENT_CYCLE_START => "\n\n💳 Payer : {$appUrl}/dashboard",
+            self::EVENT_MEMBER_APPROVED => "\n\n🚀 Rejoindre : {$appUrl}/dashboard",
+            self::EVENT_SAVINGS => "\n\n💰 Voir mon épargne : {$appUrl}/dashboard",
+            default => '',
+        };
+
+        $fullMessage = $message.$link;
+
         if ($this->greenApi->isConfigured()) {
-            $sent = $this->greenApi->sendText($phone, $message);
+            $sent = $this->greenApi->sendText($phone, $fullMessage);
 
             $this->logNotification($user, 'whatsapp', $event, $message, $sent ? 'sent' : 'failed');
 
             return $sent;
         }
 
-        $waLink = 'https://wa.me/'.$phone.'?text='.urlencode($message);
+        $waLink = 'https://wa.me/'.$phone.'?text='.urlencode($fullMessage);
 
         Log::channel('stack')->info('WhatsApp link (no Green API configured)', [
             'user_id' => $user->id,
             'phone' => $phone,
-            'message' => $message,
+            'message' => $fullMessage,
             'wa_link' => $waLink,
         ]);
 
@@ -224,15 +237,17 @@ class NotificationService
         }
     }
 
-    public function notifyPaymentConfirmed(User $user, int $amount, string $tontineName): void
+    public function notifyPaymentConfirmed(User $user, int $amount, string $tontineName, ?int $cycleNumber = null): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $msg = "✅ Bonjour {$user->name}, paiement confirmé ! Votre cotisation de {$montant} FCFA pour la tontine {$tontineName} a été enregistrée. Merci !";
+        $cycleInfo = $cycleNumber ? " (Cycle n°{$cycleNumber})" : '';
+        $msg = "✅ Bonjour {$user->name}, paiement confirmé{$cycleInfo} ! Votre cotisation de {$montant} FCFA pour la tontine {$tontineName} a été enregistrée. Merci !";
         $receipt = [
             'userName' => $user->name,
             'amount' => $amount,
             'tontineName' => $tontineName,
             'date' => now()->isoFormat('D MMMM YYYY'),
+            'cycleNumber' => $cycleNumber,
         ];
 
         if ($this->wantsChannel($user, 'payment_whatsapp')) {
