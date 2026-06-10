@@ -58,19 +58,12 @@
          role="presentation"></div>
 
     {{-- Sidebar --}}
-    <aside class="app-sidebar" :class="{ 'open': sidebarOpen }" role="navigation" aria-label="Navigation principale"
+    <aside class="app-sidebar" :class="{ 'open': sidebarOpen, 'collapsed': sidebarCollapsed }" role="navigation" aria-label="Navigation principale"
            x-trap.noscroll="sidebarOpen">
         <a href="{{ route('dashboard') }}" class="sidebar-logo" aria-label="Retour au tableau de bord">
             <img src="{{ asset('images/element-logo.png') }}" alt="TontineSN" width="36" height="36">
             <span class="sidebar-logo-text">TontineSN</span>
         </a>
-
-        <button class="sidebar-collapse-btn d-none d-md-flex"
-                @click="sidebarCollapsed = !sidebarCollapsed; localStorage.setItem('sidebar-collapsed', sidebarCollapsed)"
-                :title="sidebarCollapsed ? 'Développer la barre latérale' : 'Réduire la barre latérale'"
-                aria-label="Basculer la barre latérale">
-            <i class="fas fa-chevron-left" :class="{ 'fa-rotate-180': sidebarCollapsed }"></i>
-        </button>
 
         <nav class="sidebar-nav">
             @if(auth()->user()->isAdmin())
@@ -170,6 +163,14 @@
             </form>
         </div>
     </aside>
+
+    {{-- Sidebar collapse toggle (positionnÃ© sur la jointure) --}}
+    <button class="sidebar-collapse-btn d-none d-md-flex"
+            @click="sidebarCollapsed = !sidebarCollapsed; localStorage.setItem('sidebar-collapsed', sidebarCollapsed)"
+            :title="sidebarCollapsed ? 'DÃ©velopper la barre latÃ©rale' : 'RÃ©duire la barre latÃ©rale'"
+            aria-label="Basculer la barre latÃ©rale">
+        <i class="fas fa-chevron-left" :class="{ 'fa-rotate-180': sidebarCollapsed }"></i>
+    </button>
 
     {{-- Contenu principal --}}
     <div class="app-main" id="main-content">
