@@ -6,21 +6,28 @@
 [![License](https://img.shields.io/badge/License-MIT-green)]()
 [![Tests](https://img.shields.io/badge/tests-104%20passing-brightgreen)]()
 
-Projet académique · Master Développement Web · Sénégal
+Projet académique · UADB -D2A -PROMO17 · Sénégal
 
 ---
 
 ## Table des matières
 
-- [Stack technique](#stack-technique)
-- [Installation](#installation)
-- [Comptes de test](#comptes-de-test-après-seeding)
-- [Architecture](#architecture)
-- [Modules implémentés](#modules-implémentés)
-- [Algorithme de crédit scoring](#algorithme-de-crédit-scoring)
-- [Sécurité](#sécurité)
-- [Gamification](#gamification)
-- [Contribuer](#contribuer)
+- [🌿 TontineSN — Application Laravel de Gestion de Tontines](#-tontinesn--application-laravel-de-gestion-de-tontines)
+  - [Table des matières](#table-des-matières)
+  - [Stack technique](#stack-technique)
+  - [Installation](#installation)
+    - [1. Prérequis](#1-prérequis)
+    - [2. Configuration](#2-configuration)
+    - [3. Base de données](#3-base-de-données)
+    - [4. Lancer le serveur](#4-lancer-le-serveur)
+  - [Comptes de test (après seeding)](#comptes-de-test-après-seeding)
+    - [Données de démonstration](#données-de-démonstration)
+  - [Architecture](#architecture)
+  - [Modules implémentés](#modules-implémentés)
+  - [Algorithme de crédit scoring](#algorithme-de-crédit-scoring)
+  - [Sécurité](#sécurité)
+  - [Gamification](#gamification)
+  - [Contribuer](#contribuer)
 
 ---
 
@@ -96,21 +103,21 @@ Accès : http://localhost:8000
 
 ### Données de démonstration
 
-| Tontine               | Type            | Membres | Statut    |
-|-----------------------|-----------------|---------|-----------|
-| DAK001 — Famille Diallo | Fixe           | 6       | Terminée  |
-| THI001 — Amis de Thiès  | Fixe           | 5       | Active    |
-| DAK002 — Médina         | Fixe           | 4       | Active    |
-| CAS001 — Castors        | Pondéré + Véto | 5       | Active    |
-| STL001 — Saint-Louis    | Fixe           | 5       | Active    |
-| DKR003 — Teranga        | Fixe           | 5       | Active    |
-| ENC001 — Épargne Pro    | Enchères       | 5       | Active    |
-| ENC002 — Développement  | Enchères       | 5       | Active    |
-| EPG001 — Épargne Solidaire | Épargne forcée | 4    | Active    |
-| EPG002 — Projet Avenir  | Épargne forcée | 6       | Active    |
-| CER001 — Mariage Aminata | Cérémonielle  | 3       | Active    |
+| Tontine                        | Type            | Statut     |
+|--------------------------------|-----------------|------------|
+| Tontine Sandaga                | Fixe            | En attente |
+| Tontine Famille Diallo         | Fixe            | Active     |
+| Tontine Amis Thiès             | Fixe            | Active     |
+| Tontine Médina                 | Fixe            | Active     |
+| Tontine Dakar Plateau          | Fixe            | Terminée   |
+| Tontine Castors Tirage         | Pondéré + Véto  | Active     |
+| Tontine Enchères Liberté       | Enchères        | Active     |
+| Tontine Enchères Teranga       | Enchères        | Active     |
+| Tontine Épargne HLM            | Épargne forcée  | Active     |
+| Tontine Épargne Cité           | Épargne forcée  | Active     |
+| Cagnotte Mariage Aminata       | Cérémonielle    | Active     |
 
-Stats : **222 transactions**, **43 cycles**, **10 badges**
+Stats : **222 transactions**, **43 cycles**, **14 badges**
 
 ---
 
