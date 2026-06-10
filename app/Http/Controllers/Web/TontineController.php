@@ -439,6 +439,42 @@ SVG;
         }
     }
 
+    public function remindAll(Tontine $tontine)
+    {
+        $this->authorize('update', $tontine);
+
+        $currentCycle = $tontine->currentCycle;
+        if (! $currentCycle) {
+            return back()->withErrors(['error' => 'Aucun cycle actif.']);
+        }
+
+        try {
+            $paidIds = Transaction::success()
+                ->forCycle($currentCycle->id)
+                ->pluck('user_id')
+                ->toArray();
+
+            $unpaid = $tontine->activeMembers()
+                ->whereNotIn('users.id', $paidIds)
+                ->get();
+
+            foreach ($unpaid as $member) {
+                $this->notifier->notifyPaymentReminder(
+                    $member,
+                    $tontine->name,
+                    $tontine->amount,
+                    max(0, now()->diffInDays($currentCycle->due_date, false))
+                );
+            }
+
+            return back()->with('success', 'Rappel envoyé à ' . $unpaid->count() . ' membre(s).');
+        } catch (\Throwable $e) {
+            Log::error('Erreur relance groupee', ['tontine' => $tontine->id, 'error' => $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Erreur lors de l\'envoi des rappels.']);
+        }
+    }
+
     public function remindMember(Tontine $tontine, User $user)
     {
         $this->authorize('update', $tontine);

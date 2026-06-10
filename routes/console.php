@@ -3,11 +3,10 @@
 use App\Jobs\SendReminders;
 use App\Models\Cycle;
 use App\Models\MagicLink;
-use App\Models\Tontine;
 use App\Models\Transaction;
-use App\Models\User;
-use App\Services\CycleService;
 use App\Services\NotificationService;
+use App\Services\PaymentService;
+use App\Services\PayTechService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -28,40 +27,38 @@ Schedule::command('queue:work --stop-when-empty --max-time=60 --sleep=3')->every
 // Nettoyage des magic links expirés
 Schedule::call(fn () => MagicLink::where('expires_at', '<', now())->delete())->daily();
 
-// Marquer les cycles en retard
+// Marquer les cycles en retard + clôture automatique des épargnes (tout en un)
 Schedule::command('tontine:process-overdue')->dailyAt('06:00');
 
-// Clôture automatique des tontines forced_saving dont la date de fin est dépassée
-Schedule::call(function () {
-    $cycleService = app(CycleService::class);
-    $notifier = app(NotificationService::class);
-
-    Tontine::where('type', 'forced_saving')
-        ->where('status', 'active')
-        ->where('end_date', '<', now()->startOfDay())
-        ->each(function ($tontine) use ($cycleService, $notifier) {
-            $withdrawals = $cycleService->closeForcedSaving($tontine);
-            foreach ($withdrawals as $w) {
-                $member = User::find($w['user_id']);
-                if ($member) {
-                    $notifier->notifySavingsWithdrawal($member, $tontine->name, $w['amount']);
-                }
-            }
-        });
-})->dailyAt('07:00');
-
-// Nettoyer les transactions pending qui n'ont jamais abouti (plus de 2h)
+// Nettoyer les transactions pending > 2h ET re-vérifier auprès de PayTech
 Schedule::call(function () {
     $stale = Transaction::where('status', 'pending')
         ->where('method', '!=', 'cash')
         ->where('created_at', '<', now()->subHours(2))
         ->get();
 
+    $paytech = app(\App\Services\PayTechService::class);
+
     foreach ($stale as $tx) {
-        $tx->update([
-            'status' => 'failed',
-            'failure_reason' => 'Trop de temps écoulé depuis l\'initiation',
-        ]);
+        $confirmed = false;
+
+        // Re-vérifier auprès de PayTech si une référence externe existe
+        if ($tx->external_reference) {
+            try {
+                $confirmed = $paytech->verifyWebhook(['token' => $tx->external_reference]);
+            } catch (\Throwable) {
+                $confirmed = false;
+            }
+        }
+
+        if ($confirmed) {
+            app(\App\Services\PaymentService::class)->confirmPayment($tx);
+        } else {
+            $tx->update([
+                'status'         => 'failed',
+                'failure_reason' => 'Délai dépassé — aucune confirmation PayTech reçue',
+            ]);
+        }
     }
 })->hourly();
 

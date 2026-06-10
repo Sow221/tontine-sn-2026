@@ -154,6 +154,9 @@
     @endif
     </div>
 
+    {{-- 5b. DASHBOARD CRÉATEUR --}}
+    @include('tontines.partials.creator-dashboard')
+
     {{-- 6. MEMBRE-ACTION (raccourcis paiement rapide) --}}
     @if($myMemberStatus === 'active')
         @include('tontines.partials.member-action')

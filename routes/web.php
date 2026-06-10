@@ -87,6 +87,7 @@ Route::middleware(['auth', 'role:member'])->group(function () {
     Route::post('/tontines/{tontine}/members/{user}/approve', [TontineController::class, 'approveMember'])->name('tontines.members.approve');
     Route::delete('/tontines/{tontine}/members/{user}/reject', [TontineController::class, 'rejectMember'])->name('tontines.members.reject');
     Route::post('/tontines/{tontine}/members/{user}/remind', [TontineController::class, 'remindMember'])->name('tontines.members.remind')->middleware('throttle:10,1');
+    Route::post('/tontines/{tontine}/remind-all', [TontineController::class, 'remindAll'])->name('tontines.remind-all')->middleware('throttle:3,1');
     Route::post('/tontines/{tontine}/cash/{transaction}/confirm', [TontineController::class, 'confirmCashPayment'])->name('tontines.cash.confirm');
     Route::post('/tontines/{tontine}/beneficiary', [TontineController::class, 'setBeneficiary'])->name('tontines.beneficiary');
     Route::post('/withdrawals/{withdrawal}/confirm', [TontineController::class, 'confirmWithdrawal'])->name('withdrawals.confirm');

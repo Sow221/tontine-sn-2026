@@ -154,6 +154,49 @@ class PayTechService
         }
     }
 
+    public function sendPayout(int $userId, int $amount, string $method, string $phone, string $reference): array
+    {
+        try {
+            $this->loggingService->logPaymentInitiation(
+                $userId, $amount,
+                config('mobilemoney.paytech.currency'),
+                $reference,
+                ['type' => 'payout', 'method' => $method, 'phone' => $phone]
+            );
+
+            $response = Http::withHeaders([
+                'API_KEY'    => $this->apiKey,
+                'API_SECRET' => $this->apiSecret,
+            ])
+                ->timeout(config('mobilemoney.paytech.timeout'))
+                ->post("{$this->baseUrl}/api/payment/payout", [
+                    'amount'      => $amount,
+                    'currency'    => config('mobilemoney.paytech.currency'),
+                    'ref_command' => $reference,
+                    'method'      => $method,          // wave | orange_money | free_money
+                    'phone'       => $phone,
+                    'env'         => 'prod',
+                ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                if (($data['success'] ?? 0) === 1) {
+                    return ['success' => true, 'reference' => $data['token'] ?? $reference];
+                }
+                $err = $data['errors'][0] ?? 'Erreur payout PayTech';
+                Log::error('PayTech payout failed', ['response' => $data]);
+                return ['success' => false, 'error' => $err];
+            }
+
+            Log::error('PayTech payout HTTP error', ['status' => $response->status()]);
+            return ['success' => false, 'error' => 'Erreur de connexion PayTech payout'];
+
+        } catch (\Throwable $e) {
+            Log::error('PayTech payout exception', ['message' => $e->getMessage()]);
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
     public function verifyWebhook(array $data): bool
     {
         $token = $data['token'] ?? '';
