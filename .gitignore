@@ -10,7 +10,9 @@
 /.nova
 /.phpunit.cache
 /.vscode
+.env.alwaysdata
 .env.example.railway
+railway.toml.bak
 /.zed
 /auth.json
 /node_modules

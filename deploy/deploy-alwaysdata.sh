@@ -11,16 +11,14 @@ echo "APP_DIR: ${APP_DIR}"
 
 cd "${APP_DIR}"
 
-# Auto-create .env from .env.alwaysdata if missing
-if [ ! -f .env ]; then
-    if [ -f .env.alwaysdata ]; then
-        echo "=> .env not found, copying from .env.alwaysdata"
-        cp .env.alwaysdata .env
-        php artisan key:generate --force
-    else
-        echo "=> ERROR: .env missing and no .env.alwaysdata found. Create one from .env.example"
-        exit 1
-    fi
+# Always use .env.alwaysdata if present (written by GitHub Actions secret)
+if [ -f .env.alwaysdata ]; then
+    echo "=> .env.alwaysdata found, overwriting .env"
+    cp .env.alwaysdata .env
+    php artisan key:generate --force
+elif [ ! -f .env ]; then
+    echo "=> ERROR: .env missing and no .env.alwaysdata found. Create one from .env.example"
+    exit 1
 fi
 
 # Mode maintenance
