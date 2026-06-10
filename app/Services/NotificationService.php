@@ -7,10 +7,10 @@ use App\Models\FcmToken;
 use App\Models\NotificationLog;
 use App\Models\Tontine;
 use App\Models\User;
+use App\Services\WhatsApp\GreenApiService;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Twilio\Rest\Client as TwilioClient;
 
 class NotificationService
 {
@@ -30,17 +30,9 @@ class NotificationService
 
     const EVENT_KYC_REJECTED = 'kyc_rejected';
 
-    private ?TwilioClient $twilio = null;
-
-    public function __construct()
-    {
-        $sid = config('services.twilio.sid');
-        $token = config('services.twilio.token');
-
-        if ($sid && $token) {
-            $this->twilio = new TwilioClient($sid, $token);
-        }
-    }
+    public function __construct(
+        private GreenApiService $greenApi,
+    ) {}
 
     public function sendWebPush(User $user, string $title, string $body, string $url = '/dashboard'): bool
     {
@@ -114,35 +106,17 @@ class NotificationService
 
         $phone = preg_replace('/[^0-9]/', '', $user->phone_number);
 
-        if ($this->twilio && config('services.twilio.whatsapp_from')) {
-            try {
-                $this->twilio->messages->create(
-                    "whatsapp:+{$phone}",
-                    [
-                        'from' => 'whatsapp:'.config('services.twilio.whatsapp_from'),
-                        'body' => $message,
-                    ]
-                );
+        if ($this->greenApi->isConfigured()) {
+            $sent = $this->greenApi->sendText($phone, $message);
 
-                $this->logNotification($user, 'whatsapp', $event, $message, 'sent');
+            $this->logNotification($user, 'whatsapp', $event, $message, $sent ? 'sent' : 'failed');
 
-                return true;
-            } catch (\Exception $e) {
-                Log::error('Twilio WhatsApp failed', [
-                    'user_id' => $user->id,
-                    'phone' => $phone,
-                    'error' => $e->getMessage(),
-                ]);
-
-                $this->logNotification($user, 'whatsapp', $event, $message, 'failed');
-
-                return false;
-            }
+            return $sent;
         }
 
         $waLink = 'https://wa.me/'.$phone.'?text='.urlencode($message);
 
-        Log::channel('stack')->info('WhatsApp link (no Twilio configured)', [
+        Log::channel('stack')->info('WhatsApp link (no Green API configured)', [
             'user_id' => $user->id,
             'phone' => $phone,
             'message' => $message,
