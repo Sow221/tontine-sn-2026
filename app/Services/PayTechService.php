@@ -57,7 +57,7 @@ class PayTechService
                     'currency' => config('mobilemoney.paytech.currency'),
                     'ref_command' => $reference,
                     'command_name' => 'Cotisation tontine',
-                    'env' => 'prod',
+                    'env' => 'test',
                     'fee_bearer' => config('mobilemoney.paytech.fee_bearer'),
                     'ipn_url' => route('webhooks.paytech'),
                     'success_url' => route('payment.pending', $transaction).'?paytech_return=1',
@@ -175,7 +175,7 @@ class PayTechService
                     'ref_command' => $reference,
                     'method'      => $method,          // wave | orange_money | free_money
                     'phone'       => $phone,
-                    'env'         => 'prod',
+                    'env'         => 'test',
                 ]);
 
             if ($response->successful()) {
