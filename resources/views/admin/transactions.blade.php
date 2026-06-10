@@ -87,16 +87,16 @@
                         $operatorIcons = [
                             'wave'         => ['img' => 'images/logo wave.webp', 'alt' => 'Wave'],
                             'orange_money' => ['img' => 'images/logo orange money.webp', 'alt' => 'Orange Money'],
-                            'free_money'   => ['img' => null, 'label' => 'FM', 'color' => '#E3000F', 'bg' => '#fef2f2'],
-                            'card'         => ['img' => null, 'label' => 'CB', 'color' => '#6366f1', 'bg' => '#eef2ff'],
-                            'cash'         => ['img' => null, 'label' => 'Cash', 'color' => '#009639', 'bg' => '#f0fdf4'],
+                            'free_money'   => ['img' => null, 'icon' => 'fas fa-mobile-alt', 'color' => '#E3000F', 'bg' => '#fef2f2'],
+                            'card'         => ['img' => null, 'icon' => 'fas fa-credit-card', 'color' => '#6366f1', 'bg' => '#eef2ff'],
+                            'cash'         => ['img' => null, 'icon' => 'fas fa-money-bill-wave', 'color' => '#009639', 'bg' => '#f0fdf4'],
                         ];
-                        $icon = $operatorIcons[$tx->method] ?? ['img' => null, 'label' => '?', 'color' => '#64748b', 'bg' => '#f1f5f9'];
+                        $icon = $operatorIcons[$tx->method] ?? ['img' => null, 'icon' => 'fas fa-question', 'color' => '#64748b', 'bg' => '#f1f5f9'];
                     @endphp
                     @if($icon['img'])
-                    <img src="{{ asset($icon['img']) }}" alt="{{ $icon['alt'] }}" style="height:16px;width:auto;border-radius:3px;">
+                    <img src="{{ asset($icon['img']) }}" alt="{{ $icon['alt'] }}" style="height:22px;width:auto;border-radius:4px;">
                     @else
-                    <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:{{ $icon['bg'] }};color:{{ $icon['color'] }};font-size:9px;font-weight:800;border:1px solid {{ $icon['color'] }}40;">{{ $icon['label'] }}</span>
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:5px;background:{{ $icon['bg'] }};color:{{ $icon['color'] }};font-size:12px;border:1px solid {{ $icon['color'] }}30;"><i class="{{ $icon['icon'] }}"></i></span>
                     @endif
                     · {{ $tx->created_at->format('d/m/Y H:i') }}
                     · <span class="text-muted" style="font-family:monospace;font-size:10px;">#{{ $tx->id }}</span>

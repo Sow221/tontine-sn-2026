@@ -74,27 +74,47 @@ class HistoriqueController extends Controller
             if ($request->filled('tontine_id')) {
                 $query->whereHas('cycle', fn ($q) => $q->where('tontine_id', $request->tontine_id));
             }
-
             if ($request->filled('status')) {
                 $query->where('status', $request->status);
             }
-
+            if ($request->filled('operateur')) {
+                $query->where('method', $request->operateur);
+            }
+            if ($request->filled('type_flux')) {
+                if ($request->type_flux === 'cotisation') {
+                    $query->where(fn ($q) => $q->whereIn('type', ['cotisation', 'payment'])->orWhereNull('type'));
+                } else {
+                    $query->whereIn('type', ['retrait', 'redistribution', 'withdrawal', 'gain']);
+                }
+            }
+            if ($request->filled('date_debut')) {
+                $query->whereDate('created_at', '>=', $request->date_debut);
+            }
+            if ($request->filled('date_fin')) {
+                $query->whereDate('created_at', '<=', $request->date_fin);
+            }
+            if ($request->filled('search')) {
+                $s = $request->search;
+                $query->where(fn ($q) => $q
+                    ->where('external_reference', 'like', "%{$s}%")
+                    ->orWhereHas('user', fn ($u) => $u
+                        ->where('name', 'like', "%{$s}%")
+                        ->orWhere('phone', 'like', "%{$s}%")
+                    )
+                );
+            }
             if ($request->filled('periode') && preg_match('/^\d{4}-\d{2}$/', $request->periode)) {
                 [$year, $month] = explode('-', $request->periode);
                 $query->whereYear('created_at', $year)->whereMonth('created_at', $month);
             }
 
             $totalSuccess = (clone $query)->where('status', 'success')->sum('amount');
-
             $transactions = $query->paginate(20)->withQueryString();
 
             $periodes = collect();
             for ($i = 0; $i < 12; $i++) {
                 $date = now()->subMonths($i);
-                $periodes->push([
-                    'value' => $date->format('Y-m'),
-                    'label' => $date->isoFormat('MMMM YYYY'),
-                ]);
+                $periodes->push(['value' => $date->format('Y-m'), 'label' => $date->isoFormat('MMMM YYYY')]);
             }
 
             return view('historique.index', compact('transactions', 'tontines', 'totalSuccess', 'periodes'));
