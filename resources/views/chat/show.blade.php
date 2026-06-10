@@ -100,8 +100,6 @@ const onlineEl   = document.getElementById('chat-online');
 const sendUrl    = '{{ route('chat.send', $tontine) }}';
 const streamUrl  = '{{ route('chat.stream', $tontine) }}';
 const pollUrl    = '{{ route('chat.poll', $tontine) }}';
-const csrfToken  = document.querySelector('meta[name="csrf-token"]')?.content
-                 || document.querySelector('input[name="_token"]')?.value || '';
 const myId       = {{ auth()->id() }};
 
 // Scroll initial vers le bas

@@ -165,8 +165,9 @@ function checkStatus() {
 
 // Reprendre le polling si la page redevient visible
 document.addEventListener('visibilitychange', () => {
+    const el = document.getElementById('state-pending');
     if (document.visibilityState === 'visible'
-        && document.getElementById('state-pending').style.display !== 'none'
+        && el && el.style.display !== 'none'
         && retries < maxRetries) {
         checkStatus();
     }
