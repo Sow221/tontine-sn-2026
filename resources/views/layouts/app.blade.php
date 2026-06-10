@@ -193,16 +193,12 @@
                     <i :class="dark ? 'fas fa-sun' : 'fas fa-moon'"></i>
                 </button>
 
-                @if(auth()->user()->isAdmin())
-                <span class="badge bg-danger d-none d-sm-inline">{{ auth()->user()->role === 'super_admin' ? 'Super Admin' : 'Admin' }}</span>
-                @else
-                <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-light position-relative" aria-label="Notifications">
+                <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-light position-relative d-none d-sm-inline-flex" aria-label="Notifications">
                     <i class="fas fa-bell"></i>
                     @if(($unreadNotificationsCount ?? 0) > 0)
                     <span class="badge bg-danger position-absolute" style="top:2px;right:2px;font-size:9px;min-width:15px;height:15px;line-height:9px;padding:3px;">{{ ($unreadNotificationsCount ?? 0) > 9 ? '9+' : $unreadNotificationsCount }}</span>
                     @endif
                 </a>
-                @endif
 
                 {{-- User dropdown --}}
                 <div class="position-relative" x-data="{ dropdownOpen: false }" @click.outside="dropdownOpen = false">
@@ -210,6 +206,7 @@
                             aria-haspopup="true" :aria-expanded="dropdownOpen"
                             aria-label="Menu utilisateur">
                         <span class="topbar-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? auth()->user()->email, 0, 1)) }}</span>
+                        <span class="topbar-user-role-badge">{{ match(auth()->user()->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => '' } }}</span>
                         <i class="fas fa-chevron-down topbar-chevron" :class="{ 'open': dropdownOpen }"></i>
                     </button>
                     <div class="topbar-dropdown-menu" x-show="dropdownOpen"
