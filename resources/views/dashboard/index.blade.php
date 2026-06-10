@@ -447,14 +447,28 @@
     </div>
     @foreach($recentTransactions as $tx)
     <div class="tx-row mb-2">
-        <div class="tx-row__icon tx-row__icon--{{ $tx->status }}">
-            <i class="fas fa-{{ $tx->status === 'success' ? 'check' : ($tx->status === 'failed' ? 'times' : 'clock') }}"></i>
+        <div class="d-flex align-items-center gap-2" style="width:36px;flex-shrink:0;">
+            @php $opImgs = ['wave' => 'images/logo wave.webp', 'orange_money' => 'images/logo orange money.webp', 'free_money' => 'images/logo free money.svg']; @endphp
+            @if(isset($opImgs[$tx->method]))
+            <img src="{{ asset($opImgs[$tx->method]) }}" alt="" style="height:20px;width:auto;border-radius:3px;">
+            @else
+            <div class="tx-row__icon tx-row__icon--{{ $tx->status }}">
+                <i class="fas fa-{{ $tx->method === 'card' ? 'credit-card' : ($tx->method === 'cash' ? 'money-bill-wave' : ($tx->status === 'success' ? 'check' : ($tx->status === 'failed' ? 'times' : 'clock'))) }}"></i>
+            </div>
+            @endif
         </div>
         <div class="tx-row__info">
-            <p class="tx-row__name">{{ $tx->cycle->tontine->name ?? '—' }}</p>
-            <small class="text-muted">{{ $tx->paid_at?->format('d/m/Y') ?? $tx->created_at->format('d/m/Y') }}</small>
+            <p class="tx-row__name mb-0">{{ $tx->cycle->tontine->name ?? '—' }}</p>
+            <small class="text-muted">
+                @if($tx->type === 'redistribution')
+                <span class="badge bg-purple-light text-purple" style="font-size:9px;">Pot</span>
+                @elseif($tx->type === 'cotisation')
+                <span class="badge bg-blue-light text-blue" style="font-size:9px;">Cotisation</span>
+                @endif
+                {{ $tx->paid_at?->format('d/m/Y') ?? $tx->created_at->format('d/m/Y') }}
+            </small>
         </div>
-        <span class="tx-row__amount tx-row__amount--{{ $tx->status }}">
+        <span class="tx-row__amount tx-row__amount--{{ $tx->status }} text-nowrap">
             {{ number_format($tx->amount, 0, ',', ' ') }} F
         </span>
     </div>

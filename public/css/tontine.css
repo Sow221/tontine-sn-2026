@@ -375,6 +375,9 @@ body.dark-mode .dark-mode-card [style*='background:var(--green-light)'] { backgr
 body.dark-mode .dark-mode-card [style*='background:#eff6ff'] { background: #1e3a5f !important; }
 
 .bg-blue-light { background: #dbeafe; }
+.bg-purple-light { background: #f3e8ff; }
+.text-purple { color: #9333ea; }
+.text-blue { color: #2563eb; }
 .min-width-0 { min-width: 0; }
 
 /* -- Chat -------------------------------------------------------- */
