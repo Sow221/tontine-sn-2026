@@ -21,15 +21,11 @@ jobs:
           script: |
             APP_DIR=/home/tontine-sn/tontine-sn-2026
 
-            # Write .env.alwaysdata from GitHub secret (only if secret exists)
-            if [ -n "$ENV_ALWAYSDATA" ]; then
-              cat > "$APP_DIR/.env.alwaysdata" << 'ENVEOF'
+            # Write .env.alwaysdata from GitHub secret
+            cat > "$APP_DIR/.env.alwaysdata" << 'ENVEOF'
 ${{ secrets.ENV_ALWAYSDATA }}
 ENVEOF
-              echo "=> .env.alwaysdata written from secret"
-            fi
+            echo "=> .env.alwaysdata written from secret"
 
             cd "$APP_DIR"
             bash deploy/deploy-alwaysdata.sh
-        env:
-          ENV_ALWAYSDATA: ${{ secrets.ENV_ALWAYSDATA }}
