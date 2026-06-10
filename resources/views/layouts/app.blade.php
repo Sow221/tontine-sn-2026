@@ -38,7 +38,7 @@
     <link href="{{ asset('css/tontine.css') }}" rel="stylesheet">
     @stack('styles')
 </head>
-<body class="bg-off-white" x-data="{ dark: localStorage.getItem('tontine-theme') === 'dark' || (!localStorage.getItem('tontine-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches) }" :class="{ 'dark-mode': dark }">
+<body class="bg-off-white" x-data="{ dark: localStorage.getItem('tontine-theme') === 'dark' || (!localStorage.getItem('tontine-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches), sidebarCollapsed: localStorage.getItem('sidebar-collapsed') === 'true' }" :class="{ 'dark-mode': dark }">
 
     <a href="#main-content" class="skip-link">Aller au contenu principal</a>
 
@@ -49,7 +49,7 @@
     </noscript>
 
 @auth
-<div class="app-wrapper">
+<div class="app-wrapper" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
 
     {{-- Overlay mobile sidebar --}}
     <div class="sidebar-overlay" :class="{ 'open': sidebarOpen }"
@@ -65,71 +65,78 @@
             <span class="sidebar-logo-text">TontineSN</span>
         </a>
 
+        <button class="sidebar-collapse-btn d-none d-md-flex"
+                @click="sidebarCollapsed = !sidebarCollapsed; localStorage.setItem('sidebar-collapsed', sidebarCollapsed)"
+                :title="sidebarCollapsed ? 'Développer la barre latérale' : 'Réduire la barre latérale'"
+                aria-label="Basculer la barre latérale">
+            <i class="fas fa-chevron-left" :class="{ 'fa-rotate-180': sidebarCollapsed }"></i>
+        </button>
+
         <nav class="sidebar-nav">
             @if(auth()->user()->isAdmin())
                 {{-- Navigation ADMIN pure : pas de liens membre --}}
                 <span class="sidebar-section-label">Administration</span>
                 <a href="{{ route('admin.dashboard') }}" class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-tachometer-alt"></i> Tableau de bord
+                    <i class="fas fa-tachometer-alt"></i><span class="sidebar-link-text">Tableau de bord</span>
                 </a>
                 <a href="{{ route('admin.users') }}" class="sidebar-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
-                    <i class="fas fa-users"></i> Utilisateurs
+                    <i class="fas fa-users"></i><span class="sidebar-link-text">Utilisateurs</span>
                 </a>
                 <a href="{{ route('admin.tontines') }}" class="sidebar-link {{ request()->routeIs('admin.tontines*') ? 'active' : '' }}">
-                    <i class="fas fa-layer-group"></i> Tontines
+                    <i class="fas fa-layer-group"></i><span class="sidebar-link-text">Tontines</span>
                 </a>
                 <a href="{{ route('admin.transactions') }}" class="sidebar-link {{ request()->routeIs('admin.transactions*') ? 'active' : '' }}">
-                    <i class="fas fa-exchange-alt"></i> Transactions
+                    <i class="fas fa-exchange-alt"></i><span class="sidebar-link-text">Transactions</span>
                 </a>
                 <a href="{{ route('admin.notifications') }}" class="sidebar-link {{ request()->routeIs('admin.notifications') ? 'active' : '' }}">
-                    <i class="fas fa-bell"></i> Notifications
+                    <i class="fas fa-bell"></i><span class="sidebar-link-text">Notifications</span>
                 </a>
                 <div class="sidebar-divider"></div>
                 <span class="sidebar-section-label">Analyse</span>
                 <a href="{{ route('admin.stats') }}" class="sidebar-link {{ request()->routeIs('admin.stats') ? 'active' : '' }}">
-                    <i class="fas fa-chart-line"></i> Statistiques
+                    <i class="fas fa-chart-line"></i><span class="sidebar-link-text">Statistiques</span>
                 </a>
                 <a href="{{ route('admin.logs') }}" class="sidebar-link {{ request()->routeIs('admin.logs') ? 'active' : '' }}">
-                    <i class="fas fa-list-alt"></i> Journaux
+                    <i class="fas fa-list-alt"></i><span class="sidebar-link-text">Journaux</span>
                 </a>
                 <a href="{{ route('admin.api.docs') }}" class="sidebar-link {{ request()->routeIs('admin.api.docs') ? 'active' : '' }}">
-                    <i class="fas fa-code"></i> API Docs
+                    <i class="fas fa-code"></i><span class="sidebar-link-text">API Docs</span>
                 </a>
                 <div class="sidebar-divider"></div>
                 <span class="sidebar-section-label">Contenu</span>
                 <a href="{{ route('admin.posts') }}" class="sidebar-link {{ request()->routeIs('admin.posts*') ? 'active' : '' }}">
-                    <i class="fas fa-newspaper"></i> Actualités
+                    <i class="fas fa-newspaper"></i><span class="sidebar-link-text">Actualités</span>
                 </a>
             @else
                 {{-- Navigation MEMBRE --}}
                 <span class="sidebar-section-label">Menu</span>
                 <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home"></i> Accueil
+                    <i class="fas fa-home"></i><span class="sidebar-link-text">Accueil</span>
                 </a>
                 <a href="{{ route('tontines.index') }}" class="sidebar-link {{ request()->routeIs('tontines.*') && !request()->routeIs('tontines.explore') ? 'active' : '' }}">
-                    <i class="fas fa-users"></i> Mes tontines
+                    <i class="fas fa-users"></i><span class="sidebar-link-text">Mes tontines</span>
                 </a>
                 <a href="{{ route('tontines.explore') }}" class="sidebar-link {{ request()->routeIs('tontines.explore') ? 'active' : '' }}">
-                    <i class="fas fa-compass"></i> Explorer
+                    <i class="fas fa-compass"></i><span class="sidebar-link-text">Explorer</span>
                 </a>
                 <a href="{{ route('chat.index') }}" class="sidebar-link {{ request()->routeIs('chat.*') ? 'active' : '' }}">
-                    <i class="fas fa-comments"></i> Messages
+                    <i class="fas fa-comments"></i><span class="sidebar-link-text">Messages</span>
                 </a>
                 <a href="{{ route('notifications.index') }}" class="sidebar-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
-                    <i class="fas fa-bell"></i> Notifications
+                    <i class="fas fa-bell"></i><span class="sidebar-link-text">Notifications</span>
                     @if(($unreadNotificationsCount ?? 0) > 0)
                     <span class="badge bg-danger ms-auto">{{ $unreadNotificationsCount }}</span>
                     @endif
                 </a>
                 <a href="{{ route('profile.show') }}" class="sidebar-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
-                    <i class="fas fa-user"></i> Profil
+                    <i class="fas fa-user"></i><span class="sidebar-link-text">Profil</span>
                 </a>
                 <div class="sidebar-divider"></div>
                 <a href="{{ route('historique.index') }}" class="sidebar-link {{ request()->routeIs('historique.*') ? 'active' : '' }}">
-                    <i class="fas fa-history"></i> Historique
+                    <i class="fas fa-history"></i><span class="sidebar-link-text">Historique</span>
                 </a>
                 <a href="{{ route('faq.index') }}" class="sidebar-link {{ request()->routeIs('faq.index') ? 'active' : '' }}">
-                    <i class="fas fa-question-circle"></i> FAQ
+                    <i class="fas fa-question-circle"></i><span class="sidebar-link-text">FAQ</span>
                 </a>
             @endif
         </nav>
@@ -177,6 +184,14 @@
                 <span class="topbar-title">@yield('title', 'Tableau de bord')</span>
             </div>
             <div class="topbar-actions d-flex align-items-center gap-2">
+                {{-- Theme toggle --}}
+                <button class="btn btn-sm btn-light theme-toggle-topbar"
+                        @click.prevent="dark = !dark; localStorage.setItem('tontine-theme', dark ? 'dark' : 'light')"
+                        :title="dark ? 'Mode clair' : 'Mode sombre'"
+                        aria-label="Basculer le thème">
+                    <i :class="dark ? 'fas fa-sun' : 'fas fa-moon'"></i>
+                </button>
+
                 @if(auth()->user()->isAdmin())
                 <span class="badge bg-danger d-none d-sm-inline">{{ auth()->user()->role === 'super_admin' ? 'Super Admin' : 'Admin' }}</span>
                 @else
@@ -187,6 +202,40 @@
                     @endif
                 </a>
                 @endif
+
+                {{-- User dropdown --}}
+                <div class="position-relative" x-data="{ dropdownOpen: false }" @click.outside="dropdownOpen = false">
+                    <button class="topbar-user-btn" @click="dropdownOpen = !dropdownOpen"
+                            aria-haspopup="true" :aria-expanded="dropdownOpen"
+                            aria-label="Menu utilisateur">
+                        <span class="topbar-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? auth()->user()->email, 0, 1)) }}</span>
+                        <i class="fas fa-chevron-down topbar-chevron" :class="{ 'open': dropdownOpen }"></i>
+                    </button>
+                    <div class="topbar-dropdown-menu" x-show="dropdownOpen"
+                         x-transition:enter="dropdown-enter" x-transition:enter-start="dropdown-enter-start" x-transition:enter-end="dropdown-enter-end"
+                         x-transition:leave="dropdown-leave" x-transition:leave-start="dropdown-leave-start" x-transition:leave-end="dropdown-leave-end"
+                         x-cloak>
+                        <div class="topbar-dropdown-header">
+                            <span class="topbar-dropdown-name">{{ auth()->user()->name ?? auth()->user()->email }}</span>
+                            <span class="topbar-dropdown-role">{{ match(auth()->user()->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => 'Membre' } }}</span>
+                        </div>
+                        <div class="topbar-dropdown-divider"></div>
+                        <a href="{{ route('profile.show') }}" class="topbar-dropdown-item">
+                            <i class="fas fa-user"></i> Mon Profil
+                        </a>
+                        <a href="{{ route('profile.show') }}" class="topbar-dropdown-item">
+                            <i class="fas fa-cog"></i> Paramètres du compte
+                        </a>
+                        <div class="topbar-dropdown-divider"></div>
+                        <form method="POST" action="{{ route('auth.logout') }}">
+                            @csrf
+                            <button type="submit" class="topbar-dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i> Se déconnecter
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
                 <span class="text-muted small d-none d-md-inline">
                     {{ now()->isoFormat('dddd D MMMM YYYY') }}
                 </span>
