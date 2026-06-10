@@ -7,7 +7,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v4
@@ -20,12 +20,8 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             APP_DIR=/home/tontine-sn/tontine-sn-2026
-
-            # Write .env.alwaysdata from GitHub secret
-            cat > "$APP_DIR/.env.alwaysdata" << 'ENVEOF'
-${{ secrets.ENV_ALWAYSDATA }}
-ENVEOF
-            echo "=> .env.alwaysdata written from secret"
-
+            date
+            echo "Connected as $(whoami)"
             cd "$APP_DIR"
+            git pull origin main
             bash deploy/deploy-alwaysdata.sh
