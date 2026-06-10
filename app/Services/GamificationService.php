@@ -188,6 +188,7 @@ class GamificationService
             ->join('transactions', 'transactions.user_id', '=', 'referrals.id')
             ->where('referrals.referred_by', $user->id)
             ->where('transactions.status', 'success')
+            ->select('referrals.id')
             ->groupBy('referrals.id')
             ->havingRaw('COUNT(transactions.id) >= 3')
             ->count();
