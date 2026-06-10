@@ -54,4 +54,4 @@ php artisan storage:link --force 2>/dev/null || true
 # Mode normal
 php artisan up
 
-echo "=== OK ==="
+echo "=== [${DATE}] Deploiement termine avec succes ==="
