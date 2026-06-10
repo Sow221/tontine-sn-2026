@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', $tontine->name)
+@section('meta_description', "Tontine {$tontine->name} — {$tontine->type_label}, montant: ".number_format($tontine->amount, 0, ',', ' ')." FCFA, {$tontine->active_members_count} membre(s).")
 
 @section('content')
 <div class="container py-4" style="max-width:860px;">

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#009639" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="TontineSN — Gérez vos tontines en ligne. Créez, suivez et payez vos cotisations en toute sécurité.">
+    <meta name="description" content="@yield('meta_description', 'TontineSN — Gérez vos tontines en ligne. Créez, suivez et payez vos cotisations en toute sécurité.')">
     {{-- PWA / iOS --}}
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,10 +19,11 @@
     <link rel="apple-touch-icon" sizes="512x512" href="{{ asset('images/icon-512.png') }}">
 
     <meta property="og:title" content="@yield('title', 'Accueil') — TontineSN">
-    <meta property="og:description" content="Plateforme digitale de gestion de tontines au Sénégal.">
+    <meta property="og:description" content="@yield('meta_description', 'Plateforme digitale de gestion de tontines au Sénégal. Créez, suivez et payez vos cotisations en toute sécurité.')">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ asset('images/element-logo.png') }}">
+    <meta property="og:image" content="@yield('og_image', asset('images/icon-512.png'))">
+    <meta name="twitter:card" content="summary_large_image">
 
     <title>@yield('title', 'Accueil') — TontineSN</title>
 

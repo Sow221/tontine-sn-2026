@@ -73,6 +73,55 @@ class GreenApiService
      * Envoie une notification structurée (remplace les templates)
      * Utilise Markdown WhatsApp : *gras*, _italique_, ~barré~, `code`
      */
+    /**
+     * Envoie un fichier (image, document) via upload multipart
+     * GRATUIT, illimité sur compte Developer (QR code)
+     */
+    public function sendFileByUpload(string $phone, string $filePath, string $fileName = 'document'): bool
+    {
+        if (! $this->isConfigured()) {
+            Log::warning('Green API not configured', ['phone' => $phone]);
+
+            return false;
+        }
+
+        if (! file_exists($filePath)) {
+            Log::warning('File not found for Green API upload', ['path' => $filePath]);
+
+            return false;
+        }
+
+        $phone = $this->normalizePhone($phone);
+
+        try {
+            $response = Http::timeout(30)
+                ->attach('file', file_get_contents($filePath), $fileName)
+                ->post("{$this->apiUrl}/waInstance{$this->idInstance}/sendFileByUpload/{$this->apiToken}", [
+                    'chatId' => $phone.'@c.us',
+                    'fileName' => $fileName,
+                ]);
+
+            if ($response->successful()) {
+                return true;
+            }
+
+            Log::error('Green API sendFileByUpload failed', [
+                'status' => $response->status(),
+                'response' => $response->body(),
+            ]);
+
+            return false;
+        } catch (\Throwable $e) {
+            Log::error('Green API sendFileByUpload exception', ['error' => $e->getMessage()]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Envoie une notification structurée (remplace les templates)
+     * Utilise Markdown WhatsApp : *gras*, _italique_, ~barré~, `code`
+     */
     public function sendNotification(string $phone, string $title, string $body, ?string $buttonUrl = null, ?string $buttonText = null): bool
     {
         $message = "*{$title}*\n\n{$body}";

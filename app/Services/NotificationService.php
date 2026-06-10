@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\SendChatNotifications;
+use App\Jobs\SendWhatsAppNotification;
 use App\Models\FcmToken;
 use App\Models\NotificationLog;
 use App\Models\Tontine;
@@ -96,11 +97,26 @@ class NotificationService
         return $success;
     }
 
-    public function sendWhatsApp(User $user, string $message, string $event = 'general'): bool
+    public function sendWhatsApp(User $user, string $message, string $event = 'general', ?array $receipt = null): bool
     {
-        SendWhatsAppNotification::dispatch($user->id, $message, $event);
+        SendWhatsAppNotification::dispatch($user->id, $message, $event, $receipt);
 
         return true;
+    }
+
+    public function sendWhatsAppFile(User $user, string $filePath): bool
+    {
+        if (empty($user->phone_number)) {
+            return false;
+        }
+
+        $phone = preg_replace('/[^0-9]/', '', $user->phone_number);
+
+        if ($this->greenApi->isConfigured()) {
+            return $this->greenApi->sendFileByUpload($phone, $filePath, 'recu_tontinesn.png');
+        }
+
+        return false;
     }
 
     public function sendWhatsAppSync(User $user, string $message, string $event = 'general'): bool
@@ -212,9 +228,15 @@ class NotificationService
     {
         $montant = number_format($amount, 0, ',', ' ');
         $msg = "✅ Bonjour {$user->name}, paiement confirmé ! Votre cotisation de {$montant} FCFA pour la tontine {$tontineName} a été enregistrée. Merci !";
+        $receipt = [
+            'userName' => $user->name,
+            'amount' => $amount,
+            'tontineName' => $tontineName,
+            'date' => now()->isoFormat('D MMMM YYYY'),
+        ];
 
         if ($this->wantsChannel($user, 'payment_whatsapp')) {
-            $this->sendWhatsApp($user, $msg, self::EVENT_PAYMENT);
+            $this->sendWhatsApp($user, $msg, self::EVENT_PAYMENT, $receipt);
         }
         if ($this->wantsChannel($user, 'payment_email')) {
             $this->sendEmail(
