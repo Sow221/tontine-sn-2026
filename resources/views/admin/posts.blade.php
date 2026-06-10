@@ -79,13 +79,12 @@
                         <i class="fas fa-{{ $post->published_at && $post->published_at->isPast() ? 'eye-slash' : 'check' }}"></i>
                     </button>
                 </form>
-                <form method="POST" action="{{ route('admin.posts.destroy', $post) }}"
-                      onsubmit="return confirm('Supprimer cet article ?')">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Supprimer">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </form>
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill"
+                        x-data
+                        @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.posts.destroy', $post) }}', message: 'Supprimer cet article ?', confirmText: 'Oui, supprimer', method: 'DELETE', type: 'danger' } }))"
+                        title="Supprimer">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
         </div>
     </div>

@@ -158,13 +158,11 @@
                 {{ match($t->status) { 'active' => 'Active', 'suspended' => 'Suspendue', 'completed' => 'Terminée', default => 'En attente' } }}
             </span>
             @if($t->status === 'active')
-            <form method="POST" action="{{ route('admin.tontines.suspend', $t) }}">
-                @csrf
-                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"
-                        onclick="return confirm('Suspendre « {{ $t->name }} » ?')">
-                    <i class="fas fa-pause"></i>
-                </button>
-            </form>
+            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill"
+                    x-data
+                    @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.tontines.suspend', $t) }}', message: 'Suspendre « {{ $t->name }} » ?', confirmText: 'Oui, suspendre', type: 'danger' } }))">
+                <i class="fas fa-pause"></i>
+            </button>
             @elseif($t->status === 'suspended')
             <form method="POST" action="{{ route('admin.tontines.reactivate', $t) }}">
                 @csrf
@@ -194,13 +192,11 @@
                 {{ ucfirst($tx->status) }}
             </span>
             @if($tx->status === 'pending')
-            <form method="POST" action="{{ route('admin.transactions.force-confirm', $tx) }}">
-                @csrf
-                <button type="submit" class="btn btn-sm btn-success rounded-pill"
-                        onclick="return confirm('Confirmer manuellement cette transaction ?')">
-                    <i class="fas fa-check"></i>
-                </button>
-            </form>
+            <button type="button" class="btn btn-sm btn-success rounded-pill"
+                    x-data
+                    @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.transactions.force-confirm', $tx) }}', message: 'Confirmer manuellement cette transaction ?', confirmText: 'Oui, confirmer', type: 'danger' } }))">
+                <i class="fas fa-check"></i>
+            </button>
             @endif
         </div>
     </div>

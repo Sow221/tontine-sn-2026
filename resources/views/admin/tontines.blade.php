@@ -67,13 +67,11 @@
                 </span>
                 <div class="d-flex gap-1 mt-1">
                     @if($tontine->status === 'active')
-                    <form method="POST" action="{{ route('admin.tontines.suspend', $tontine) }}">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"
-                                onclick="return confirm('Suspendre « {{ addslashes($tontine->name) }} » ?')">
-                            <i class="fas fa-pause me-1"></i>Suspendre
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill"
+                            x-data
+                            @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.tontines.suspend', $tontine) }}', message: 'Suspendre « {{ addslashes($tontine->name) }} » ?', confirmText: 'Oui, suspendre', type: 'danger' } }))">
+                        <i class="fas fa-pause me-1"></i>Suspendre
+                    </button>
                     @elseif($tontine->status === 'suspended')
                     <form method="POST" action="{{ route('admin.tontines.reactivate', $tontine) }}">
                         @csrf

@@ -1,5 +1,5 @@
-<div x-data="{ open: false, action: '', message: '', confirmText: 'Confirmer', type: 'danger' }"
-     x-on:open-modal.window="if ($event.detail.id === '{{ $id }}') { open = true; action = $event.detail.action; message = $event.detail.message; confirmText = $event.detail.confirmText || 'Confirmer'; type = $event.detail.type || 'danger'; }"
+<div x-data="{ open: false, action: '', message: '', method: 'POST', confirmText: 'Confirmer', type: 'danger' }"
+     x-on:open-modal.window="if ($event.detail.id === '{{ $id }}') { open = true; action = $event.detail.action; method = $event.detail.method || 'POST'; message = $event.detail.message; confirmText = $event.detail.confirmText || 'Confirmer'; type = $event.detail.type || 'danger'; }"
      x-show="open"
      x-cloak
      x-trap.noscroll="open"
@@ -20,7 +20,7 @@
             <button type="button" class="btn btn-light flex-grow-1" @click="open = false">Annuler</button>
             <form :action="action" method="POST" class="flex-grow-1" @submit="open = false">
                 @csrf
-                @method($method ?? 'DELETE')
+                <input type="hidden" name="_method" :value="method || 'POST'">
                 <button type="submit" class="btn w-100" :class="type === 'danger' ? 'btn-danger' : 'btn-primary'" x-text="confirmText"></button>
             </form>
         </div>

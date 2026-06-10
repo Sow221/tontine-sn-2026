@@ -110,14 +110,12 @@
                         </select>
                     </form>
                     {{-- Activer/Désactiver --}}
-                    <form method="POST" action="{{ route('admin.users.toggle', $user) }}">
-                        @csrf
-                        <button type="submit"
-                                class="btn btn-sm btn-{{ $user->is_active ? 'outline-danger' : 'outline-success' }} rounded-pill"
-                                onclick="return confirm('{{ $user->is_active ? 'Désactiver' : 'Activer' }} {{ addslashes($user->name ?? $user->email) }} ?')">
-                            {{ $user->is_active ? 'Désactiver' : 'Activer' }}
-                        </button>
-                    </form>
+                    <button type="button"
+                            class="btn btn-sm btn-{{ $user->is_active ? 'outline-danger' : 'outline-success' }} rounded-pill"
+                            x-data
+                            @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.users.toggle', $user) }}', message: '{{ $user->is_active ? 'Désactiver' : 'Activer' }} {{ addslashes($user->name ?? $user->email) }} ?', confirmText: 'Oui, {{ $user->is_active ? 'désactiver' : 'activer' }}', type: 'danger' } }))">
+                        {{ $user->is_active ? 'Désactiver' : 'Activer' }}
+                    </button>
                 </div>
                 @endif
             </div>

@@ -345,6 +345,8 @@
         @endif
     </nav>
 
+<x-confirm-modal id="admin-confirm" />
+
 </div>
 
 @else

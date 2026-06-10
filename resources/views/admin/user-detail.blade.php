@@ -132,15 +132,13 @@
                         <button type="submit" class="btn btn-sm btn-primary rounded-pill flex-shrink-0">Changer</button>
                     </form>
                     {{-- Activer / Désactiver --}}
-                    <form method="POST" action="{{ route('admin.users.toggle', $user) }}">
-                        @csrf
-                        <button type="submit"
-                                class="btn btn-sm btn-{{ $user->is_active ? 'outline-danger' : 'outline-success' }} w-100 rounded-pill"
-                                onclick="return confirm('{{ $user->is_active ? 'Désactiver' : 'Activer' }} cet utilisateur ?')">
-                            <i class="fas fa-{{ $user->is_active ? 'ban' : 'check-circle' }} me-1"></i>
-                            {{ $user->is_active ? 'Désactiver le compte' : 'Activer le compte' }}
-                        </button>
-                    </form>
+                    <button type="button"
+                            class="btn btn-sm btn-{{ $user->is_active ? 'outline-danger' : 'outline-success' }} w-100 rounded-pill"
+                            x-data
+                            @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.users.toggle', $user) }}', message: '{{ $user->is_active ? 'Désactiver' : 'Activer' }} cet utilisateur ?', confirmText: 'Oui, {{ $user->is_active ? 'désactiver' : 'activer' }}', type: 'danger' } }))">
+                        <i class="fas fa-{{ $user->is_active ? 'ban' : 'check-circle' }} me-1"></i>
+                        {{ $user->is_active ? 'Désactiver le compte' : 'Activer le compte' }}
+                    </button>
                     {{-- KYC --}}
                     @if($user->kyc_document && !$user->kyc_verified)
                     <a href="{{ route('admin.users.kyc.review', $user) }}"
@@ -202,13 +200,11 @@
                 {{ number_format($tx->amount, 0, ',', ' ') }} F
             </span>
             @if($tx->status === 'pending')
-            <form method="POST" action="{{ route('admin.transactions.force-confirm', $tx) }}">
-                @csrf
-                <button type="submit" class="btn btn-sm btn-success rounded-pill"
-                        onclick="return confirm('Confirmer manuellement ?')">
-                    <i class="fas fa-check"></i>
-                </button>
-            </form>
+            <button type="button" class="btn btn-sm btn-success rounded-pill"
+                    x-data
+                    @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.transactions.force-confirm', $tx) }}', message: 'Confirmer manuellement cette transaction ?', confirmText: 'Oui, confirmer', type: 'danger' } }))">
+                <i class="fas fa-check"></i>
+            </button>
             @endif
         </div>
         @empty

@@ -75,13 +75,11 @@
                 </span>
                 @if($tx->status === 'pending')
                 <div class="mt-1">
-                    <form method="POST" action="{{ route('admin.transactions.force-confirm', $tx) }}">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-success rounded-pill"
-                                onclick="return confirm('Confirmer manuellement la transaction #{{ $tx->id }} ?')">
-                            <i class="fas fa-check me-1"></i>Confirmer
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-sm btn-success rounded-pill"
+                            x-data
+                            @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.transactions.force-confirm', $tx) }}', message: 'Confirmer manuellement la transaction #{{ $tx->id }} ?', confirmText: 'Oui, confirmer', type: 'danger' } }))">
+                        <i class="fas fa-check me-1"></i>Confirmer
+                    </button>
                 </div>
                 @endif
             </div>
