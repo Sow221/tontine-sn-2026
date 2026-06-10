@@ -16,9 +16,20 @@ class AdminTransactionController extends Controller
     {
         try {
             $transactions = Transaction::with('user', 'cycle.tontine')
+                ->when($request->search, function ($q) use ($request) {
+                    $q->where(function ($sub) use ($request) {
+                        $sub->where('id', 'like', '%'.$request->search.'%')
+                            ->orWhereHas('user', fn ($u) => $u
+                                ->where('name', 'like', '%'.$request->search.'%')
+                                ->orWhere('phone_number', 'like', '%'.$request->search.'%')
+                            );
+                    });
+                })
                 ->when($request->status, fn ($q) => $q->where('status', $request->status))
                 ->when($request->method, fn ($q) => $q->where('method', $request->method))
                 ->when($request->suspicious, fn ($q) => $q->where('amount', '>', config('tontine.transaction.daily_limit')))
+                ->when($request->date_from, fn ($q) => $q->whereDate('created_at', '>=', $request->date_from))
+                ->when($request->date_to,   fn ($q) => $q->whereDate('created_at', '<=', $request->date_to))
                 ->latest()
                 ->paginate(25);
 

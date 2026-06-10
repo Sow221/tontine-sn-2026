@@ -66,9 +66,14 @@ class AdminDashboardController extends Controller
 
             $pendingKycUsers = User::kycPending()->latest()->take(5)->get();
 
+            $todayTransactions = Transaction::whereDate('created_at', today())->count();
+            $todayUsers        = User::whereDate('created_at', today())->count();
+            $todayKyc          = User::whereNotNull('kyc_document')->whereDate('updated_at', today())->count();
+
             return view('admin.dashboard', compact(
                 'stats', 'recentTontines', 'suspiciousTx', 'pendingKycUsers',
-                'chartMonths', 'chartAmounts', 'blockedTontines'
+                'chartMonths', 'chartAmounts', 'blockedTontines',
+                'todayTransactions', 'todayUsers', 'todayKyc'
             ));
         } catch (\Throwable $e) {
             Log::error('Erreur admin dashboard', ['error' => $e->getMessage(), 'class' => get_class($e)]);

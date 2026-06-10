@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Gestion des tontines')
+@section('title', 'Gestion des tontines | TontineSN')
 
 @section('content')
 <div class="container py-4">
@@ -57,8 +57,11 @@
                     {{ $tontine->creator->name ?? '—' }} ·
                     Code : <strong>{{ $tontine->code }}</strong> ·
                     {{ $tontine->active_members_count }} membres ·
-                    {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA ·
+                    {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA/cycle ·
                     {{ match($tontine->type) { 'auction' => 'Enchères', 'forced_saving' => 'Épargne', 'ceremonial' => 'Cérémonielle', default => 'Fixe' } }}
+                    @if($tontine->pot_total ?? 0 > 0)
+                    · <span class="text-green fw-semibold">Pot : {{ number_format($tontine->pot_total, 0, ',', ' ') }} F</span>
+                    @endif
                 </small>
             </div>
             <div class="d-flex flex-column align-items-end gap-1">

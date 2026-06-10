@@ -1012,7 +1012,7 @@ body.dark-mode .sidebar-collapse-btn:hover {
   background: #334155;
   color: #e2e8f0;
 }
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .sidebar-collapse-btn { display: none; }
 }
 

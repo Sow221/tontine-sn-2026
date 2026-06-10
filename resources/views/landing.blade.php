@@ -4,18 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#009639">
-<meta name="description" content="TontineSN — La première infrastructure d'épargne collective numérique du Sénégal. Gérez vos tontines en ligne, payez via Wave & Orange Money, construisez votre score de crédit communautaire.">
-<meta property="og:title" content="TontineSN — L'infrastructure d'épargne collective du Sénégal">
+<meta name="description" content="Gérez votre tontine en ligne au Sénégal. Cotisations Wave & Orange Money, score de crédit communautaire, 4 types de tontines. Gratuit | TontineSN">
+<meta property="og:title" content="Tontine en Ligne - Épargne &amp; Cotisations Sénégal | TontineSN">
 <meta property="og:description" content="4 types de tontines. Score de crédit communautaire. Wave & Orange Money intégrés. La tontine traditionnelle, enfin numérique.">
-<meta property="og:image" content="{{ asset('images/hero-community.jpg') }}">
+<meta property="og:image" content="{{ asset('images/hero-community.webp') }}">
 <meta property="og:url" content="{{ url('/') }}">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="canonical" href="{{ url('/') }}">
+<link rel="icon" type="image/svg+xml" href="{{ asset('images/icon-192.svg') }}">
+<link rel="icon" type="image/png" sizes="96x96" href="{{ asset('images/icon-192.png') }}">
 <link href="{{ asset('css/landing.css') }}" rel="stylesheet">
-<title>TontineSN — La tontine numérique du Sénégal</title>
+<title>Tontine en Ligne - Épargne &amp; Cotisations Sénégal | TontineSN</title>
 </head>
 <body>
 
@@ -26,7 +28,10 @@
 <nav class="ls-nav" id="nav" aria-label="Navigation principale">
   <div class="ls-nav__inner">
     <a href="{{ route('home') }}" class="ls-nav__logo" aria-label="TontineSN — Accueil">
-      <img src="{{ asset('images/element-logo.png') }}" alt="" class="ls-nav__logo-img" width="38" height="38" aria-hidden="true">
+      <picture>
+        <source srcset="{{ asset('images/element-logo.webp') }}" type="image/webp">
+        <img src="{{ asset('images/element-logo.png') }}" alt="Logo TontineSN - Plateforme de gestion de tontine en ligne" class="ls-nav__logo-img" width="38" height="38">
+      </picture>
       <span class="ls-nav__logo-text">TontineSN</span>
     </a>
     <div class="ls-nav__links">
@@ -581,8 +586,9 @@
     <div class="ls-payment__grid">
       <div class="ls-payment__image-wrap">
         <img
+          srcset="{{ asset('images/mobile-payment.webp') }} 1x"
           src="{{ asset('images/mobile-payment.jpg') }}"
-          alt="Paiement mobile Wave au Sénégal"
+          alt="Paiement mobile Wave et Orange Money pour tontine au Sénégal"
           class="ls-payment__image"
           width="600" height="400"
           loading="lazy"
@@ -689,8 +695,9 @@
     </div>
     <div class="ls-proof__image-band ls-reveal">
       <img
+        srcset="{{ asset('images/group-community.webp') }} 1x"
         src="{{ asset('images/group-community.jpg') }}"
-        alt="Des groupes TontineSN actifs à travers le Sénégal"
+        alt="Groupe de tontine actif au Sénégal - membres TontineSN"
         class="ls-proof__community-img"
         loading="lazy"
       >
@@ -809,8 +816,9 @@
   <div class="ls-cta__inner">
     <div class="ls-cta__image-wrap">
       <img
+        srcset="{{ asset('images/woman-phone.webp') }} 1x"
         src="{{ asset('images/woman-phone.jpg') }}"
-        alt="Membre TontineSN gérant sa tontine sur smartphone"
+        alt="Femme gérant sa tontine en ligne sur smartphone au Sénégal"
         class="ls-cta__image"
         width="440" height="520"
         loading="lazy"
@@ -866,7 +874,10 @@
 <footer class="ls-footer" role="contentinfo">
   <div class="ls-footer__inner">
     <div class="ls-footer__brand">
-      <img src="{{ asset('images/Tontine.png') }}" alt="TontineSN" class="ls-footer__logo" width="36" height="36" loading="lazy">
+      <picture>
+        <source srcset="{{ asset('images/Tontine.webp') }}" type="image/webp">
+        <img src="{{ asset('images/Tontine.png') }}" alt="Logo TontineSN - Tontine numérique Sénégal" class="ls-footer__logo" width="36" height="36" loading="lazy">
+      </picture>
       <p class="ls-footer__tagline">La tontine num&eacute;rique du S&eacute;n&eacute;gal.</p>
       <p class="ls-footer__tagline ls-footer__tagline--sub">Pour les familles, associations &amp; professionnels</p>
       <a href="mailto:contact@tontinesn.com" class="ls-footer__contact">contact@tontinesn.com</a>

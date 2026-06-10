@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Gestion des utilisateurs')
+@section('title', 'Gestion des utilisateurs | TontineSN')
 
 @section('content')
 <div class="container py-4">
@@ -67,7 +67,9 @@
                 @if($user->phone_number)
                 <small class="text-muted d-block"><i class="fas fa-phone me-1"></i>{{ $user->phone_number }}</small>
                 @endif
-                <small class="text-muted">Inscrit {{ $user->created_at->diffForHumans() }}</small>
+                <small class="text-muted">Inscrit {{ $user->created_at->diffForHumans() }}
+                    <span class="text-muted" style="font-size:10px;"> ({{ $user->created_at->format('d/m/Y') }})</span>
+                </small>
             </div>
             <div class="d-flex flex-column align-items-end gap-1 flex-shrink-0">
                 {{-- Badge rôle --}}

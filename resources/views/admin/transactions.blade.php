@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Transactions')
+@section('title', 'Gestion des transactions | TontineSN')
 
 @section('content')
 <div class="container py-4">
@@ -17,25 +17,39 @@
 
     <form method="GET" action="{{ route('admin.transactions') }}" class="card mb-4">
         <div class="row g-2">
-            <div class="col-6 col-sm-3">
+            <div class="col-12 col-sm-4">
+                <input type="text" name="search" class="form-control form-control-sm"
+                       placeholder="Nom, téléphone, ID transaction…" value="{{ request('search') }}">
+            </div>
+            <div class="col-6 col-sm-2">
                 <select name="status" class="form-select form-select-sm">
-                    <option value="">Tous les statuts</option>
+                    <option value="">Tous statuts</option>
                     @foreach(['pending' => 'En attente', 'success' => 'Payé', 'failed' => 'Échoué', 'reversed' => 'Annulé'] as $val => $label)
                     <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-6 col-sm-3">
+            <div class="col-6 col-sm-2">
                 <select name="method" class="form-select form-select-sm">
-                    <option value="">Tous les moyens</option>
+                    <option value="">Tous moyens</option>
                     @foreach(['wave' => 'Wave', 'orange_money' => 'Orange Money', 'free_money' => 'Free Money', 'card' => 'Carte', 'cash' => 'Espèces'] as $val => $label)
                     <option value="{{ $val }}" {{ request('method') === $val ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
+            <div class="col-6 col-sm-2">
+                <input type="date" name="date_from" class="form-control form-control-sm"
+                       value="{{ request('date_from') }}" title="Du">
+            </div>
+            <div class="col-6 col-sm-2">
+                <input type="date" name="date_to" class="form-control form-control-sm"
+                       value="{{ request('date_to') }}" title="Au">
+            </div>
+        </div>
+        <div class="row g-2 mt-1">
             <div class="col-6 col-sm-3">
                 <select name="suspicious" class="form-select form-select-sm">
-                    <option value="">Toutes</option>
+                    <option value="">Tous montants</option>
                     <option value="1" {{ request('suspicious') ? 'selected' : '' }}>⚠️ Montant élevé</option>
                 </select>
             </div>
@@ -43,10 +57,11 @@
                 <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fas fa-filter me-1"></i>Filtrer</button>
             </div>
         </div>
-        @if(request()->filled('status') || request()->filled('method') || request()->filled('suspicious'))
-        <a href="{{ route('admin.transactions') }}" class="text-muted small mt-2 d-inline-block">
-            <i class="fas fa-times me-1"></i>Effacer
-        </a>
+        @if(request()->filled('status') || request()->filled('method') || request()->filled('suspicious') || request()->filled('search') || request()->filled('date_from') || request()->filled('date_to'))
+        <div class="d-flex align-items-center gap-2 mt-2">
+            <span class="filter-active-badge"><i class="fas fa-filter" aria-hidden="true"></i>Filtres actifs</span>
+            <a href="{{ route('admin.transactions') }}" class="filter-clear-link"><i class="fas fa-times" aria-hidden="true"></i>Effacer</a>
+        </div>
         @endif
     </form>
 
@@ -59,19 +74,36 @@
             <div class="flex-grow-1 min-width-0">
                 <p class="mb-0 fw-semibold small text-truncate">
                     {{ $tx->user->name ?? $tx->user->email ?? '—' }}
+                    @if($tx->user->phone_number ?? false)
+                    <span class="text-muted fw-normal"> · {{ $tx->user->phone_number }}</span>
+                    @endif
                     @if($tx->amount > config('tontine.transaction.daily_limit'))
                     <span class="badge bg-warning text-dark ms-1" style="font-size:9px;">⚠️ Élevé</span>
                     @endif
                 </p>
-                <small class="text-muted">
+                <small class="text-muted d-flex align-items-center gap-2 flex-wrap">
                     {{ $tx->cycle->tontine->name ?? '—' }} ·
-                    {{ match($tx->method) { 'wave' => 'Wave', 'orange_money' => 'Orange Money', 'free_money' => 'Free Money', 'card' => 'Carte', 'cash' => 'Espèces', default => ucfirst($tx->method) } }} ·
-                    {{ $tx->created_at->format('d/m/Y H:i') }}
+                    @php
+                        $operatorConfig = [
+                            'wave'         => ['color' => '#00DCA5', 'bg' => '#f0fdf4', 'label' => 'Wave'],
+                            'orange_money' => ['color' => '#FF7900', 'bg' => '#fff7ed', 'label' => 'Orange Money'],
+                            'free_money'   => ['color' => '#E3000F', 'bg' => '#fef2f2', 'label' => 'Free Money'],
+                            'card'         => ['color' => '#6366f1', 'bg' => '#eef2ff', 'label' => 'Carte'],
+                            'cash'         => ['color' => '#009639', 'bg' => '#f0fdf4', 'label' => 'Espèces'],
+                        ];
+                        $op = $operatorConfig[$tx->method] ?? ['color' => '#64748b', 'bg' => '#f1f5f9', 'label' => ucfirst($tx->method)];
+                    @endphp
+                    <span style="display:inline-flex;align-items:center;gap:4px;background:{{ $op['bg'] }};border:1px solid {{ $op['color'] }}30;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:600;color:{{ $op['color'] }};">
+                        <span style="width:7px;height:7px;border-radius:50%;background:{{ $op['color'] }};display:inline-block;"></span>
+                        {{ $op['label'] }}
+                    </span>
+                    · {{ $tx->created_at->format('d/m/Y H:i') }}
+                    · <span class="text-muted" style="font-family:monospace;font-size:10px;">#{{ $tx->id }}</span>
                 </small>
             </div>
             <div class="text-end flex-shrink-0">
                 <span class="fw-bold {{ $tx->status === 'success' ? 'text-green' : ($tx->status === 'failed' ? 'text-danger' : 'text-warning') }}">
-                    {{ number_format($tx->amount, 0, ',', ' ') }} F
+                    {{ $tx->status === 'success' ? '+' : ($tx->status === 'failed' ? '' : '') }}{{ number_format($tx->amount, 0, ',', ' ') }} F
                 </span>
                 @if($tx->status === 'pending')
                 <div class="mt-1">

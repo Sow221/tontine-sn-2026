@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', $tontine->name)
+@section('title', $tontine->name . ' — Tontine en ligne | TontineSN')
 @section('meta_description', "Tontine {$tontine->name} — {$tontine->type_label}, montant: ".number_format($tontine->amount, 0, ',', ' ')." FCFA, {$tontine->active_members_count} membre(s).")
 
 @section('content')
@@ -187,6 +187,12 @@
 
     {{-- 8. STATS RAPIDES --}}
     <div id="section-stats">
+    @if($tontine->pot_total > 0)
+    <div class="pot-highlight mb-4">
+        <i class="fas fa-coins"></i>
+        Pot actuel : <strong>{{ number_format($tontine->pot_total, 0, ',', ' ') }} FCFA</strong>
+    </div>
+    @endif
     <div class="row g-3 mb-4">
         <div class="col-4">
             <div class="stat-card text-center">

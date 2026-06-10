@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Historique')
+@section('title', 'Historique des paiements | TontineSN')
 
 @section('content')
 <div class="container py-4">
@@ -91,15 +91,28 @@
                 </div>
                 <div class="flex-grow-1">
                     <p class="mb-0 fw-semibold small">{{ $tx->cycle->tontine->name ?? '—' }}</p>
-                    <small class="text-muted">
+                    <small class="text-muted d-flex align-items-center gap-2 flex-wrap">
                         Cycle {{ $tx->cycle->cycle_number ?? '—' }} ·
                         {{ $tx->paid_at?->format('d/m/Y H:i') ?? $tx->created_at->format('d/m/Y H:i') }} ·
-                        {{ match($tx->method) { 'wave' => 'Wave', 'orange_money' => 'Orange Money', 'free_money' => 'Free Money', 'card' => 'Carte', 'cash' => 'Espèces', default => ucfirst($tx->method) } }}
+                        @php
+                            $opColors = [
+                                'wave'         => ['color' => '#00DCA5', 'bg' => '#f0fdf4', 'label' => 'Wave'],
+                                'orange_money' => ['color' => '#FF7900', 'bg' => '#fff7ed', 'label' => 'Orange Money'],
+                                'free_money'   => ['color' => '#E3000F', 'bg' => '#fef2f2', 'label' => 'Free Money'],
+                                'card'         => ['color' => '#6366f1', 'bg' => '#eef2ff', 'label' => 'Carte'],
+                                'cash'         => ['color' => '#009639', 'bg' => '#f0fdf4', 'label' => 'Espèces'],
+                            ];
+                            $opH = $opColors[$tx->method] ?? ['color' => '#64748b', 'bg' => '#f1f5f9', 'label' => ucfirst($tx->method)];
+                        @endphp
+                        <span style="display:inline-flex;align-items:center;gap:4px;background:{{ $opH['bg'] }};border:1px solid {{ $opH['color'] }}30;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:600;color:{{ $opH['color'] }};">
+                            <span style="width:7px;height:7px;border-radius:50%;background:{{ $opH['color'] }};display:inline-block;"></span>
+                            {{ $opH['label'] }}
+                        </span>
                     </small>
                 </div>
                 <div class="text-end">
                     <span class="fw-bold {{ $tx->status === 'success' ? 'text-green' : ($tx->status === 'failed' ? 'text-danger' : 'text-warning') }}">
-                        {{ number_format($tx->amount, 0, ',', ' ') }} F
+                        {{ $tx->status === 'success' ? '+' : '' }}{{ number_format($tx->amount, 0, ',', ' ') }} F
                     </span>
                     <br>
                     <div class="mt-1"><x-transaction-status :status="$tx->status" /></div>
@@ -118,6 +131,9 @@
                         </form>
                         @endif
                     </div>
+                    @endif
+                    @if($tx->status === 'pending')
+                    <small class="text-warning d-block mt-1"><i class="fas fa-clock me-1"></i>Paiement en cours…</small>
                     @endif
                 </div>
             </div>

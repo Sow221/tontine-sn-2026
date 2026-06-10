@@ -43,14 +43,19 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer('layouts.app', function ($view) {
             $unreadCount = 0;
+            $latestNotifications = collect();
             if (Auth::check()) {
                 $cacheKey = 'unread_notifications_'.Auth::id();
                 $unreadCount = Cache::remember($cacheKey, 30, function () {
                     return NotificationLog::where('user_id', Auth::id())->unread()->count();
                 });
+                $latestNotifications = NotificationLog::where('user_id', Auth::id())
+                    ->latest()
+                    ->limit(4)
+                    ->get();
             }
             $view->with('unreadNotificationsCount', $unreadCount);
-            // Expose le nonce CSP généré par SecurityHeaders middleware
+            $view->with('latestNotifications', $latestNotifications);
             $view->with('cspNonce', request()->attributes->get('csp_nonce', ''));
         });
     }

@@ -18,16 +18,18 @@
     <link rel="apple-touch-icon" sizes="192x192" href="{{ asset('images/icon-192.png') }}">
     <link rel="apple-touch-icon" sizes="512x512" href="{{ asset('images/icon-512.png') }}">
 
-    <meta property="og:title" content="@yield('title', 'Accueil') — TontineSN">
+    <meta property="og:title" content="@yield('og_title', 'Tontine en Ligne - Épargne &amp; Cotisations Sénégal | TontineSN')">
     <meta property="og:description" content="@yield('meta_description', 'Plateforme digitale de gestion de tontines au Sénégal. Créez, suivez et payez vos cotisations en toute sécurité.')">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:image" content="@yield('og_image', asset('images/icon-512.png'))">
     <meta name="twitter:card" content="summary_large_image">
 
-    <title>@yield('title', 'Accueil') — TontineSN</title>
+    <title>@yield('title', 'Accueil') - Gestion de Tontine en Ligne | TontineSN</title>
 
     <link rel="canonical" href="{{ url()->current() }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/icon-192.svg') }}">
+    <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('images/icon-192.png') }}">
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -202,12 +204,40 @@
                     <i :class="dark ? 'fas fa-sun' : 'fas fa-moon'"></i>
                 </button>
 
-                <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-light position-relative d-none d-sm-inline-flex" aria-label="Notifications">
-                    <i class="fas fa-bell"></i>
-                    @if(($unreadNotificationsCount ?? 0) > 0)
-                    <span class="badge bg-danger position-absolute" style="top:2px;right:2px;font-size:9px;min-width:15px;height:15px;line-height:9px;padding:3px;">{{ ($unreadNotificationsCount ?? 0) > 9 ? '9+' : $unreadNotificationsCount }}</span>
-                    @endif
-                </a>
+                <div class="position-relative" x-data="{ notifOpen: false }" @click.outside="notifOpen = false">
+                    <button class="btn btn-sm btn-light position-relative d-none d-sm-inline-flex"
+                            @click="notifOpen = !notifOpen"
+                            aria-label="Notifications" :aria-expanded="notifOpen">
+                        <i class="fas fa-bell"></i>
+                        @if(($unreadNotificationsCount ?? 0) > 0)
+                        <span class="badge bg-danger position-absolute" style="top:2px;right:2px;font-size:9px;min-width:15px;height:15px;line-height:9px;padding:3px;">{{ ($unreadNotificationsCount ?? 0) > 9 ? '9+' : $unreadNotificationsCount }}</span>
+                        @endif
+                    </button>
+                    <div x-show="notifOpen" x-cloak
+                         x-transition:enter="dropdown-enter" x-transition:enter-start="dropdown-enter-start" x-transition:enter-end="dropdown-enter-end"
+                         x-transition:leave="dropdown-leave" x-transition:leave-start="dropdown-leave-start" x-transition:leave-end="dropdown-leave-end"
+                         class="topbar-dropdown-menu" style="min-width:280px;">
+                        <div class="topbar-dropdown-header d-flex align-items-center justify-content-between">
+                            <span class="topbar-dropdown-name">Notifications</span>
+                            @if(($unreadNotificationsCount ?? 0) > 0)
+                            <span class="badge bg-danger" style="font-size:10px;">{{ $unreadNotificationsCount }} nouvelle(s)</span>
+                            @endif
+                        </div>
+                        <div class="topbar-dropdown-divider"></div>
+                        @forelse($latestNotifications ?? [] as $notif)
+                        <a href="{{ route('notifications.index') }}" class="topbar-dropdown-item {{ $notif->read_at ? '' : 'fw-semibold' }}">
+                            <i class="fas fa-circle" style="font-size:6px;color:{{ $notif->read_at ? 'var(--gray-border)' : 'var(--green)' }};"></i>
+                            <span class="text-truncate" style="max-width:220px;">{{ Str::limit($notif->data['message'] ?? $notif->data['title'] ?? 'Notification', 50) }}</span>
+                        </a>
+                        @empty
+                        <p class="text-muted small text-center py-3 mb-0">Aucune notification</p>
+                        @endforelse
+                        <div class="topbar-dropdown-divider"></div>
+                        <a href="{{ route('notifications.index') }}" class="topbar-dropdown-item" style="color:var(--green);justify-content:center;font-weight:600;">
+                            Voir tout
+                        </a>
+                    </div>
+                </div>
 
                 {{-- User dropdown --}}
                 <div class="position-relative" x-data="{ dropdownOpen: false }" @click.outside="dropdownOpen = false">
@@ -235,8 +265,8 @@
                         <div class="topbar-dropdown-divider"></div>
                         <form method="POST" action="{{ route('auth.logout') }}">
                             @csrf
-                            <button type="submit" class="topbar-dropdown-item topbar-dropdown-item--danger">
-                                <i class="fas fa-sign-out-alt"></i> Se déconnecter
+                            <button type="submit" class="topbar-dropdown-item text-danger">
+                                <i class="fas fa-sign-out-alt text-danger"></i> Se déconnecter
                             </button>
                         </form>
                     </div>

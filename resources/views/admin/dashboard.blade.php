@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Administration')
+@section('title', 'Tableau de bord Administration | TontineSN')
 
 @section('content')
 @push('head-scripts')
@@ -42,20 +42,35 @@
                 </div>
                 <div class="stat-label">KYC en attente</div>
                 @if($stats['pending_kyc'] > 0)
-                <small class="text-warning">{{ $stats['pending_kyc'] }} document(s) à vérifier</small>
+                <small class="text-warning d-block mb-2">{{ $stats['pending_kyc'] }} document(s) à vérifier</small>
+                <a href="{{ route('admin.users', ['kyc' => 'pending']) }}" class="btn btn-outline-warning rounded-pill" style="font-size:11px;padding:3px 10px;min-height:auto;">
+                    Traiter maintenant →
+                </a>
                 @endif
             </div>
         </div>
     </div>
 
-    {{-- Exports rapides --}}
-    <div class="d-flex gap-2 mb-4">
-        <a href="{{ route('admin.users.export') }}" class="btn btn-sm btn-outline-secondary rounded-pill">
-            <i class="fas fa-download me-1"></i>Export utilisateurs CSV
-        </a>
-        <a href="{{ route('admin.transactions.export') }}" class="btn btn-sm btn-outline-secondary rounded-pill">
-            <i class="fas fa-download me-1"></i>Export transactions CSV
-        </a>
+    {{-- Activité du jour --}}
+    <div class="card mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h6 class="fw-semibold mb-0"><i class="fas fa-calendar-day me-2 text-indigo"></i>Aujourd'hui</h6>
+            <small class="text-muted">{{ now()->isoFormat('dddd D MMMM') }}</small>
+        </div>
+        <div class="row g-2 text-center">
+            <div class="col-4">
+                <div class="stat-value text-green" style="font-size:1.3rem;">{{ $todayTransactions ?? 0 }}</div>
+                <div class="stat-label">Transactions</div>
+            </div>
+            <div class="col-4">
+                <div class="stat-value text-indigo" style="font-size:1.3rem;">{{ $todayUsers ?? 0 }}</div>
+                <div class="stat-label">Nouveaux inscrits</div>
+            </div>
+            <div class="col-4">
+                <div class="stat-value {{ ($todayKyc ?? 0) > 0 ? 'text-warning' : 'text-muted' }}" style="font-size:1.3rem;">{{ $todayKyc ?? 0 }}</div>
+                <div class="stat-label">KYC soumis</div>
+            </div>
+        </div>
     </div>
 
     {{-- Actions rapides --}}
