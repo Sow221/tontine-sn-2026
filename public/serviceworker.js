@@ -4,7 +4,7 @@
  * Supporte FCM (Firebase Cloud Messaging)
  */
 
-const APP_VERSION   = 'v3';
+const APP_VERSION   = 'v4';
 const STATIC_CACHE  = `tontinesn-static-${APP_VERSION}`;
 const DYNAMIC_CACHE = `tontinesn-dynamic-${APP_VERSION}`;
 const ALL_CACHES    = [STATIC_CACHE, DYNAMIC_CACHE];
