@@ -27,6 +27,8 @@ class NotificationService
 
     const EVENT_SAVINGS = 'savings_withdrawal';
 
+    const EVENT_MEMBER_REQUEST = 'member_request';
+
     const EVENT_KYC_APPROVED = 'kyc_approved';
 
     const EVENT_KYC_REJECTED = 'kyc_rejected';
@@ -344,6 +346,21 @@ class NotificationService
             <strong>Montant à retirer : {$montant} FCFA</strong><br><br>
             Contactez le gestionnaire de votre tontine pour récupérer votre épargne.",
             self::EVENT_SAVINGS
+        );
+    }
+
+    public function notifyNewMemberRequest(User $creator, User $newMember, Tontine $tontine): void
+    {
+        $msg = "👤 Bonjour {$creator->name}, {$newMember->name} souhaite rejoindre votre tontine {$tontine->name}. Connectez-vous pour approuver ou refuser.";
+
+        $this->sendWhatsApp($creator, $msg, self::EVENT_MEMBER_REQUEST);
+        $this->sendEmail(
+            $creator,
+            "👤 Nouvelle demande d'adhésion — {$tontine->name}",
+            "Bonjour <strong>{$creator->name}</strong>,<br><br>
+            <strong>{$newMember->name}</strong> souhaite rejoindre votre tontine <strong>{$tontine->name}</strong>.<br><br>
+            Connectez-vous à TontineSN pour approuver ou refuser cette demande.",
+            self::EVENT_MEMBER_REQUEST
         );
     }
 

@@ -258,7 +258,9 @@
             <div class="d-flex justify-content-end gap-1 mt-1 mb-1">
                 <img src="{{ asset('images/logo wave.webp') }}" alt="Wave" title="Wave" style="width:20px;height:20px;border-radius:4px;object-fit:contain;border:1px solid #e2e8f0;">
                 <img src="{{ asset('images/logo orange money.webp') }}" alt="Orange Money" title="Orange Money" style="width:20px;height:20px;border-radius:4px;object-fit:contain;border:1px solid #e2e8f0;">
-                <span title="Free Money" style="width:20px;height:20px;border-radius:4px;background:#fef2f2;border:1px solid #fca5a5;display:inline-flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;color:#E3000F;">FM</span>
+                <span title="Free Money" style="width:20px;height:20px;border-radius:4px;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;border:1px solid #fca5a5;">
+                                <img src="{{ asset('images/logo free money.svg') }}" alt="Free Money" style="width:16px;height:16px;object-fit:contain;">
+                            </span>
             </div>
             <a href="{{ route('cycles.pay', $cycle) }}"
                class="btn btn-sm {{ $isOverdue ? 'btn-danger' : 'btn-primary' }} rounded-pill">

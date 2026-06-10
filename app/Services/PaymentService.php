@@ -55,6 +55,7 @@ class PaymentService
                 'user_id' => $userId,
                 'amount' => $finalAmount,
                 'method' => $method,
+                'type' => 'cotisation',
                 'external_reference' => $ref,
                 'status' => 'pending',
                 'paid_at' => null,

@@ -8,7 +8,7 @@
     $opConfig = [
         'wave'         => ['img' => 'images/logo wave.webp',            'alt' => 'Wave',         'color' => '#00DCA5', 'bg' => '#f0fdf4', 'label' => 'Wave'],
         'orange_money' => ['img' => 'images/logo orange money.webp',    'alt' => 'Orange Money', 'color' => '#FF7900', 'bg' => '#fff7ed', 'label' => 'Orange Money'],
-        'free_money'   => ['img' => null, 'alt' => 'Free Money',        'label' => 'FM',         'color' => '#E3000F', 'bg' => '#fef2f2'],
+        'free_money'   => ['img' => 'images/logo free money.svg', 'alt' => 'Free Money', 'color' => '#E3000F', 'bg' => '#fef2f2', 'label' => 'Free Money'],
         'card'         => ['img' => null, 'alt' => 'Carte',             'label' => 'CB',         'color' => '#6366f1', 'bg' => '#eef2ff'],
         'cash'         => ['img' => null, 'alt' => 'Espèces',           'label' => '💵',         'color' => '#009639', 'bg' => '#f0fdf4'],
     ];

@@ -87,7 +87,7 @@
                         $operatorIcons = [
                             'wave'         => ['img' => 'images/logo wave.webp', 'alt' => 'Wave'],
                             'orange_money' => ['img' => 'images/logo orange money.webp', 'alt' => 'Orange Money'],
-                            'free_money'   => ['img' => null, 'icon' => 'fas fa-mobile-alt', 'color' => '#E3000F', 'bg' => '#fef2f2'],
+                            'free_money'   => ['img' => 'images/logo free money.svg', 'alt' => 'Free Money'],
                             'card'         => ['img' => null, 'icon' => 'fas fa-credit-card', 'color' => '#6366f1', 'bg' => '#eef2ff'],
                             'cash'         => ['img' => null, 'icon' => 'fas fa-money-bill-wave', 'color' => '#009639', 'bg' => '#f0fdf4'],
                         ];

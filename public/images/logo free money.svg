@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="16" fill="#E3000F"/>
+  <text x="50" y="56" font-family="Arial Black, Arial, sans-serif" font-size="28" font-weight="900" fill="white" text-anchor="middle" dominant-baseline="middle">FM</text>
+  <text x="50" y="78" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.85)" text-anchor="middle">FREE MONEY</text>
+</svg>

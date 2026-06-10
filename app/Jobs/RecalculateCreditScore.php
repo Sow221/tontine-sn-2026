@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 
 class RecalculateCreditScore implements ShouldQueue
 {
@@ -24,6 +25,9 @@ class RecalculateCreditScore implements ShouldQueue
         }
 
         $scorer->calculate($user);
+
+        // Invalider le cache leaderboard de cet utilisateur après recalcul du score
+        Cache::forget('leaderboard.user.' . $this->userId);
 
         CheckAndNotifyBadges::dispatch($this->userId)->afterResponse();
     }

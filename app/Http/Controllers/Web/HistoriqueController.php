@@ -82,7 +82,7 @@ class HistoriqueController extends Controller
             }
             if ($request->filled('type_flux')) {
                 if ($request->type_flux === 'cotisation') {
-                    $query->where(fn ($q) => $q->whereIn('type', ['cotisation', 'payment'])->orWhereNull('type'));
+                    $query->where('type', 'cotisation');
                 } else {
                     $query->whereIn('type', ['retrait', 'redistribution', 'withdrawal', 'gain']);
                 }
@@ -99,7 +99,7 @@ class HistoriqueController extends Controller
                     ->where('external_reference', 'like', "%{$s}%")
                     ->orWhereHas('user', fn ($u) => $u
                         ->where('name', 'like', "%{$s}%")
-                        ->orWhere('phone', 'like', "%{$s}%")
+                        ->orWhere('phone_number', 'like', "%{$s}%")
                     )
                 );
             }
