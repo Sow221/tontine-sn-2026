@@ -39,6 +39,7 @@ class DemoDataSeeder extends Seeder
         $this->createEpargneCite();
         $this->createCeremonialMariage();
         $this->createCastorsTirage();
+        $this->createTontineSuspendue();
 
         $this->createP2PTransactions();
         $this->createChatMessages();
@@ -611,6 +612,36 @@ class DemoDataSeeder extends Seeder
 
         $this->makeCycle($t, 2, 'pending', $this->now->copy()->addDays(25), null, null);
         $this->command?->info('  ✓ 1 cycle partiel + 2 vetos · 6 membres');
+    }
+
+    // ──────────────────────────────────────────────
+    //  Tontine 11 : Suspendue — Fixed, Monthly
+    //  0 cycles, 3 membres, suspended, montant 10 000
+    // ──────────────────────────────────────────────
+    private function createTontineSuspendue(): void
+    {
+        $this->command?->info("\n--- 11. Tontine Suspendue (suspendue, 10 000 F) ---");
+        $t = Tontine::firstOrCreate(
+            ['code' => 'SUS001'],
+            [
+                'name' => 'Tontine Suspendue',
+                'description' => 'Tontine suspendue pour non-respect des règles — exemple de statut suspended.',
+                'amount' => 10000, 'frequency' => 'monthly', 'type' => 'fixed',
+                'status' => 'suspended', 'visibility' => 'private',
+                'start_date' => $this->now->copy()->subMonth(),
+                'max_members' => 3, 'quorum' => 1,
+                'draw_method' => 'sequential',
+                'created_by' => $this->user('admin@tontinesn.test')->id,
+            ]
+        );
+        if (! $t->wasRecentlyCreated) {
+            $this->command?->info('  ✓ existe déjà');
+            return;
+        }
+
+        $members = ['admin@tontinesn.test', 'fatou@tontinesn.test', 'membre@tontinesn.test'];
+        $this->attachMembers($t, $members);
+        $this->command?->info('  ✓ suspendue · 3 membres');
     }
 
     // ──────────────────────────────────────────────

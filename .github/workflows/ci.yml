@@ -59,4 +59,7 @@ jobs:
         run: php artisan test
 
       - name: Check security vulnerabilities
-        run: composer audit || true
+        run: composer audit
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=2G --no-progress --error-format=github

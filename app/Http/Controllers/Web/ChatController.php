@@ -8,6 +8,7 @@ use App\Models\Tontine;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -57,14 +58,14 @@ class ChatController extends Controller
         // Désactiver le max_execution_time pour les connexions persistantes SSE
         set_time_limit(0);
 
-        return response()->stream(function () use ($tontineId, $lastId) {
+        return response()->stream(function () use ($tontineId, $lastId, $user) {
             if (ob_get_level()) {
                 ob_end_flush();
             }
 
             $current = $lastId;
             $ticks = 0;
-            $maxTicks = 300; // 5 minutes max puis fermeture propre
+            $maxTicks = 300;
 
             while ($ticks < $maxTicks) {
                 if (connection_aborted()) {
@@ -90,15 +91,29 @@ class ChatController extends Controller
                     $current = $msg->id;
                 }
 
-                // Heartbeat toutes les 15s pour maintenir la connexion
                 if (++$ticks % 15 === 0) {
                     $online = DB::table('tontine_members')
                         ->where('tontine_id', $tontineId)
                         ->where('status', 'active')
                         ->where('chat_last_seen_at', '>=', now()->subMinutes(2))
                         ->count();
+
+                    $typingIds = DB::table('tontine_members')
+                        ->where('tontine_id', $tontineId)
+                        ->where('status', 'active')
+                        ->where('user_id', '!=', $user?->id ?? 0)
+                        ->pluck('user_id');
+
+                    $typing = collect();
+                    foreach ($typingIds as $uid) {
+                        $entry = Cache::get("chat:typing:{$tontineId}:{$uid}");
+                        if ($entry) {
+                            $typing->push($entry);
+                        }
+                    }
+
                     echo 'event: heartbeat'."\n";
-                    echo 'data: '.json_encode(['online' => $online])."\n\n";
+                    echo 'data: '.json_encode(['online' => $online, 'typing' => $typing])."\n\n";
                 }
 
                 if (ob_get_level()) {
@@ -212,6 +227,28 @@ class ChatController extends Controller
 
             return back()->withErrors(['error' => 'Erreur lors de l\'envoi du message.']);
         }
+    }
+
+    public function typing(Request $request, Tontine $tontine)
+    {
+        $user = Auth::user();
+        $this->authorizeAccess($tontine, $user);
+
+        $request->validate(['typing' => 'required|boolean']);
+
+        $key = "chat:typing:{$tontine->id}:{$user->id}";
+
+        if ($request->typing) {
+            Cache::put($key, ['user_id' => $user->id, 'name' => $user->name, 'expires' => now()->addSeconds(5)->timestamp], 10);
+        } else {
+            Cache::forget($key);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true]);
+        }
+
+        return response('', 204);
     }
 
     private function authorizeAccess(Tontine $tontine, $user): void

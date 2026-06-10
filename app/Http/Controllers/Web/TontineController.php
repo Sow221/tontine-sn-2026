@@ -134,7 +134,12 @@ class TontineController extends Controller
         } catch (\Throwable $e) {
             Log::error('Erreur création tontine', ['error' => $e->getMessage(), 'class' => get_class($e)]);
 
-            return back()->withErrors(['error' => 'Erreur lors de la création de la tontine.'])->withInput();
+            $msg = match (true) {
+                str_contains($e->getMessage(), 'visibility') => 'La colonne visibility est manquante. Exécutez php artisan migrate.',
+                str_contains($e->getMessage(), 'SQLSTATE[23000]') => 'Cette tontine existe déjà avec le même code.',
+                default => 'Erreur lors de la création de la tontine. Vérifiez les champs et réessayez.',
+            };
+            return back()->withErrors(['error' => $msg])->withInput();
         }
     }
 
@@ -289,7 +294,8 @@ class TontineController extends Controller
         } catch (\Throwable $e) {
             Log::error('Erreur activation tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
 
-            return back()->withErrors(['activate' => 'Erreur lors de l\'activation.']);
+            $actMsg = str_contains($e->getMessage(), 'cycles') ? 'Erreur lors de la génération des cycles.' : 'Erreur lors de l\'activation. Vérifiez que la tontine a au moins 2 membres actifs.';
+            return back()->withErrors(['activate' => $actMsg]);
         }
     }
 

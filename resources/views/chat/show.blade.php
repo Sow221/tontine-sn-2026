@@ -18,6 +18,7 @@
         </a>
         <h5 class="fw-bold mb-0">{{ $tontine->name }}</h5>
         <span class="badge bg-light text-muted ms-auto" id="chat-online"></span>
+        <span class="badge bg-light text-muted" id="chat-typing-indicator" style="display:none;"><i class="fas fa-pencil-alt me-1"></i>Écrit…</span>
         <span class="badge bg-light text-muted">{{ $messages->total() }} message(s)</span>
     </div>
 
@@ -97,19 +98,56 @@ const chatForm   = document.getElementById('chat-form');
 const counter    = document.getElementById('char-count');
 const errorEl    = document.getElementById('chat-error');
 const onlineEl   = document.getElementById('chat-online');
+const typingEl   = document.getElementById('chat-typing-indicator');
 const sendUrl    = '{{ route('chat.send', $tontine) }}';
 const streamUrl  = '{{ route('chat.stream', $tontine) }}';
 const pollUrl    = '{{ route('chat.poll', $tontine) }}';
+const typingUrl  = '{{ route('chat.typing', $tontine) }}';
 const myId       = {{ auth()->id() }};
+let typingTimer  = null;
+let isTyping     = false;
 
 // Scroll initial vers le bas
 if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
 
-// ── Compteur caractères + Entrée pour envoyer ──────────────────────────────
+// ── Notification sonore ────────────────────────────────────────────────────
+function playNotificationSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 800;
+        gain.gain.value = 0.1;
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+    } catch (_) {}
+}
+
+// ── Compteur caractères + Entrée pour envoyer + indicateur écriture ──────
 if (chatInput && counter) {
     chatInput.addEventListener('input', function () {
         counter.textContent = this.value.length + '/2000';
         counter.style.color = this.value.length > 1800 ? 'var(--red)' : '';
+
+        if (!isTyping && this.value.trim()) {
+            isTyping = true;
+            fetch(typingUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                body: JSON.stringify({ typing: true }),
+            }).catch(() => {});
+        }
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            isTyping = false;
+            fetch(typingUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                body: JSON.stringify({ typing: false }),
+            }).catch(() => {});
+        }, 3000);
     });
     chatInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -167,13 +205,16 @@ let pollFailures  = 0;
 let pollActive    = true;
 
 function handleIncomingMessage(m) {
-    // Ignorer les doublons déjà affichés à l'envoi
     if (m.user_id === myId && document.querySelector(`[data-msg-id="${m.id}"]`)) return;
     const wasAtBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 60;
     appendBubble(m);
     lastMessageId = m.id;
-    if (wasAtBottom) chatBox.scrollTop = chatBox.scrollHeight;
-    else showNewMessageBadge();
+    if (wasAtBottom) {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    } else {
+        showNewMessageBadge();
+    }
+    if (m.user_id !== myId) playNotificationSound();
 }
 
 if (typeof EventSource !== 'undefined') {
@@ -183,7 +224,11 @@ if (typeof EventSource !== 'undefined') {
         if (es) es.close();
         es = new EventSource(`${streamUrl}?after=${lastMessageId}`, { withCredentials: true });
         es.onmessage = e => handleIncomingMessage(JSON.parse(e.data));
-        es.addEventListener('heartbeat', e => updateOnlineIndicator(JSON.parse(e.data).online ?? null));
+        es.addEventListener('heartbeat', e => {
+            const data = JSON.parse(e.data);
+            updateOnlineIndicator(data.online ?? null);
+            updateTypingIndicator(data.typing ?? null);
+        });
         es.onerror = () => { es.close(); startPolling(); };
     }
 
@@ -216,6 +261,7 @@ function startPolling() {
                 const data = await res.json();
                 (data.messages ?? []).forEach(handleIncomingMessage);
                 updateOnlineIndicator(data.online ?? null);
+                updateTypingIndicator(data.typing ?? null);
             }
         } catch (_) { pollFailures++; }
         const delay = Math.min(5000 * Math.pow(1.5, Math.min(pollFailures, 4)), 30000);
@@ -253,6 +299,22 @@ function appendBubble(m) {
         </div>`;
 
     chatBox.appendChild(wrap);
+}
+
+// ── Indicateur "en train d'écrire" ─────────────────────────────────────────
+function updateTypingIndicator(typingUsers) {
+    if (!typingEl) return;
+    if (!typingUsers || typingUsers.length === 0) {
+        typingEl.style.display = 'none';
+        return;
+    }
+    const names = typingUsers.map(u => u.name).filter(Boolean);
+    if (names.length === 0) {
+        typingEl.style.display = 'none';
+        return;
+    }
+    typingEl.textContent = names.join(', ') + ' ' + (names.length > 1 ? 'écrivent…' : 'écrit…');
+    typingEl.style.display = 'inline';
 }
 
 // ── Badge "nouveaux messages" ─────────────────────────────────────────────

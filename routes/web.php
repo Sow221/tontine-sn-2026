@@ -140,6 +140,7 @@ Route::middleware(['auth', 'role:member'])->group(function () {
     Route::get('/chat/{tontine}/stream', [ChatController::class, 'stream'])->name('chat.stream');
     Route::get('/chat/{tontine}/poll', [ChatController::class, 'poll'])->name('chat.poll');
     Route::post('/chat/{tontine}', [ChatController::class, 'send'])->name('chat.send')->middleware('throttle:20,1');
+    Route::post('/chat/{tontine}/typing', [ChatController::class, 'typing'])->name('chat.typing');
 });
 
 // ── Admin ──────────────────────────────────────────────────────────────────
