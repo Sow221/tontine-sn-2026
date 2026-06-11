@@ -745,6 +745,7 @@
     </div>
     <div>
       <h2 id="cta-title" class="ls-cta__title">
+        Rejoignez des centaines de tontines actives.<br>
         <span class="ls-cta__title-sub">Rejoignez des centaines de tontines actives.</span>
       </h2>
       <p class="ls-cta__subtitle">
