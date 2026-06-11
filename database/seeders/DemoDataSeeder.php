@@ -250,9 +250,9 @@ class DemoDataSeeder extends Seeder
         $c1 = $this->makeCycle($t, 1, 'paid',
             $this->now->copy()->subMonths(2), $this->user('fatou@tontinesn.test'),
             $this->now->copy()->subMonths(2)->addDays(3));
-        $this->payAll($c1, $members, 15000, $this->now->copy()->subMonths(2)->subDay());
-
-        // Cycle 2 : en cours
+        $this->payAll($c1, $members, 15000, $this->now->copy()->subMonths(2)->subDay(), 'free_money');
+    
+    // Cycle 2 : en cours
         $c2 = $this->makeCycle($t, 2, 'partial',
             $this->now->copy()->subMonth(), $this->user('juliette@tontinesn.test'),
             $this->now->copy()->subMonth()->addDays(2));
@@ -354,7 +354,7 @@ class DemoDataSeeder extends Seeder
             $this->now->copy()->subMonths(3)->addDays(5),
             $this->user('rbousquet@tontinesn.test'),
             $this->now->copy()->subMonths(3));
-        $this->payAll($c1, $members, 30000, $this->now->copy()->subMonths(3)->subDay());
+        $this->payAll($c1, $members, 30000, $this->now->copy()->subMonths(3)->subDay(), 'card');
         AuctionBid::create(['cycle_id' => $c1->id, 'user_id' => $this->user('rbousquet@tontinesn.test')->id, 'bid_rate' => 12.00]);
         AuctionBid::create(['cycle_id' => $c1->id, 'user_id' => $this->user('npaul@tontinesn.test')->id, 'bid_rate' => 8.50]);
         AuctionBid::create(['cycle_id' => $c1->id, 'user_id' => $this->user('bleroy@tontinesn.test')->id, 'bid_rate' => 5.00]);
@@ -364,7 +364,7 @@ class DemoDataSeeder extends Seeder
             $this->now->copy()->subMonths(2)->addDays(5),
             $this->user('npaul@tontinesn.test'),
             $this->now->copy()->subMonths(2));
-        $this->payAll($c2, $members, 30000, $this->now->copy()->subMonths(2)->subDay());
+        $this->payAll($c2, $members, 30000, $this->now->copy()->subMonths(2)->subDay(), 'cash');
         AuctionBid::create(['cycle_id' => $c2->id, 'user_id' => $this->user('npaul@tontinesn.test')->id, 'bid_rate' => 15.00]);
         AuctionBid::create(['cycle_id' => $c2->id, 'user_id' => $this->user('gilles.guillaume@tontinesn.test')->id, 'bid_rate' => 10.00]);
         AuctionBid::create(['cycle_id' => $c2->id, 'user_id' => $this->user('rbousquet@tontinesn.test')->id, 'bid_rate' => 7.50]);
@@ -416,7 +416,7 @@ class DemoDataSeeder extends Seeder
             $this->now->copy()->subMonths(2)->addDays(3),
             $this->user('nbonnin@tontinesn.test'),
             $this->now->copy()->subMonths(2));
-        $this->payAll($c1, $members, 20000, $this->now->copy()->subMonths(2)->subDay());
+        $this->payAll($c1, $members, 20000, $this->now->copy()->subMonths(2)->subDay(), 'free_money');
         AuctionBid::create(['cycle_id' => $c1->id, 'user_id' => $this->user('nbonnin@tontinesn.test')->id, 'bid_rate' => 10.00]);
         AuctionBid::create(['cycle_id' => $c1->id, 'user_id' => $this->user('hugues@tontinesn.test')->id, 'bid_rate' => 7.50]);
 
@@ -516,7 +516,8 @@ class DemoDataSeeder extends Seeder
         for ($i = 1; $i <= 3; $i++) {
             $due = $this->now->copy()->subMonths(3 - $i);
             $c = $this->makeCycle($t, $i, 'paid', $due, null, null);
-            $this->payAll($c, $members, 35000, $due->copy()->subDay());
+            $methods = ['wave', 'wave', 'card'];
+            $this->payAll($c, $members, 35000, $due->copy()->subDay(), $methods[$i - 1]);
         }
         $this->command?->info('  ✓ 3 cycles payés · 4 membres');
     }
@@ -558,8 +559,15 @@ class DemoDataSeeder extends Seeder
         $this->payAll($c1, $members, 20000, $this->now->copy()->subMonths(2)->subDay());
 
         // Cycle 2 : en attente
-        $this->makeCycle($t, 2, 'pending',
+        $c2 = $this->makeCycle($t, 2, 'pending',
             $this->now->copy()->subMonth(), null, null);
+
+        // 1 cash en attente de confirmation admin (pour montrer le bouton Confirmer)
+        Transaction::create([
+            'cycle_id' => $c2->id, 'user_id' => $this->user('fatou@tontinesn.test')->id,
+            'amount' => 20000, 'method' => 'cash', 'status' => 'pending',
+            'paid_at' => null, 'type' => 'cycle_payment',
+        ]);
 
         $this->command?->info('  ✓ 2 cycles (1 payé + 1 en attente) · 5 membres');
     }
@@ -824,7 +832,7 @@ class DemoDataSeeder extends Seeder
         ]);
     }
 
-    private function payAll(Cycle $cycle, array $emails, int $amount, Carbon $paidAt): void
+    private function payAll(Cycle $cycle, array $emails, int $amount, Carbon $paidAt, string $method = 'wave'): void
     {
         foreach ($emails as $email) {
             $user = $this->user($email);
@@ -833,7 +841,7 @@ class DemoDataSeeder extends Seeder
             }
             Transaction::create([
                 'cycle_id' => $cycle->id, 'user_id' => $user->id,
-                'amount' => $amount, 'method' => 'wave', 'status' => 'success',
+                'amount' => $amount, 'method' => $method, 'status' => 'success',
                 'paid_at' => $paidAt, 'type' => 'cycle_payment',
             ]);
         }
