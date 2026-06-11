@@ -498,14 +498,7 @@
             <span class="ls-score__stat-value" data-count="4">4</span>
             <span class="ls-score__stat-label">Moyens de<br>paiement</span>
           </div>
-          <div class="ls-score__stat ls-reveal ls-reveal--delay-2">
-            <span class="ls-score__stat-value" data-count="50">50</span>
-            <span class="ls-score__stat-label">Membres<br>par tontine</span>
-          </div>
-          <div class="ls-score__stat ls-reveal ls-reveal--delay-3">
-            <span class="ls-score__stat-value" data-count="1">1</span>
-            <span class="ls-score__stat-label">Langue<br>support&eacute;e</span>
-          </div>
+
         </div>
         <div class="ls-score__quote">
           Votre ponctualit&eacute; n&rsquo;&eacute;tait jamais r&eacute;compens&eacute;e. Avec TontineSN, elle devient votre identit&eacute; financi&egrave;re.<br>
@@ -632,84 +625,6 @@
 </section>
 
 <!-- ════════════════════════════════
-   9. SOCIAL PROOF
-════════════════════════════════ -->
-<section class="ls-proof" aria-labelledby="proof-title">
-  <div class="ls-container">
-    <div class="ls-proof__header">
-      <div class="ls-section-badge">Ils nous font confiance</div>
-      <h2 id="proof-title" class="ls-section-title">D&eacute;j&agrave; utilis&eacute; &agrave; travers<br><span class="ls-text-green">tout le S&eacute;n&eacute;gal.</span></h2>
-    </div>
-    <div class="ls-proof__stats">
-      <div class="ls-proof__stat ls-reveal">
-        <span class="ls-proof__stat-value">500+</span>
-        <span class="ls-proof__stat-label">Membres inscrits</span>
-      </div>
-      <div class="ls-proof__stat ls-reveal ls-reveal--delay-1">
-        <span class="ls-proof__stat-value">120+</span>
-        <span class="ls-proof__stat-label">Tontines cr&eacute;&eacute;es</span>
-      </div>
-      <div class="ls-proof__stat ls-reveal ls-reveal--delay-2">
-        <span class="ls-proof__stat-value">98%</span>
-        <span class="ls-proof__stat-label">Paiements r&eacute;ussis</span>
-      </div>
-      <div class="ls-proof__stat ls-reveal ls-reveal--delay-3">
-        <span class="ls-proof__stat-value">4 villes</span>
-        <span class="ls-proof__stat-label">Dakar &middot; Thi&egrave;s &middot; Ziguinchor &middot; Saint-Louis</span>
-      </div>
-    </div>
-    <div class="ls-proof__testimonials">
-      <div class="ls-testimonial ls-reveal">
-        <div class="ls-testimonial__stars" aria-label="5 étoiles">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-        <p class="ls-testimonial__text">&laquo;&thinsp;Avant on perdait des carnets, on oubliait qui avait pay&eacute;. Maintenant tout est visible, m&ecirc;me ma belle-m&egrave;re ne conteste plus l&rsquo;ordre.&thinsp;&raquo;</p>
-        <div class="ls-testimonial__author">
-          <div class="ls-testimonial__avatar" aria-hidden="true">AF</div>
-          <div>
-            <strong>Aminata F.</strong>
-            <span>Tontine familiale &middot; Dakar</span>
-          </div>
-        </div>
-      </div>
-      <div class="ls-testimonial ls-reveal ls-reveal--delay-1">
-        <div class="ls-testimonial__stars" aria-label="5 étoiles">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-        <p class="ls-testimonial__text">&laquo;&thinsp;Le score de cr&eacute;dit c&rsquo;est une vraie innovation. Maintenant les nouveaux membres montrent leur score avant de rejoindre notre groupe.&thinsp;&raquo;</p>
-        <div class="ls-testimonial__author">
-          <div class="ls-testimonial__avatar" aria-hidden="true">MD</div>
-          <div>
-            <strong>Moussa D.</strong>
-            <span>Tontine professionnelle &middot; Thi&egrave;s</span>
-          </div>
-        </div>
-      </div>
-      <div class="ls-testimonial ls-reveal ls-reveal--delay-2">
-        <div class="ls-testimonial__stars" aria-label="5 étoiles">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-        <p class="ls-testimonial__text">&laquo;&thinsp;J&rsquo;ai pay&eacute; ma cotisation depuis Ziguinchor via Wave en 30 secondes. Le groupe &agrave; Dakar l&rsquo;a vu imm&eacute;diatement. &Eacute;patant.&thinsp;&raquo;</p>
-        <div class="ls-testimonial__author">
-          <div class="ls-testimonial__avatar" aria-hidden="true">FN</div>
-          <div>
-            <strong>Fatou N.</strong>
-            <span>Tontine de quartier &middot; Ziguinchor</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="ls-proof__image-band ls-reveal">
-      <img
-        srcset="{{ asset('images/group-community.webp') }} 1x"
-        src="{{ asset('images/group-community.jpg') }}"
-        alt="Groupe de tontine actif au Sénégal - membres TontineSN"
-        class="ls-proof__community-img"
-        loading="lazy"
-      >
-      <div class="ls-proof__image-caption">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span>Des centaines de groupes actifs &agrave; travers le S&eacute;n&eacute;gal</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════
    10. TRUST BAND
 ════════════════════════════════ -->
 <section class="ls-trust-band" aria-label="Garanties et sécurité">
@@ -816,9 +731,9 @@
   <div class="ls-cta__inner">
     <div class="ls-cta__image-wrap">
       <img
-        srcset="{{ asset('images/woman-phone.webp') }} 1x"
-        src="{{ asset('images/woman-phone.jpg') }}"
-        alt="Femme gérant sa tontine en ligne sur smartphone au Sénégal"
+        srcset="{{ asset('images/tontine-une dame-qui manage.webp') }} 1x"
+        src="{{ asset('images/tontine-une dame-qui manage.jfif') }}"
+        alt="Dame gérant sa tontine en ligne au Sénégal"
         class="ls-cta__image"
         width="440" height="520"
         loading="lazy"
@@ -829,9 +744,7 @@
       </div>
     </div>
     <div>
-      <div class="ls-cta__viral-tag"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Invitez vos membres par lien en 1 clic</div>
       <h2 id="cta-title" class="ls-cta__title">
-        Votre groupe vous attend.<br>
         <span class="ls-cta__title-sub">Rejoignez des centaines de tontines actives.</span>
       </h2>
       <p class="ls-cta__subtitle">
@@ -862,7 +775,7 @@
       </div>
       <div class="ls-cta__counter">
         <span class="ls-cta__counter-number" data-count="120">0</span>
-        <span class="ls-cta__counter-label">tontines cr&eacute;&eacute;es cette semaine</span>
+        <span class="ls-cta__counter-label">tontines actives</span>
       </div>
     </div>
   </div>
