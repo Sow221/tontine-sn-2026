@@ -9,8 +9,8 @@
         'wave'         => ['img' => 'images/logo wave.webp',            'alt' => 'Wave',         'color' => '#00DCA5', 'bg' => '#f0fdf4', 'label' => 'Wave'],
         'orange_money' => ['img' => 'images/logo orange money.webp',    'alt' => 'Orange Money', 'color' => '#FF7900', 'bg' => '#fff7ed', 'label' => 'Orange Money'],
         'free_money'   => ['img' => 'images/logo free money.svg', 'alt' => 'Free Money', 'color' => '#E3000F', 'bg' => '#fef2f2', 'label' => 'Free Money'],
-        'card'         => ['img' => null, 'alt' => 'Carte',             'label' => 'CB',         'color' => '#6366f1', 'bg' => '#eef2ff'],
-        'cash'         => ['img' => null, 'alt' => 'Espèces',           'label' => '💵',         'color' => '#009639', 'bg' => '#f0fdf4'],
+        'card'         => ['img' => null, 'alt' => 'Carte',             'label' => 'Carte',      'color' => '#6366f1', 'bg' => '#eef2ff', 'fa' => 'fa-credit-card'],
+        'cash'         => ['img' => null, 'alt' => 'Espèces',           'label' => 'Espèces',    'color' => '#009639', 'bg' => '#f0fdf4', 'fa' => 'fa-money-bill-wave'],
     ];
 
     $retaitTypes = ['retrait', 'redistribution', 'withdrawal', 'gain'];
@@ -158,6 +158,8 @@
                 <div style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:{{ $op['bg'] }};border:1px solid {{ $op['color'] }}30;display:flex;align-items:center;justify-content:center;overflow:hidden;">
                     @if(!empty($op['img']))
                         <img src="{{ asset($op['img']) }}" alt="{{ $op['alt'] }}" style="width:28px;height:28px;object-fit:contain;">
+                    @elseif(!empty($op['fa']))
+                        <i class="fas {{ $op['fa'] }}" style="font-size:18px;color:{{ $op['color'] }};"></i>
                     @else
                         <span style="font-size:10px;font-weight:800;color:{{ $op['color'] }};">{{ $op['label'] }}</span>
                     @endif
@@ -166,7 +168,12 @@
                 {{-- Infos transaction --}}
                 <div class="flex-grow-1 min-width-0">
                     <p class="mb-0 fw-semibold small text-truncate">{{ $tx->cycle->tontine->name ?? '—' }}</p>
-                    <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                    <div class="d-flex align-items-center gap-1 flex-wrap mt-1">
+                        @if($tx->type === 'redistribution')
+                        <span style="font-size:9px;background:#f3e8ff;color:#9333ea;border-radius:999px;padding:1px 6px;font-weight:600;">Pot</span>
+                        @elseif($tx->type === 'cotisation')
+                        <span style="font-size:9px;background:#dbeafe;color:#2563eb;border-radius:999px;padding:1px 6px;font-weight:600;">Cotisation</span>
+                        @endif
                         <small class="text-muted">
                             {{ $tx->user->name ?? '—' }}
                             @if($tx->user?->phone)

@@ -196,13 +196,23 @@
     @if($suspiciousTx->isNotEmpty())
     <h6 class="fw-semibold mt-4 mb-3 text-danger">⚠️ Transactions suspectes (montant élevé)</h6>
     @foreach($suspiciousTx as $tx)
+    @php $opIcons = ['wave' => ['img' => 'images/logo wave.webp', 'col' => '#00DCA5'], 'orange_money' => ['img' => 'images/logo orange money.webp', 'col' => '#FF7900'], 'free_money' => ['img' => 'images/logo free money.svg', 'col' => '#E3000F']]; @endphp
     <div class="card mb-2 py-2 border-danger">
         <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2" style="flex-shrink:0;width:36px;">
+                @if(isset($opIcons[$tx->method]))
+                <img src="{{ asset($opIcons[$tx->method]['img']) }}" alt="" style="height:22px;width:auto;border-radius:3px;">
+                @else
+                <span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:{{ $tx->method === 'card' ? '#eef2ff' : ($tx->method === 'cash' ? '#f0fdf4' : '#f1f5f9') }};">
+                    <i class="fas fa-{{ $tx->method === 'card' ? 'credit-card' : ($tx->method === 'cash' ? 'money-bill-wave' : 'question') }}" style="font-size:14px;color:{{ $tx->method === 'card' ? '#6366f1' : ($tx->method === 'cash' ? '#009639' : '#64748b') }};"></i>
+                </span>
+                @endif
+            </div>
             <div class="flex-grow-1">
                 <p class="mb-0 fw-semibold small">{{ $tx->user->name ?? $tx->user->phone_number ?? '—' }}</p>
                 <small class="text-muted">{{ $tx->cycle->tontine->name ?? '—' }} · {{ $tx->created_at->format('d/m/Y H:i') }}</small>
             </div>
-            <span class="fw-bold text-danger">{{ number_format($tx->amount, 0, ',', ' ') }} F</span>
+            <span class="fw-bold text-danger text-nowrap">{{ number_format($tx->amount, 0, ',', ' ') }} F</span>
             <span class="badge badge-{{ $tx->status === 'success' ? 'success' : ($tx->status === 'pending' ? 'warning' : 'secondary') }}">
                 {{ ucfirst($tx->status) }}
             </span>
