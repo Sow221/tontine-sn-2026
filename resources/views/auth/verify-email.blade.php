@@ -6,57 +6,60 @@
     <meta name="theme-color" content="#009639">
     <title>Vérifiez votre email — TontineSN</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/icon-192.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="{{ asset('css/tontine.css') }}" rel="stylesheet">
-    <style>
-        body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f0fdf4; font-family:'Inter',sans-serif; margin:0; }
-        .card { background:#fff; border-radius:16px; padding:40px 32px; max-width:460px; width:100%; box-shadow:0 4px 24px rgba(0,0,0,.08); text-align:center; }
-        .icon { font-size:56px; margin-bottom:16px; }
-        h1 { font-size:22px; font-weight:700; color:#111827; margin:0 0 8px; }
-        p { color:#6b7280; font-size:15px; line-height:1.6; margin:0 0 24px; }
-        .btn { display:inline-block; background:#009639; color:#fff; border:none; border-radius:999px; padding:12px 28px; font-size:15px; font-weight:600; cursor:pointer; text-decoration:none; width:100%; box-sizing:border-box; }
-        .btn:hover { background:#007a2e; }
-        .link { color:#009639; font-size:13px; text-decoration:none; display:block; margin-top:16px; }
-        .link:hover { text-decoration:underline; }
-        .alert { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px 16px; font-size:14px; color:#166534; margin-bottom:20px; }
-        .alert-warn { background:#fff7ed; border-color:#fed7aa; color:#9a3412; }
-    </style>
 </head>
-<body>
-<div class="card">
-    <div class="icon">✉️</div>
-    <h1>Vérifiez votre email</h1>
-    <p>
-        Nous avons envoyé un lien de vérification à <strong>{{ auth()->user()->email }}</strong>.
-        Cliquez sur ce lien pour activer votre compte TontineSN.
-    </p>
+<body class="auth-body">
 
-    @if(session('status') === 'verification-link-sent' || session('status'))
-    <div class="alert">{{ session('status') }}</div>
-    @endif
+<div class="auth-container">
+    <div class="auth-card">
 
-    @if(session('success'))
-    <div class="alert">{{ session('success') }}</div>
-    @endif
+        <div class="text-center mb-4">
+            <div class="auth-logo-img" style="font-size:56px;line-height:1">✉️</div>
+            <h1 class="auth-title">Vérifiez votre email</h1>
+            <p class="auth-subtitle">
+                Nous avons envoyé un lien de vérification à <strong>{{ auth()->user()->email }}</strong>.
+                Cliquez sur ce lien pour activer votre compte TontineSN.
+            </p>
+        </div>
 
-    @if($errors->any())
-    <div class="alert alert-warn">{{ $errors->first() }}</div>
-    @endif
+        @if(session('status') === 'verification-link-sent' || session('status'))
+            <div class="auth-alert auth-alert-success">{{ session('status') }}</div>
+        @endif
 
-    <form method="POST" action="{{ route('verification.send') }}">
-        @csrf
-        <button type="submit" class="btn">Renvoyer l'email de vérification</button>
-    </form>
+        @if(session('success'))
+            <div class="auth-alert auth-alert-success">{{ session('success') }}</div>
+        @endif
 
-    <form method="POST" action="{{ route('auth.logout') }}" style="margin-top:8px;">
-        @csrf
-        <button type="submit" class="btn" style="background:#fff;color:#6b7280;border:1px solid #e5e7eb;margin-top:4px;">
-            Se déconnecter
-        </button>
-    </form>
+        @if($errors->any())
+            <div class="auth-alert auth-alert-error">{{ $errors->first() }}</div>
+        @endif
 
-    <p style="margin-top:20px;font-size:12px;color:#9ca3af;">
-        Pas reçu l'email ? Vérifiez vos spams. L'email arrive en moins de 2 minutes.
-    </p>
+        <form method="POST" action="{{ route('verification.send') }}">
+            @csrf
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="fas fa-paper-plane me-2"></i>Renvoyer l'email de vérification
+            </button>
+        </form>
+
+        <form method="POST" action="{{ route('auth.logout') }}" class="mt-2">
+            @csrf
+            <button type="submit" class="btn btn-outline-secondary w-100 mt-2">
+                Se déconnecter
+            </button>
+        </form>
+
+        <p class="text-center text-muted small mt-4 mb-0">
+            Pas reçu l'email ? Vérifiez vos spams. L'email arrive en moins de 2 minutes.
+        </p>
+
+    </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

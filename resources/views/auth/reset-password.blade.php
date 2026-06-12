@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Réinitialisation de mot de passe TontineSN">
+    <meta name="theme-color" content="#009639">
     <title>TontineSN — Nouveau mot de passe</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,13 +19,13 @@
     <div class="auth-card">
 
         <div class="text-center mb-4">
-            <div class="auth-logo">🔒</div>
-            <h1 class="fw-bold h3">Nouveau mot de passe</h1>
+            <div class="auth-logo-img" style="font-size:48px;line-height:1">🔒</div>
+            <h1 class="auth-title">Nouveau mot de passe</h1>
             <p class="auth-subtitle">Choisissez un mot de passe sécurisé.</p>
         </div>
 
         @if($errors->any())
-            <div class="alert alert-danger" role="alert">
+            <div class="auth-alert auth-alert-error" role="alert">
                 @foreach($errors->all() as $error)
                     <div><i class="fas fa-exclamation-circle me-1"></i>{{ $error }}</div>
                 @endforeach
