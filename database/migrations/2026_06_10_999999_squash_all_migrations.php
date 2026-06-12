@@ -127,6 +127,7 @@ return new class extends Migration
             $table->boolean('onboarding_completed')->default(false);
             $table->string('referral_code', 8)->nullable()->unique();
             $table->foreignId('referred_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('email_verified_at')->nullable();
             $table->timestamp('last_seen_at')->nullable();
             $table->unsignedSmallInteger('payment_streak')->default(0);
             $table->unsignedSmallInteger('max_streak')->default(0);
@@ -179,7 +180,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->unsignedInteger('max_members')->default(20);
-            $table->unsignedDecimal('penalty_rate', 5, 2)->default(0);
+            $table->decimal('penalty_rate', 5, 2)->default(0);
             $table->unsignedInteger('quorum')->default(1);
             $table->string('draw_method', 20)->default('sequential');
             $table->boolean('weighted_draw')->default(false);
@@ -264,7 +265,7 @@ return new class extends Migration
         Schema::create('credit_scores', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->unique()->constrained()->nullOnDelete();
-            $table->unsignedDecimal('score', 4, 2)->default(0);
+            $table->decimal('score', 4, 2)->default(0);
             $table->unsignedBigInteger('total_contributed')->default(0);
             $table->unsignedInteger('on_time_payments')->default(0);
             $table->unsignedInteger('total_cycles')->default(0);
@@ -321,7 +322,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('cycle_id')->constrained()->cascadeOnDelete()->index();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->unsignedDecimal('bid_rate', 5, 2);
+            $table->decimal('bid_rate', 5, 2);
             $table->timestamps();
             $table->unique(['cycle_id', 'user_id']);
         });

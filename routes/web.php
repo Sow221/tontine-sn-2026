@@ -21,6 +21,7 @@ use App\Http\Controllers\Web\ThemeController;
 use App\Http\Controllers\Web\TontineController;
 use App\Http\Controllers\Web\TwoFactorController;
 use App\Http\Controllers\Web\WebhookController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 Route::get('/api/docs', [ApiDocsController::class, 'index'])->name('api.docs');
 Route::get('/api/spec', [ApiDocsController::class, 'spec'])->name('api.spec');
@@ -61,12 +62,26 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout')->middleware('auth');
 
+// ── Vérification email ─────────────────────────────────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::get('/email/verify', fn () => view('auth.verify-email'))
+        ->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $request->fulfill();
+        return redirect()->route('dashboard')->with('success', 'Email vérifié avec succès ! Bienvenue sur TontineSN.');
+    })->middleware('signed')->name('verification.verify');
+    Route::post('/email/verification-notification', function (\Illuminate\Http\Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('status', 'Un nouvel email de vérification a été envoyé.');
+    })->middleware('throttle:6,1')->name('verification.send');
+});
+
 // ── Webhooks ───────────────────────────────────────────────────────────────
 Route::get('/payment/failed', [PaymentController::class, 'failed'])->name('payment.failed');
 Route::post('/webhooks/greenapi', [WebhookController::class, 'greenapi'])->name('webhooks.greenapi');
 
 // ── Espace membre ──────────────────────────────────────────────────────────
-Route::middleware(['auth', 'role:member'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
 
     // Onboarding
     Route::post('/onboarding/complete', function () {

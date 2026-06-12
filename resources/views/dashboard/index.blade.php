@@ -494,6 +494,8 @@
 </a>
 @endif
 
+<x-onboarding />
+
 @endsection
 
 @push('scripts')

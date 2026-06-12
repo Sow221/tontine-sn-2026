@@ -164,15 +164,11 @@ class GamificationService
             return 0;
         }
 
-        // Compatible MySQL et SQLite
-        $driver = config('database.default');
-        $dateCast = $driver === 'sqlite' ? 'DATE(transactions.paid_at)' : 'DATE(transactions.paid_at)';
-
         $latePaymentExists = $user->transactions()
             ->where('transactions.status', 'success')
             ->join('cycles', 'cycles.id', '=', 'transactions.cycle_id')
             ->where('transactions.paid_at', '>=', now()->subMonths(3))
-            ->whereRaw("{$dateCast} > DATE(cycles.due_date)")
+            ->whereRaw('DATE(transactions.paid_at) > DATE(cycles.due_date)')
             ->exists();
 
         return $latePaymentExists ? 0 : 3;

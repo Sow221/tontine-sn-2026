@@ -57,7 +57,7 @@ class PayTechService
                     'currency' => config('mobilemoney.paytech.currency'),
                     'ref_command' => $reference,
                     'command_name' => 'Cotisation tontine',
-                    'env' => 'test',
+                    'env' => 'prod',
                     'fee_bearer' => config('mobilemoney.paytech.fee_bearer'),
                     'ipn_url' => route('webhooks.paytech'),
                     'success_url' => route('payment.pending', $transaction).'?paytech_return=1',

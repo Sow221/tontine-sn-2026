@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Cycle;
 use App\Models\Transaction;
+use App\Services\CycleService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\PayTechService;
@@ -20,6 +21,7 @@ class PaymentController extends Controller
         private PaymentService $paymentService,
         private PayTechService $payTechService,
         private NotificationService $notifier,
+        private CycleService $cycleService,
     ) {}
 
     public function showForm(Cycle $cycle)
@@ -110,16 +112,30 @@ class PaymentController extends Controller
                 'failure_reason' => 'Annulé par l\'utilisateur',
             ]);
 
-            $transaction->load('cycle.tontine');
-            if ($transaction->cycle?->tontine) {
-                $this->notifier->send(
-                    $transaction->user,
-                    'general',
-                    "Votre paiement de {$transaction->amount} FCFA pour {$transaction->cycle->tontine->name} a été annulé."
-                );
+            $transaction->load('cycle.tontine', 'user');
+
+            // Recalculer le total collecté du cycle après annulation
+            if ($transaction->cycle) {
+                $this->cycleService->updateCycleTotal($transaction->cycle);
             }
 
-            return back()->with('success', 'Paiement annulé avec succès.');
+            if ($transaction->cycle?->tontine) {
+                $method = $transaction->method;
+                $isDigital = in_array($method, ['wave', 'orange_money', 'free_money', 'card'], true);
+
+                $message = "Votre paiement de {$transaction->amount} FCFA pour {$transaction->cycle->tontine->name} a été marqué comme annulé.";
+                if ($isDigital) {
+                    $message .= ' Pour le remboursement réel, contactez directement votre opérateur de paiement.';
+                }
+
+                $this->notifier->send($transaction->user, 'general', $message);
+            }
+
+            $successMsg = $transaction->method === 'cash'
+                ? 'Paiement espèces annulé. Le cycle a été mis à jour.'
+                : 'Paiement marqué comme annulé. Pour le remboursement, contactez votre opérateur (Wave, Orange Money…).';
+
+            return back()->with('success', $successMsg);
         } catch (\Throwable $e) {
             Log::error('Erreur annulation paiement', ['transaction' => $transaction->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
 

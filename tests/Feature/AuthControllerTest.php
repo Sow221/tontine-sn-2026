@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class AuthControllerTest extends TestCase
@@ -45,13 +46,16 @@ class AuthControllerTest extends TestCase
 
     public function test_user_can_register(): void
     {
+        Notification::fake();
+
         $this->post(route('auth.register.post'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'phone_number' => '+221 77 123 45 67',
             'password' => 'password123',
             'password_confirmation' => 'password123',
-        ])->assertRedirect(route('dashboard'));
+            'terms' => '1',
+        ])->assertRedirect(route('verification.notice'));
 
         $this->assertDatabaseHas('users', ['email' => 'test@example.com']);
     }

@@ -16,6 +16,10 @@
 <link rel="canonical" href="{{ url('/') }}">
 <link rel="icon" type="image/svg+xml" href="{{ asset('images/icon-192.svg') }}">
 <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('images/icon-192.png') }}">
+<link rel="manifest" href="{{ asset('manifest.json') }}">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TontineSN">
 <link href="{{ asset('css/landing.css') }}" rel="stylesheet">
 <title>Tontine en Ligne - Épargne &amp; Cotisations Sénégal | TontineSN</title>
 </head>
@@ -610,6 +614,10 @@
             <img src="{{ asset('images/logo orange money.png') }}" alt="Orange Money" class="ls-payment__method-img" width="44" height="44" loading="lazy">
             <span class="ls-payment__method-name">Orange Money</span>
           </div>
+          <div class="ls-payment__method ls-payment__method--free">
+            <img src="{{ asset('images/logo free money.svg') }}" alt="Free Money" class="ls-payment__method-img" width="44" height="44" loading="lazy">
+            <span class="ls-payment__method-name">Free Money</span>
+          </div>
           <div class="ls-payment__method ls-payment__method--card">
             <img src="{{ asset('images/carte bancaire.png') }}" alt="Carte bancaire" class="ls-payment__method-img" width="44" height="44" loading="lazy">
             <span class="ls-payment__method-name">Carte</span>
@@ -745,8 +753,8 @@
     </div>
     <div>
       <h2 id="cta-title" class="ls-cta__title">
-        Rejoignez des centaines de tontines actives.<br>
-        <span class="ls-cta__title-sub">Rejoignez des centaines de tontines actives.</span>
+        Votre tontine mérite mieux<br>qu'un carnet papier.
+        <span class="ls-cta__title-sub">Rejoignez des centaines de tontines actives dès aujourd'hui.</span>
       </h2>
       <p class="ls-cta__subtitle">
         Cr&eacute;ez votre premi&egrave;re tontine en moins de 2 minutes.

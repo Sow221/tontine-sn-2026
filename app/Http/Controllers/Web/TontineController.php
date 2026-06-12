@@ -350,6 +350,11 @@ class TontineController extends Controller
                 'active' => 'Active', 'completed' => 'Terminée', default => 'En attente'
             };
 
+            $safeName   = htmlspecialchars($tontine->name, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+            $safeCode   = htmlspecialchars($tontine->code, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+            $safeAmount = htmlspecialchars($amount, ENT_XML1, 'UTF-8');
+            $safeStatus = htmlspecialchars($status, ENT_XML1, 'UTF-8');
+
             $svg = <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
@@ -360,12 +365,12 @@ class TontineController extends Controller
   </defs>
   <rect width="1200" height="630" fill="url(#bg)" rx="0"/>
   <rect x="0" y="530" width="1200" height="100" fill="#009639"/>
-  <text x="60" y="100" font-family="system-ui, sans-serif" font-size="48" font-weight="800" fill="#111827">{$tontine->name}</text>
-  <text x="60" y="160" font-family="system-ui, sans-serif" font-size="28" fill="#6b7280">Code\u{00A0}: {$tontine->code}</text>
+  <text x="60" y="100" font-family="system-ui, sans-serif" font-size="48" font-weight="800" fill="#111827">{$safeName}</text>
+  <text x="60" y="160" font-family="system-ui, sans-serif" font-size="28" fill="#6b7280">Code&#160;: {$safeCode}</text>
   <rect x="60" y="200" width="1080" height="2" fill="#e5e7eb"/>
-  <text x="60" y="260" font-family="system-ui, sans-serif" font-size="24" fill="#374151">Montant\u{00A0}: {$amount} FCFA par cycle</text>
-  <text x="60" y="310" font-family="system-ui, sans-serif" font-size="24" fill="#374151">Membres\u{00A0}: {$members}</text>
-  <text x="60" y="360" font-family="system-ui, sans-serif" font-size="24" fill="#374151">Statut\u{00A0}: {$status}</text>
+  <text x="60" y="260" font-family="system-ui, sans-serif" font-size="24" fill="#374151">Montant&#160;: {$safeAmount} FCFA par cycle</text>
+  <text x="60" y="310" font-family="system-ui, sans-serif" font-size="24" fill="#374151">Membres&#160;: {$members}</text>
+  <text x="60" y="360" font-family="system-ui, sans-serif" font-size="24" fill="#374151">Statut&#160;: {$safeStatus}</text>
   <text x="60" y="590" font-family="system-ui, sans-serif" font-size="32" font-weight="700" fill="#ffffff">TontineSN</text>
   <text x="1140" y="590" font-family="system-ui, sans-serif" font-size="20" fill="rgba(255,255,255,0.8)" text-anchor="end">Rejoindre avec le code</text>
 </svg>

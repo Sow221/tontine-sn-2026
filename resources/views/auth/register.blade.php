@@ -105,6 +105,20 @@
                 <small id="match-text" aria-live="polite"></small>
             </div>
 
+            <div class="mb-4">
+                <div class="form-check">
+                    <input class="form-check-input @error('terms') is-invalid @enderror"
+                           type="checkbox" name="terms" id="terms" required>
+                    <label class="form-check-label small" for="terms">
+                        J'accepte les
+                        <a href="{{ route('cgu') }}" target="_blank" class="text-green text-decoration-none fw-semibold">conditions d'utilisation</a>
+                        et la
+                        <a href="{{ route('privacy') }}" target="_blank" class="text-green text-decoration-none fw-semibold">politique de confidentialité</a>
+                    </label>
+                    @error('terms')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+            </div>
+
             <button type="submit" class="btn btn-primary btn-lg w-100">
                 <i class="fas fa-user-plus me-2"></i>Créer mon compte
             </button>

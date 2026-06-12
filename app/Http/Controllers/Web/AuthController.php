@@ -90,6 +90,9 @@ class AuthController extends Controller
                 'referred_by' => $referrer?->id,
             ]);
 
+            // Envoyer l'email de vérification (via Resend — gratuit jusqu'à 3000/mois)
+            $user->sendEmailVerificationNotification();
+
             Auth::login($user);
             $user->update(['last_seen_at' => now()]);
 
@@ -99,7 +102,8 @@ class AuthController extends Controller
                 RecalculateCreditScore::dispatch($referrer->id)->afterResponse();
             }
 
-            return redirect()->route('dashboard')->with('success', 'Bienvenue sur TontineSN ! Créez votre première tontine ou rejoignez un groupe avec un code.');
+            return redirect()->route('verification.notice')
+                ->with('success', 'Bienvenue ! Un email de vérification a été envoyé à '.$user->email.'. Vérifiez votre boîte mail pour activer votre compte.');
         } catch (\Throwable $e) {
             Log::error('Erreur inscription', ['error' => $e->getMessage(), 'class' => get_class($e)]);
 
@@ -202,6 +206,8 @@ class AuthController extends Controller
                     'password' => Str::random(32),
                     'role' => 'member',
                     'referred_by' => $referrer?->id,
+                    // Google confirme l'email — pas besoin de vérification manuelle
+                    'email_verified_at' => now(),
                 ]
             );
 

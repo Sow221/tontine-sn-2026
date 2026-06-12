@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Tontine extends Model
 {
@@ -141,7 +142,10 @@ class Tontine extends Model
     {
         static::creating(function (Tontine $tontine) {
             if (empty($tontine->code)) {
-                $tontine->code = strtoupper(substr(uniqid(), -6));
+                do {
+                    $code = Str::upper(Str::random(6));
+                } while (static::withTrashed()->where('code', $code)->exists());
+                $tontine->code = $code;
             }
         });
     }

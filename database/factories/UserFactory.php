@@ -28,6 +28,7 @@ class UserFactory extends Factory
             'password' => bcrypt('password'),
             'role' => 'member',
 
+            'email_verified_at' => now(),
             'kyc_verified' => false,
             'is_active' => true,
             'remember_token' => Str::random(10),
