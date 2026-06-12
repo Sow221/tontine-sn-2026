@@ -17,7 +17,6 @@ use App\Http\Controllers\Web\PaymentController;
 use App\Http\Controllers\Web\PostController;
 use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\QrCodePaymentController;
-use App\Http\Controllers\Web\ThemeController;
 use App\Http\Controllers\Web\TontineController;
 use App\Http\Controllers\Web\TwoFactorController;
 use App\Http\Controllers\Web\WebhookController;
@@ -118,6 +117,7 @@ Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
     Route::post('/cycles/{cycle}/veto', [CycleController::class, 'veto'])->name('cycles.veto');
     Route::get('/transactions/{transaction}/recu', [PaymentController::class, 'receipt'])->name('transactions.receipt');
     Route::post('/transactions/{transaction}/reverse', [PaymentController::class, 'reverse'])->name('transactions.reverse')->middleware('throttle:3,1');
+    Route::post('/transactions/{transaction}/dispute', [PaymentController::class, 'dispute'])->name('transactions.dispute')->middleware('throttle:3,1');
     Route::get('/payment/success/cash/{transaction}', [PaymentController::class, 'successCash'])->name('payment.success.cash');
 
     // QR Code Payments (P2P)
@@ -194,5 +194,3 @@ Route::middleware(['auth', 'role:admin,super_admin'])->prefix('admin')->name('ad
     Route::delete('/posts/{post}', [AdminDashboardController::class, 'destroyPost'])->name('posts.destroy');
 });
 
-// Route thème accessible à tous les authentifiés (admin inclus)
-Route::middleware('auth')->post('/theme/toggle', [ThemeController::class, 'toggle'])->name('theme.toggle');

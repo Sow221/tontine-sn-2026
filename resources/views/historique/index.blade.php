@@ -41,6 +41,33 @@
         <strong class="text-green">{{ number_format($totalSuccess, 0, ',', ' ') }} FCFA</strong>
     </p>
 
+    {{-- ── POTS REÇUS (décaissements) ────────────────────────────────── --}}
+    @if($decaissements->isNotEmpty())
+    <div class="card mb-4" style="border-left:4px solid #009639;">
+        <h6 class="fw-semibold mb-3"><i class="fas fa-hand-holding-usd me-2 text-green"></i>Pots reçus</h6>
+        <div class="d-flex flex-column gap-2">
+            @foreach($decaissements as $cycle)
+            <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                <div style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:#f0fdf4;border:1px solid rgba(0,150,57,0.2);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-trophy" style="color:#009639;font-size:16px;"></i>
+                </div>
+                <div class="flex-grow-1 min-width-0">
+                    <p class="mb-0 fw-semibold small text-truncate">{{ $cycle->tontine->name ?? '—' }}</p>
+                    <small class="text-muted">Cycle #{{ $cycle->cycle_number }} · {{ $cycle->drawn_at?->format('d/m/Y') ?? '—' }}</small>
+                </div>
+                <div class="text-end" style="flex-shrink:0;">
+                    <span class="fw-bold" style="color:#009639;font-size:15px;">
+                        + {{ number_format($cycle->total_collected, 0, ',', ' ') }} FCFA
+                    </span>
+                    <br>
+                    <span style="background:#dcfce7;color:#16a34a;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:600;">Pot reçu</span>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     {{-- ── FILTRES ────────────────────────────────────────────────────── --}}
     <form method="GET" action="{{ route('historique.index') }}" class="card mb-4">
 
@@ -211,6 +238,19 @@
                                 <i class="fas fa-undo me-1"></i>Annuler
                             </button>
                         </form>
+                        @endif
+                        @if($tx->method === 'cash' && empty($tx->metadata['disputed']))
+                        <form method="POST" action="{{ route('transactions.dispute', $tx) }}" class="d-inline"
+                              x-data x-ref="disputeForm{{ $tx->id }}">
+                            @csrf
+                            <input type="hidden" name="reason" value="Paiement espèces non effectué">
+                            <button type="button" class="small text-warning border-0 bg-transparent p-0 ms-2"
+                                    @click="if(confirm('Contester ce paiement espèces ? Le créateur de la tontine sera notifié.')) { $refs.disputeForm{{ $tx->id }}.submit(); }">
+                                <i class="fas fa-flag me-1"></i>Contester
+                            </button>
+                        </form>
+                        @elseif(!empty($tx->metadata['disputed']))
+                        <span class="small ms-2" style="color:#f59e0b;"><i class="fas fa-flag me-1"></i>Contesté</span>
                         @endif
                     </div>
                     @endif

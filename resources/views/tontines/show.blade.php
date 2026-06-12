@@ -1,6 +1,8 @@
 @extends('layouts.app')
 @section('title', $tontine->name . ' — Tontine en ligne | TontineSN')
 @section('meta_description', "Tontine {$tontine->name} — {$tontine->type_label}, montant: ".number_format($tontine->amount, 0, ',', ' ')." FCFA, {$tontine->active_members_count} membre(s).")
+@section('og_title', $tontine->name . ' — Tontine TontineSN')
+@section('og_image', route('tontines.og', $tontine->code))
 
 @section('content')
 <div class="container py-4" style="max-width:860px;">
@@ -226,71 +228,83 @@
         </a>
     </div>
 
-    {{-- 9. RÉSUMÉ PERSONNEL (collapsible) --}}
-    @if($tontine->status !== 'pending')
-    <div class="mb-4" x-data="{ open: false }">
-        <button type="button" class="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-between"
-                @click="open = !open" :aria-expanded="open">
-            <span><i class="fas fa-chart-bar me-2"></i>{{ __('member.summary') }}</span>
-            <i class="fas fa-chevron-down" :style="open ? 'transform:rotate(180deg)' : ''" style="transition:transform 0.2s;"></i>
-        </button>
-        <div x-show="open" x-collapse class="card mt-2">
-            <div class="row g-2 text-center">
-                <div class="col-4">
-                    <div class="stat-card">
-                        <div class="stat-value text-green fs-6">{{ number_format($totalCollecte / 1000, 0) }}K</div>
-                        <div class="stat-label">{{ __('member.collected') }}</div>
-                    </div>
-                </div>
-                <div class="col-4">
-                    <div class="stat-card">
-                        <div class="stat-value text-indigo fs-6">{{ $cyclesPaids }}/{{ $tontine->cycles->count() }}</div>
-                        <div class="stat-label">{{ __('member.cycles_paid') }}</div>
-                    </div>
-                </div>
-                @if(in_array($tontine->type, ['fixed', 'auction']))
-                <div class="col-4">
-                    <div class="stat-card">
-                        @if($currentCycle && $currentCycle->beneficiary_id === auth()->id())
-                            <div class="stat-value text-warning fs-6">Maintenant</div>
-                            <div class="stat-label">{{ __('member.your_turn') }}</div>
-                        @elseif($turnEstimate && ($turnEstimate['status'] ?? '') === 'waiting')
-                            @php
-                                $estimatedCycle = $tontine->cycles->where('status', '!=', 'paid')->sortBy('cycle_number')->skip($turnEstimate['members_ahead'])->first();
-                            @endphp
-                            <div class="stat-value text-indigo fs-6">~{{ $turnEstimate['members_ahead'] }}</div>
-                            <div class="stat-label">{{ __('member.turns_before_you') }}</div>
-                            @if($estimatedCycle?->due_date)
-                            <small class="text-muted d-block" style="font-size:10px;">≈ {{ $estimatedCycle->due_date->isoFormat('MMM YYYY') }}</small>
-                            @endif
-                        @elseif(($turnEstimate['status'] ?? '') === 'already_won')
-                            <div class="stat-value text-success fs-6">✓</div>
-                            <div class="stat-label">{{ __('member.already_served') }}</div>
-                        @elseif($myPosition)
-                            <div class="stat-value text-indigo fs-6">#{{ $myPosition }}</div>
-                            <div class="stat-label">{{ __('member.my_position') }}</div>
+    {{-- 9. RÉSUMÉ FINANCIER PERSONNEL --}}
+    @if($tontine->status !== 'pending' && $myMemberStatus === 'active')
+    <div class="card mb-4">
+        <h6 class="fw-semibold mb-3"><i class="fas fa-wallet me-2 text-green"></i>Ma situation financière</h6>
+        <div class="row g-2 text-center mb-3">
+
+            {{-- Ma contribution personnelle --}}
+            <div class="col-4">
+                <div class="stat-card">
+                    <div class="stat-value text-green fs-6">
+                        @if($myContribution >= 1000)
+                            {{ number_format($myContribution / 1000, 0) }}K
                         @else
-                            <div class="stat-value text-muted fs-6">—</div>
-                            <div class="stat-label">{{ __('member.rotation') }}</div>
+                            {{ number_format($myContribution, 0) }}
                         @endif
                     </div>
+                    <div class="stat-label">J'ai cotisé (FCFA)</div>
                 </div>
-                @elseif($tontine->type === 'forced_saving' && isset($mySaved))
-                <div class="col-4">
-                    <div class="stat-card">
-                        <div class="stat-value text-green fs-6">{{ number_format($mySaved / 1000, 0) }}K</div>
-                        <div class="stat-label">Mon épargne</div>
-                    </div>
-                </div>
-                @endif
             </div>
-            @if($myPastWin && ($turnEstimate['status'] ?? null) === 'already_won')
-            <p class="text-muted small mb-0 mt-2">
-                <i class="fas fa-trophy me-1"></i>{{ __('member.last_pot_received', ['num' => $myPastWin->cycle_number]) }}
-                ({{ $myPastWin->drawn_at?->format('d/m/Y') ?? '—' }}).
-            </p>
+
+            {{-- Avancement cycles --}}
+            <div class="col-4">
+                <div class="stat-card">
+                    <div class="stat-value text-indigo fs-6">{{ $cyclesPaids }}/{{ $tontine->cycles->count() }}</div>
+                    <div class="stat-label">Cycles clôturés</div>
+                </div>
+            </div>
+
+            {{-- Mon tour / pot attendu --}}
+            @if(in_array($tontine->type, ['fixed', 'auction']))
+            <div class="col-4">
+                <div class="stat-card">
+                    @if($currentCycle && $currentCycle->beneficiary_id === auth()->id())
+                        <div class="stat-value text-warning fs-6">🎉 Maintenant</div>
+                        <div class="stat-label">C'est votre tour !</div>
+                    @elseif(($turnEstimate['status'] ?? '') === 'already_won')
+                        <div class="stat-value text-success fs-6">✓ Reçu</div>
+                        <div class="stat-label">Pot cycle #{{ $myPastWin?->cycle_number ?? '—' }}</div>
+                    @elseif(($turnEstimate['status'] ?? '') === 'waiting')
+                        @php $estimatedCycle = $tontine->cycles->where('status', '!=', 'paid')->sortBy('cycle_number')->skip($turnEstimate['members_ahead'])->first(); @endphp
+                        <div class="stat-value text-indigo fs-6">~{{ $turnEstimate['members_ahead'] }} tour(s)</div>
+                        <div class="stat-label">Avant vous</div>
+                        @if($estimatedCycle?->due_date)
+                        <small class="text-muted d-block" style="font-size:10px;">≈ {{ $estimatedCycle->due_date->isoFormat('MMM YYYY') }}</small>
+                        @endif
+                    @elseif($myPosition)
+                        <div class="stat-value text-indigo fs-6">#{{ $myPosition }}</div>
+                        <div class="stat-label">Ma position</div>
+                    @else
+                        <div class="stat-value text-muted fs-6">—</div>
+                        <div class="stat-label">Tour à tirer</div>
+                    @endif
+                </div>
+            </div>
+            @elseif($tontine->type === 'forced_saving' && isset($mySaved))
+            <div class="col-4">
+                <div class="stat-card">
+                    <div class="stat-value text-green fs-6">
+                        @if($mySaved >= 1000)
+                            {{ number_format($mySaved / 1000, 0) }}K
+                        @else
+                            {{ $mySaved }}
+                        @endif
+                    </div>
+                    <div class="stat-label">Mon épargne (FCFA)</div>
+                </div>
+            </div>
             @endif
         </div>
+
+        {{-- Pot attendu (pour les tontines tournantes) --}}
+        @if(in_array($tontine->type, ['fixed', 'auction']) && ($turnEstimate['status'] ?? '') === 'waiting')
+        <div class="d-flex align-items-center gap-2 p-2 rounded" style="background:#f0fdf4;border:1px solid rgba(0,150,57,0.15);">
+            <i class="fas fa-coins text-green"></i>
+            <span class="small">Pot attendu quand c'est votre tour : <strong>{{ number_format($expectedPot, 0, ',', ' ') }} FCFA</strong></span>
+        </div>
+        @endif
     </div>
     @endif
 

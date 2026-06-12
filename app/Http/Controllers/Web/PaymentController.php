@@ -205,6 +205,44 @@ class PaymentController extends Controller
         }
     }
 
+    public function dispute(Request $request, Transaction $transaction)
+    {
+        abort_if($transaction->user_id !== Auth::id(), 403);
+        abort_unless($transaction->method === 'cash' && $transaction->status === 'success', 403);
+
+        $request->validate(['reason' => 'nullable|string|max:500']);
+
+        $meta = $transaction->metadata ?? [];
+        if (! empty($meta['disputed'])) {
+            return back()->with('info', 'Ce paiement est déjà marqué comme contesté.');
+        }
+
+        $meta['disputed'] = true;
+        $meta['dispute_reason'] = $request->reason ?? 'Contesté par le membre';
+        $meta['disputed_by'] = Auth::id();
+        $meta['disputed_at'] = now()->toIso8601String();
+        $transaction->update(['metadata' => $meta]);
+
+        try {
+            $transaction->load('cycle.tontine.creator');
+            $creator = $transaction->cycle?->tontine?->creator;
+            if ($creator && $creator->id !== Auth::id()) {
+                $tontineName = $transaction->cycle->tontine->name;
+                $cycleNum = $transaction->cycle->cycle_number;
+                $reason = $request->reason ? ' Raison : '.$request->reason : '';
+                $this->notifier->send(
+                    $creator,
+                    'general',
+                    Auth::user()->name." conteste le paiement espèces du cycle {$cycleNum} de la tontine « {$tontineName} ».{$reason}"
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Notification dispute échouée', ['transaction' => $transaction->id, 'error' => $e->getMessage()]);
+        }
+
+        return back()->with('success', 'Contestation enregistrée. Le créateur de la tontine a été notifié.');
+    }
+
     public function failed(Request $request)
     {
         try {

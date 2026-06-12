@@ -162,13 +162,6 @@ class CycleService
             $tontine->update(['status' => 'completed']);
         });
 
-        // Webhook sortant : tontine complétée
-        app(WebhookOutboundService::class)->dispatch('tontine.completed', [
-            'tontine_id' => $tontine->id,
-            'type' => $tontine->type,
-            'members' => count($withdrawals),
-        ]);
-
         return $withdrawals;
     }
 

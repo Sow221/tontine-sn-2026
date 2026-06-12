@@ -12,6 +12,10 @@ use App\Models\Transaction;
 
 class DrawService
 {
+    public function __construct(
+        private NotificationService $notifier,
+    ) {}
+
     public function canDraw(Cycle $cycle): ?string
     {
         if ($cycle->beneficiary_id) {
@@ -28,14 +32,12 @@ class DrawService
             $paidCount = $cycle->successfulTransactions()->count();
             $memberCount = $tontine->activeMembers()->count();
 
-            // Si un quorum est configuré, vérifier uniquement le quorum
             if ($tontine->quorum > 1) {
                 $required = (int) ceil($memberCount * $tontine->quorum / 100);
                 if ($paidCount < $required) {
                     return 'Quorum non atteint : '.$paidCount.'/'.$required.' paiements requis.';
                 }
             } else {
-                // Sans quorum configuré, on exige 100%
                 if ($cycle->completionRate() < 100) {
                     return 'Tirage impossible : '.$cycle->completionRate().'% collecté seulement.';
                 }
@@ -94,14 +96,11 @@ class DrawService
             return false;
         }
 
-        // Sauvegarder le bénéficiaire veté avant de l'effacer
         $vetoedUserId = $cycle->beneficiary_id;
 
-        // Annuler le tirage et supprimer les votes
         $cycle->update(['beneficiary_id' => null, 'draw_hash' => null, 'drawn_at' => null]);
         CycleVeto::where('cycle_id', $cycle->id)->delete();
 
-        // Vérifier qu'il reste des membres éligibles avant le re-tirage
         $tontine = $cycle->tontine;
         $alreadyWon = Cycle::where('tontine_id', $tontine->id)
             ->whereNotNull('beneficiary_id')
@@ -112,18 +111,15 @@ class DrawService
             ->count();
 
         if ($eligible === 0) {
-            // Aucun membre éligible : marquer le cycle comme bloqué via un statut
-            // On laisse beneficiary_id null et on notifie le créateur
-            app(NotificationService::class)->send(
+            $this->notifier->send(
                 $tontine->creator,
                 'general',
-                "⚠️ Tous les membres ont déjà reçu le pot dans la tontine \u00ab {$tontine->name} \u00bb. Le tirage ne peut pas être rellancé. Contactez les membres."
+                "⚠️ Tous les membres ont déjà reçu le pot dans la tontine « {$tontine->name} ». Le tirage ne peut pas être relancé. Contactez les membres."
             );
 
             return true;
         }
 
-        // Re-tirer immédiatement un nouveau bénéficiaire
         $this->drawBeneficiary($cycle);
 
         return true;
@@ -245,7 +241,8 @@ class DrawService
                         ],
                         [
                             'amount' => $amount,
-                            'method' => 'cash',
+                            'method' => 'direct_transfer',
+                            'type' => 'redistribution',
                             'status' => 'success',
                             'paid_at' => now(),
                         ]
@@ -253,13 +250,11 @@ class DrawService
                 }
             }
 
-            // Notifier les membres dont l'enchère n'a pas été retenue
-            $notifier = app(NotificationService::class);
             $tontineName = $cycle->tontine->name;
             $cycleNum = $cycle->cycle_number;
             foreach ($eligible->where('id', '!=', $winner->id) as $loser) {
                 try {
-                    $notifier->sendEmail(
+                    $this->notifier->sendEmail(
                         $loser,
                         "🏷️ Résultat enchère — {$tontineName}",
                         "Bonjour <strong>{$loser->name}</strong>,<br><br>"

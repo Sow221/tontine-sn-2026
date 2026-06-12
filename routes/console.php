@@ -2,7 +2,6 @@
 
 use App\Jobs\SendReminders;
 use App\Models\Cycle;
-use App\Models\MagicLink;
 use App\Models\Transaction;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
@@ -23,9 +22,6 @@ Schedule::job(new SendReminders)->dailyAt('08:00');
 
 // Worker file d'attente (exécute les jobs WhatsApp en arrière-plan)
 Schedule::command('queue:work --stop-when-empty --max-time=60 --sleep=3')->everyMinute()->withoutOverlapping();
-
-// Nettoyage des magic links expirés
-Schedule::call(fn () => MagicLink::where('expires_at', '<', now())->delete())->daily();
 
 // Marquer les cycles en retard + clôture automatique des épargnes (tout en un)
 Schedule::command('tontine:process-overdue')->dailyAt('06:00');

@@ -15,7 +15,6 @@ use App\Services\DrawService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\TontineService;
-use App\Services\WebhookOutboundService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -29,7 +28,6 @@ class TontineController extends Controller
         private PaymentService $paymentService,
         private NotificationService $notifier,
         private DrawService $drawService,
-        private WebhookOutboundService $webhookOutbound,
     ) {}
 
     public function explore(Request $request)
@@ -188,6 +186,12 @@ class TontineController extends Controller
 
             $totalCollecte = $tontine->cycles->sum('total_collected');
             $cyclesPaids = $tontine->cycles->where('status', 'paid')->count();
+            $myContribution = Transaction::success()
+                ->forTontine($tontine->id)
+                ->forUser($userId)
+                ->excludeRedistribution()
+                ->sum('amount');
+            $expectedPot = $tontine->amount * $tontine->activeMembers()->count();
             $myPastWin = $tontine->cycles->firstWhere('beneficiary_id', $userId);
             $turnEstimate = $myMemberStatus === 'active'
                 ? $tontine->turnEstimateFor($userId)
@@ -231,7 +235,7 @@ class TontineController extends Controller
                 'canVeto', 'hasVetoed', 'vetoCount', 'vetoRequired',
                 'myMemberStatus', 'totalCollecte', 'cyclesPaids', 'myPosition', 'myPastWin', 'turnEstimate',
                 'inviteUrl', 'acceptsNewMembers', 'mySaved', 'myWithdrawal', 'withdrawals', 'pastCycles',
-                'bidDeadlinePassed', 'lastSuccessTransaction'
+                'bidDeadlinePassed', 'lastSuccessTransaction', 'myContribution', 'expectedPot'
             ));
         } catch (\Throwable $e) {
             Log::error('Erreur affichage tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
@@ -400,15 +404,6 @@ SVG;
                 }
 
                 return back()->withErrors(['code' => $result['message']]);
-            }
-
-            // Webhook sortant : membre ayant rejoint
-            if ($tontine) {
-                $this->webhookOutbound->dispatch('member.joined', [
-                    'tontine_id' => $tontine->id,
-                    'user_id' => Auth::id(),
-                    'status' => 'pending',
-                ]);
             }
 
             return redirect()->route('tontines.show', $tontine)->with('success', $result['message']);
@@ -651,19 +646,48 @@ SVG;
                 return back()->withErrors(['leave' => 'Vous n\'êtes pas membre de cette tontine.']);
             }
 
-            if ($tontine->status === 'active' && $memberStatus === 'active') {
-                $hasTurn = $tontine->cycles()->where('beneficiary_id', $user->id)->exists();
-                if ($hasTurn) {
-                    return back()->withErrors(['leave' => 'Vous ne pouvez pas quitter une tontine active dans laquelle vous avez un tour assigné.']);
-                }
-            }
-
             if ($tontine->created_by === $user->id) {
                 return back()->withErrors(['leave' => 'Le créateur ne peut pas quitter sa propre tontine. Transférez la propriété à un autre membre actif avant de quitter.']);
             }
 
+            if ($tontine->status === 'active' && $memberStatus === 'active') {
+                // Bloquer si un tour est déjà assigné à ce membre
+                $hasTurn = $tontine->cycles()->where('beneficiary_id', $user->id)->exists();
+                if ($hasTurn) {
+                    return back()->withErrors(['leave' => 'Vous ne pouvez pas quitter une tontine active dans laquelle vous avez un tour assigné.']);
+                }
+
+                // Bloquer si le membre a déjà payé dans le cycle en cours non encore clôturé :
+                // son départ ferait baisser expectedTotal() et pourrait déclencher artificiellement
+                // la complétion du cycle avec un pot incomplet.
+                $currentCycle = $tontine->currentCycle;
+                if ($currentCycle && $currentCycle->status !== 'paid') {
+                    $hasPaidCurrentCycle = Transaction::success()
+                        ->forCycle($currentCycle->id)
+                        ->forUser($user->id)
+                        ->exists();
+                    if ($hasPaidCurrentCycle) {
+                        return back()->withErrors(['leave' => 'Vous avez déjà cotisé pour le cycle en cours (cycle '.$currentCycle->cycle_number.'). Attendez la clôture de ce cycle avant de quitter.']);
+                    }
+                }
+            }
+
             $tontine->members()->detach($user->id);
             Cache::forget("tontine_member_{$tontine->id}_{$user->id}");
+
+            // Notifier le créateur qu'un membre a quitté
+            if ($tontine->status === 'active') {
+                try {
+                    $creator = \App\Models\User::find($tontine->created_by);
+                    if ($creator && $creator->id !== $user->id) {
+                        $this->notifier->send(
+                            $creator,
+                            'general',
+                            "{$user->name} a quitté la tontine « {$tontine->name} »."
+                        );
+                    }
+                } catch (\Throwable) {}
+            }
 
             return redirect()->route('tontines.index')->with('success', 'Vous avez quitté la tontine « '.$tontine->name.' ».');
         } catch (\Throwable $e) {

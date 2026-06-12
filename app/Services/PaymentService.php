@@ -18,8 +18,6 @@ class PaymentService
         private DrawService $drawService,
         private NotificationService $notifier,
         private GamificationService $gamification,
-        private CreditScoringService $scorer,
-        private WebhookOutboundService $webhookOutbound,
         private PayTechService $paytech,
     ) {}
 
@@ -113,16 +111,8 @@ class PaymentService
             }
         });
 
-        // Opérations hors transaction : notifications, jobs async, webhooks
+        // Opérations hors transaction : notifications, jobs async
         $transaction->loadMissing('cycle.tontine', 'user');
-
-        $this->webhookOutbound->dispatch('payment.confirmed', [
-            'transaction_id' => $transaction->id,
-            'user_id' => $transaction->user_id,
-            'amount' => $transaction->amount,
-            'method' => $transaction->method,
-            'cycle_id' => $transaction->cycle_id,
-        ]);
 
         if ($transaction->user) {
             RecalculateCreditScore::dispatch($transaction->user->id)->afterResponse();
@@ -179,12 +169,6 @@ class PaymentService
                     }
                 }
             }
-            $this->webhookOutbound->dispatch('cycle.beneficiary_drawn', [
-                'cycle_id' => $cycle->id,
-                'tontine_id' => $cycle->tontine_id,
-                'beneficiary_id' => $beneficiaryId,
-                'amount' => $beneficiaryAmount,
-            ]);
         }
 
         if ($cycleWasPaid) {
@@ -204,6 +188,10 @@ class PaymentService
 
     public function confirmWithdrawal(SavingsWithdrawal $withdrawal): void
     {
+        if ($withdrawal->status === 'paid') {
+            return;
+        }
+
         $withdrawal->update(['status' => 'paid', 'paid_at' => now()]);
     }
 }

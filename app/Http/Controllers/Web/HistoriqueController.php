@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cycle;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Http\Request;
@@ -117,7 +118,14 @@ class HistoriqueController extends Controller
                 $periodes->push(['value' => $date->format('Y-m'), 'label' => $date->isoFormat('MMMM YYYY')]);
             }
 
-            return view('historique.index', compact('transactions', 'tontines', 'totalSuccess', 'periodes'));
+            // Cycles où l'utilisateur était bénéficiaire — pots reçus
+            $decaissements = Cycle::where('beneficiary_id', $user->id)
+                ->where('status', 'paid')
+                ->with('tontine')
+                ->orderByDesc('drawn_at')
+                ->get();
+
+            return view('historique.index', compact('transactions', 'tontines', 'totalSuccess', 'periodes', 'decaissements'));
         } catch (\Throwable $e) {
             Log::error('Erreur historique', ['error' => $e->getMessage(), 'class' => get_class($e)]);
 

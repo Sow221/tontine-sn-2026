@@ -6,9 +6,6 @@
         "build": "vite build",
         "dev": "vite"
     },
-    "dependencies": {
-        "shepherd.js": "^13.0.3"
-    },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
         "axios": "^1.11.0",
