@@ -87,10 +87,10 @@
         </div>
       </div>
       <h1 class="ls-hero__title">
-        La tontine traditionnelle<br>
-        <span class="ls-hero__title-accent">transform&eacute;e en capital.</span>
+        Z&eacute;ro carnet.<br>
+        <span class="ls-hero__title-accent">Z&eacute;ro conflit. Z&eacute;ro oubli.</span>
       </h1>
-      <p class="ls-hero__slogan">Z&eacute;ro carnet. Z&eacute;ro conflit. Z&eacute;ro oubli.</p>
+      <p class="ls-hero__slogan">La tontine traditionnelle, enfin num&eacute;rique.</p>
       <p class="ls-hero__desc">
         Pour les <strong>familles</strong>, <strong>associations de quartier</strong> et <strong>groupes professionnels</strong> &mdash;
         TontineSN num&eacute;rise votre tontine sans en changer l&rsquo;esprit.
@@ -544,8 +544,8 @@
           <div class="ls-vision__pillar">
             <span class="ls-vision__pillar-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
             <div>
-              <strong>Scalabilit&eacute; Afrique de l&rsquo;Ouest</strong>
-              <p>Mod&egrave;le duplicable partout o&ugrave; la tontine est pratiqu&eacute;e &mdash; Mali, C&ocirc;te d&rsquo;Ivoire, Cameroun, Guin&eacute;e</p>
+              <strong>100% s&eacute;n&eacute;galais</strong>
+              <p>Con&ccedil;u &agrave; Dakar, pour les familles, associations et groupes professionnels du S&eacute;n&eacute;gal</p>
             </div>
           </div>
           <div class="ls-vision__pillar">
@@ -567,8 +567,8 @@
           <span class="ls-vision__number-label">des transactions<br>encore informelles</span>
         </div>
         <div class="ls-vision__number-card ls-vision__number-card--green">
-          <span class="ls-vision__number">100M+</span>
-          <span class="ls-vision__number-label">pratiquants en<br>Afrique de l&rsquo;Ouest</span>
+          <span class="ls-vision__number">0 FCFA</span>
+          <span class="ls-vision__number-label">de frais<br>pour TontineSN</span>
         </div>
       </div>
     </div>
@@ -735,6 +735,7 @@
    12. CTA FINAL
 ════════════════════════════════ -->
 <section class="ls-cta" aria-labelledby="cta-title">
+  @php $tontineCount = \App\Models\Tontine::whereIn('status', ['active', 'pending'])->count(); @endphp
   <div class="ls-cta__bg" aria-hidden="true"></div>
   <div class="ls-cta__inner">
     <div class="ls-cta__image-wrap">
@@ -748,7 +749,7 @@
       >
       <div class="ls-cta__image-badge">
         <span class="ls-cta__image-badge-dot" aria-hidden="true"></span>
-        <span>120+ tontines actives</span>
+        <span>{{ $tontineCount }}+ tontines actives</span>
       </div>
     </div>
     <div>
@@ -783,7 +784,7 @@
         </span>
       </div>
       <div class="ls-cta__counter">
-        <span class="ls-cta__counter-number" data-count="120">0</span>
+        <span class="ls-cta__counter-number" data-count="{{ $tontineCount }}">0</span>
         <span class="ls-cta__counter-label">tontines actives</span>
       </div>
     </div>
