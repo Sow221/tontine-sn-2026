@@ -14,6 +14,7 @@ use App\Services\CreditScoringService;
 use App\Services\GamificationService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
@@ -71,8 +72,8 @@ class DashboardController extends Controller
                 $newBadges = collect(session('new_badges'))->map(fn ($b) => (object) $b);
             }
             $gamification = $this->gamification->getUserStats($user);
-            $leaderboard = $this->gamification->getLeaderboardForUser($user, 5);
-            $chartData = $this->chartData($user);
+            $leaderboard = Cache::remember("leaderboard_{$user->id}", 900, fn () => $this->gamification->getLeaderboardForUser($user, 5));
+            $chartData = Cache::remember("chart_data_{$user->id}", 3600, fn () => $this->chartData($user));
 
             return view('dashboard.index', compact(
                 'user', 'activeTontines', 'upcomingPayments', 'overduePayments',

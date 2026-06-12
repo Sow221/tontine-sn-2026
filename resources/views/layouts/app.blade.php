@@ -31,11 +31,9 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/icon-192.svg') }}">
     <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('images/icon-192.png') }}">
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="{{ asset('css/vendor/google-fonts.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/vendor/bootstrap.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/vendor/fontawesome.min.css') }}">
     @stack('head-scripts')
     <link href="{{ asset('css/tontine.css') }}" rel="stylesheet">
     @stack('styles')
@@ -63,7 +61,10 @@
     <aside class="app-sidebar" :class="{ 'open': sidebarOpen, 'collapsed': sidebarCollapsed }" role="navigation" aria-label="Navigation principale"
            x-trap.noscroll="sidebarOpen">
         <a href="{{ route('dashboard') }}" class="sidebar-logo" aria-label="Retour au tableau de bord">
-            <img src="{{ asset('images/element-logo.png') }}" alt="TontineSN" width="36" height="36">
+            <picture>
+                <source srcset="{{ asset('images/element-logo.webp') }}" type="image/webp">
+                <img src="{{ asset('images/element-logo.png') }}" alt="TontineSN" width="36" height="36">
+            </picture>
             <span class="sidebar-logo-text">TontineSN</span>
         </a>
 
@@ -155,17 +156,13 @@
                     <i class="fas fa-cog"></i> Paramètres généraux
                 </a>
             </div>
-            <form method="POST" action="{{ route('theme.toggle') }}" class="mb-2" x-data>
-                @csrf
+            <div class="mb-2">
                 <button type="button" class="btn btn-sm btn-outline-secondary w-100"
-                        @click.prevent="
-                            dark = !dark;
-                            localStorage.setItem('tontine-theme', dark ? 'dark' : 'light');
-                        ">
+                        @click="dark = !dark; localStorage.setItem('tontine-theme', dark ? 'dark' : 'light')">
                     <i class="fas me-2" :class="dark ? 'fa-sun' : 'fa-moon'"></i>
                     <span x-text="dark ? 'Mode clair' : 'Mode sombre'"></span>
                 </button>
-            </form>
+            </div>
             <form method="POST" action="{{ route('auth.logout') }}">
                 @csrf
                 <button type="submit" class="btn btn-outline-danger btn-sm w-100">
@@ -401,11 +398,11 @@
     </div>
 @endauth
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
-<script src="{{ asset('js/tontine.js') }}"></script>
+<script defer src="{{ asset('js/vendor/bootstrap.bundle.min.js') }}"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.14.1/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.1/dist/cdn.min.js"></script>
+<script defer src="{{ asset('js/vendor/alpine.min.js') }}"></script>
+<script defer src="{{ asset('js/tontine.js') }}"></script>
 <script nonce="{{ $cspNonce ?? '' }}">
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
