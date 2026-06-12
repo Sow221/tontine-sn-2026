@@ -41,9 +41,11 @@ php artisan route:cache
 php artisan view:cache
 php artisan event:cache
 
-# Migrations + seed (idempotent — ne fait rien si admin existe déjà)
+# Migrations
 php artisan migrate --force
-php artisan db:seed --force
+
+# Seed — non-bloquant : les données de démo peuvent déjà exister en prod
+php artisan db:seed --force || echo "[WARN] Seeder partiel (données existantes ignorées)"
 
 # Permissions (ignorer les erreurs sur AlwaysData - hébergement mutualisé)
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
