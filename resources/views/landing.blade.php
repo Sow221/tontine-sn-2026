@@ -265,9 +265,9 @@
 <section class="ls-live" id="types" aria-labelledby="types-title">
   <div class="ls-container">
     <div class="ls-live__header">
-      <div class="ls-section-badge">4 formules</div>
+      <div class="ls-section-badge">5 formules</div>
       <h2 id="types-title" class="ls-section-title">
-        4 types de tontines.<br>
+        5 types de tontines.<br>
         <span class="ls-text-green">Choisissez la v&ocirc;tre.</span>
       </h2>
       <p class="ls-section-desc" style="margin:0 auto;">
@@ -299,16 +299,17 @@
           <span style="font-size:0.75rem;color:var(--gray-400);">&#x1F3B2; Tirage pond&eacute;r&eacute; &middot; V&eacute;to d&eacute;mocratique</span>
         </div>
       </div>
-      <div class="ls-live__card ls-reveal ls-reveal--delay-2">
+      <div class="ls-live__card ls-reveal ls-reveal--delay-2" style="border:2px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,#fef3c7);position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;right:0;background:#f59e0b;color:white;font-size:0.65rem;font-weight:700;padding:3px 10px;border-bottom-left-radius:8px;letter-spacing:0.05em;">UNIQUE EN AFRIQUE</div>
         <div class="ls-live__card-top">
           <span class="ls-live__card-name">Tontine aux Ench&egrave;res</span>
-          <span class="ls-live__card-badge">Ench&egrave;res</span>
+          <span class="ls-live__card-badge" style="background:#f59e0b;color:white;">&#x1F3C6; Innovation</span>
         </div>
-        <div class="ls-live__card-meta">
-          Ench&eacute;rissez de 0.5% &agrave; 30% pour recevoir la cagnotte en priorit&eacute;. La remise est redistribu&eacute;e aux autres membres du groupe.
+        <div class="ls-live__card-meta" style="color:#92400e;">
+          <strong>Besoin urgent du pot ?</strong> Ench&eacute;rissez de 0,5&nbsp;% &agrave; 30&nbsp;% pour le recevoir en priorit&eacute;. Votre remise est redistribu&eacute;e aux autres membres — tout le monde y gagne.
         </div>
         <div class="ls-live__card-footer" style="border:none;padding-top:8px;">
-          <span style="font-size:0.75rem;color:var(--gray-400);">&#x1F4CA; Offres en temps r&eacute;el</span>
+          <span style="font-size:0.75rem;color:#b45309;font-weight:600;">&#x1F4CA; Ench&egrave;res en temps r&eacute;el &middot; Redistribution automatique</span>
         </div>
       </div>
       <div class="ls-live__card ls-reveal ls-reveal--delay-3">
@@ -321,6 +322,18 @@
         </div>
         <div class="ls-live__card-footer" style="border:none;padding-top:8px;">
           <span style="font-size:0.75rem;color:var(--gray-400);">&#x1F3AF; Objectif collectif</span>
+        </div>
+      </div>
+      <div class="ls-live__card ls-reveal" style="border-left:3px solid #ec4899;">
+        <div class="ls-live__card-top">
+          <span class="ls-live__card-name">Tontine C&eacute;r&eacute;monielle</span>
+          <span class="ls-live__card-badge" style="background:#fdf2f8;color:#9d174d;">&#x1F389; &Eacute;v&eacute;nement</span>
+        </div>
+        <div class="ls-live__card-meta">
+          Collecte pour un mariage, baptême ou événement familial. Le groupe cotise et un b&eacute;n&eacute;ficiaire d&eacute;sign&eacute; re&ccedil;oit le pot &agrave; la date de la c&eacute;r&eacute;monie.
+        </div>
+        <div class="ls-live__card-footer" style="border:none;padding-top:8px;">
+          <span style="font-size:0.75rem;color:#9d174d;">&#x231B; Compte &agrave; rebours int&eacute;gr&eacute;</span>
         </div>
       </div>
     </div>
@@ -819,7 +832,6 @@
     <div class="ls-footer__col">
       <span class="ls-footer__col-title">Ressources</span>
       <a href="{{ route('faq.index') }}">FAQ</a>
-      <a href="{{ route('posts.index') }}">Blog</a>
       <a href="{{ route('api.docs') }}">API</a>
     </div>
     <div class="ls-footer__col">
@@ -833,7 +845,6 @@
     <span>&copy; {{ date('Y') }} TontineSN &mdash; Fait au S&eacute;n&eacute;gal &#9733;</span>
     <div class="ls-footer__links">
       <a href="{{ route('faq.index') }}">FAQ</a>
-      <a href="{{ route('posts.index') }}">Blog</a>
       <a href="mailto:contact@tontinesn.com">Contact</a>
       <a href="{{ route('cgu') }}">CGU</a>
       <a href="{{ route('privacy') }}">Confidentialit&eacute;</a>

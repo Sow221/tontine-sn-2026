@@ -160,7 +160,7 @@ class AdminUserController extends Controller
                 return back()->withErrors(['error' => 'Seul un super administrateur peut créer un autre super administrateur.']);
             }
 
-            $user->update(['role' => $request->role]);
+            $user->forceFill(['role' => $request->role])->save();
             Cache::forget('admin.stats');
 
             return back()->with('success', "Rôle de {$user->name} mis à jour en « {$request->role} ».");

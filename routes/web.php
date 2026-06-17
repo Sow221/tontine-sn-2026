@@ -41,6 +41,7 @@ Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
 Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
 Route::get('/posts/{post}/og', [PostController::class, 'ogImage'])->name('posts.og');
 Route::get('/faq', [FaqController::class, 'index'])->name('faq.index');
+Route::middleware('auth')->get('/contact', fn () => view('contact'))->name('contact');
 Route::get('/tontines/og/{code}', [TontineController::class, 'ogInviteImage'])->name('tontines.og');
 // ── Authentification ───────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
@@ -76,8 +77,10 @@ Route::middleware('auth')->group(function () {
 });
 
 // ── Webhooks ───────────────────────────────────────────────────────────────
-Route::get('/payment/failed', [PaymentController::class, 'failed'])->name('payment.failed');
-Route::post('/webhooks/greenapi', [WebhookController::class, 'greenapi'])->name('webhooks.greenapi');
+Route::middleware('auth')->get('/payment/failed', [PaymentController::class, 'failed'])->name('payment.failed');
+Route::post('/webhooks/greenapi/{token}', [WebhookController::class, 'greenapi'])
+    ->name('webhooks.greenapi')
+    ->middleware(['throttle:30,1', 'verify.greenapi']);
 
 // ── Espace membre ──────────────────────────────────────────────────────────
 Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
@@ -100,6 +103,7 @@ Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
     Route::post('/tontines/{tontine}/transfer', [TontineController::class, 'transferOwnership'])->name('tontines.transfer');
     Route::post('/tontines/{tontine}/members/{user}/approve', [TontineController::class, 'approveMember'])->name('tontines.members.approve');
     Route::delete('/tontines/{tontine}/members/{user}/reject', [TontineController::class, 'rejectMember'])->name('tontines.members.reject');
+    Route::delete('/tontines/{tontine}/members/{user}/exclude', [TontineController::class, 'excludeMember'])->name('tontines.members.exclude');
     Route::post('/tontines/{tontine}/members/{user}/remind', [TontineController::class, 'remindMember'])->name('tontines.members.remind')->middleware('throttle:10,1');
     Route::post('/tontines/{tontine}/remind-all', [TontineController::class, 'remindAll'])->name('tontines.remind-all')->middleware('throttle:3,1');
     Route::post('/tontines/{tontine}/cash/{transaction}/confirm', [TontineController::class, 'confirmCashPayment'])->name('tontines.cash.confirm');
@@ -108,11 +112,11 @@ Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
 
     // Paiements
     Route::get('/cycles/{cycle}/pay', [PaymentController::class, 'showForm'])->name('cycles.pay');
-    Route::post('/cycles/{cycle}/pay', [PaymentController::class, 'initiate'])->name('cycles.pay.initiate');
+    Route::post('/cycles/{cycle}/pay', [PaymentController::class, 'initiate'])->name('cycles.pay.initiate')->middleware('throttle:5,1');
     Route::get('/payment/pending/{transaction}', [PaymentController::class, 'pending'])->name('payment.pending');
     Route::get('/payment/status/{transaction}', [PaymentController::class, 'status'])->name('payment.status');
-    Route::post('/cycles/{cycle}/draw', [CycleController::class, 'draw'])->name('cycles.draw');
-    Route::post('/cycles/{cycle}/bid', [CycleController::class, 'bid'])->name('cycles.bid');
+    Route::post('/cycles/{cycle}/draw', [CycleController::class, 'draw'])->name('cycles.draw')->middleware('throttle:3,1');
+    Route::post('/cycles/{cycle}/bid', [CycleController::class, 'bid'])->name('cycles.bid')->middleware('throttle:10,1');
     Route::post('/cycles/{cycle}/close-saving', [CycleController::class, 'closeForcedSaving'])->name('cycles.close-saving');
     Route::post('/cycles/{cycle}/veto', [CycleController::class, 'veto'])->name('cycles.veto');
     Route::get('/transactions/{transaction}/recu', [PaymentController::class, 'receipt'])->name('transactions.receipt');
@@ -160,7 +164,7 @@ Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
 });
 
 // ── Admin ──────────────────────────────────────────────────────────────────
-Route::middleware(['auth', 'role:admin,super_admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin,super_admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     // Users
     Route::get('/users', [AdminUserController::class, 'index'])->name('users');
@@ -177,6 +181,7 @@ Route::middleware(['auth', 'role:admin,super_admin'])->prefix('admin')->name('ad
     Route::get('/tontines/{tontine}', [AdminTontineController::class, 'show'])->name('tontines.show');
     Route::post('/tontines/{tontine}/suspend', [AdminTontineController::class, 'suspend'])->name('tontines.suspend');
     Route::post('/tontines/{tontine}/reactivate', [AdminTontineController::class, 'reactivate'])->name('tontines.reactivate');
+    Route::post('/tontines/{tontine}/cycles/{cycle}/force-close', [AdminTontineController::class, 'forceCloseCycle'])->name('tontines.cycle.force-close');
     // Transactions
     Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions');
     Route::get('/transactions/export', [AdminTransactionController::class, 'export'])->name('transactions.export');
@@ -187,10 +192,6 @@ Route::middleware(['auth', 'role:admin,super_admin'])->prefix('admin')->name('ad
     Route::get('/notifications', [AdminLogController::class, 'notifications'])->name('notifications');
     Route::get('/stats', [AdminDashboardController::class, 'stats'])->name('stats');
     Route::get('/referrals', [AdminDashboardController::class, 'referrals'])->name('referrals');
-    Route::get('/api-docs', [ApiDocsController::class, 'index'])->name('api.docs');
-    Route::get('/posts', [AdminDashboardController::class, 'posts'])->name('posts');
-    Route::post('/posts', [AdminDashboardController::class, 'storePost'])->name('posts.store');
-    Route::post('/posts/{post}/publish', [AdminDashboardController::class, 'publishPost'])->name('posts.publish');
-    Route::delete('/posts/{post}', [AdminDashboardController::class, 'destroyPost'])->name('posts.destroy');
+    Route::get('/api-docs', [ApiDocsController::class, 'index'])->name('api-docs');
 });
 

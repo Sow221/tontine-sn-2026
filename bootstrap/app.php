@@ -5,6 +5,7 @@ use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\VerifyGreenApiWebhook;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -26,11 +27,13 @@ return Application::configure(basePath: dirname(__DIR__))
             ActivityLogger::class,
         ]);
         $middleware->alias([
-            'role' => RoleMiddleware::class,
+            'role'            => RoleMiddleware::class,
             'check.user.active' => CheckUserActive::class,
+            'verify.greenapi' => VerifyGreenApiWebhook::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'webhooks/paytech',
+            'webhooks/greenapi/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

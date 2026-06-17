@@ -113,6 +113,35 @@
     </div>
     @endif
 
+    {{-- Transactions disputées --}}
+    @php
+        $disputedTx = \App\Models\Transaction::whereHas('cycle', fn($q) => $q->where('tontine_id', $tontine->id))
+            ->where('status', 'disputed')
+            ->with('user')
+            ->get();
+    @endphp
+    @if($disputedTx->isNotEmpty())
+    <div class="mb-3 p-3 rounded" style="background:#fef2f2;border:1px solid #fecaca;">
+        <p class="fw-semibold small mb-2 text-danger">
+            <i class="fas fa-flag me-1"></i>{{ $disputedTx->count() }} transaction(s) contestée(s)
+        </p>
+        @foreach($disputedTx as $dtx)
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <div class="member-avatar avatar-sm" style="background:#fee2e2;color:#dc2626;">
+                {{ strtoupper(substr($dtx->user->name ?? '?', 0, 2)) }}
+            </div>
+            <div class="flex-grow-1 min-width-0">
+                <p class="mb-0 small fw-semibold text-truncate">{{ $dtx->user->name ?? '—' }}</p>
+                <small class="text-muted">{{ number_format($dtx->amount, 0, ',', ' ') }} FCFA · Cycle {{ $dtx->cycle->cycle_number ?? '?' }}</small>
+            </div>
+            <a href="{{ route('historique.index', ['tontine_id' => $tontine->id]) }}" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-0" style="font-size:11px;">
+                Voir
+            </a>
+        </div>
+        @endforeach
+    </div>
+    @endif
+
     {{-- Prochains bénéficiaires --}}
     @if($upcomingBeneficiaries->isNotEmpty() && !in_array($tontine->type, ['forced_saving', 'ceremonial']))
     <div>

@@ -100,6 +100,15 @@
                 </button>
             </form>
             @endif
+            @if(isset($currentCycle) && $currentCycle && in_array($currentCycle->status, ['active', 'partial', 'overdue']))
+            <form method="POST" action="{{ route('admin.tontines.cycle.force-close', [$tontine, $currentCycle]) }}"
+                  onsubmit="return confirm('Clôturer de force le cycle {{ $currentCycle->cycle_number }} ? Cette action est irréversible.')">
+                @csrf
+                <button type="submit" class="btn btn-outline-warning rounded-pill">
+                    <i class="fas fa-lock me-1"></i>Clôturer cycle {{ $currentCycle->cycle_number }}
+                </button>
+            </form>
+            @endif
         </div>
     </div>
 
@@ -131,6 +140,53 @@
         <p class="text-muted small mb-0">Aucun membre.</p>
         @endforelse
     </div>
+
+    {{-- Cycle courant : qui a payé --}}
+    @if(isset($currentCycle) && $currentCycle)
+    <div class="card mb-4">
+        <h6 class="fw-semibold mb-3">
+            Cycle {{ $currentCycle->cycle_number }} — Paiements
+            <span class="badge badge-{{ match($currentCycle->status) { 'paid' => 'success', 'overdue' => 'danger', 'partial' => 'warning', default => 'secondary' } }} ms-2">
+                {{ match($currentCycle->status) { 'paid' => 'Payé', 'overdue' => 'En retard', 'partial' => 'Partiel', default => 'En attente' } }}
+            </span>
+        </h6>
+        @php
+            $activeMembers = $members->where('pivot.status', 'active');
+            $paidCount = $cycleTransactions->where('status', 'success')->count();
+        @endphp
+        <div class="d-flex gap-3 mb-3 text-center">
+            <div class="flex-grow-1 p-2 bg-light rounded">
+                <div class="fw-bold text-green fs-5">{{ $paidCount }}</div>
+                <small class="text-muted">Payé</small>
+            </div>
+            <div class="flex-grow-1 p-2 bg-light rounded">
+                <div class="fw-bold text-warning fs-5">{{ $cycleTransactions->where('status', 'pending')->count() }}</div>
+                <small class="text-muted">En attente</small>
+            </div>
+            <div class="flex-grow-1 p-2 bg-light rounded">
+                <div class="fw-bold text-danger fs-5">{{ $activeMembers->count() - $cycleTransactions->count() }}</div>
+                <small class="text-muted">Non payé</small>
+            </div>
+        </div>
+        @foreach($activeMembers as $member)
+        @php $tx = $cycleTransactions->get($member->id); @endphp
+        <div class="d-flex align-items-center gap-2 mb-2 pb-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+            <div class="member-avatar avatar-sm text-white">{{ strtoupper(substr($member->name ?? '?', 0, 2)) }}</div>
+            <span class="flex-grow-1 small fw-semibold">{{ $member->name }}</span>
+            @if($tx)
+                @if($tx->status === 'success')
+                <span class="badge badge-success">Payé · {{ number_format($tx->amount, 0, ',', ' ') }} FCFA</span>
+                <span class="text-muted small">{{ $tx->method }}</span>
+                @else
+                <span class="badge badge-warning">En attente · espèces</span>
+                @endif
+            @else
+            <span class="badge badge-danger">Non payé</span>
+            @endif
+        </div>
+        @endforeach
+    </div>
+    @endif
 
     {{-- Cycles --}}
     <div class="card mb-4">

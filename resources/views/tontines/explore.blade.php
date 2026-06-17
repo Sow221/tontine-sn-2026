@@ -4,7 +4,7 @@
 @section('content')
 <div class="container py-4">
 
-    <div class="d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
         <div>
             <h4 class="fw-bold mb-0">Explorer les tontines</h4>
             <small class="text-muted">
@@ -15,7 +15,7 @@
                 @endif
             </small>
         </div>
-        <a href="{{ route('tontines.create') }}" class="btn btn-primary rounded-pill">
+        <a href="{{ route('tontines.create') }}" class="btn btn-primary rounded-pill flex-shrink-0">
             <i class="fas fa-plus me-2"></i>Créer la mienne
         </a>
     </div>

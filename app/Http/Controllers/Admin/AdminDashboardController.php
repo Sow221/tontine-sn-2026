@@ -3,14 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Post;
 use App\Models\Tontine;
 use App\Models\Transaction;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class AdminDashboardController extends Controller
 {
@@ -166,45 +163,4 @@ class AdminDashboardController extends Controller
         }
     }
 
-    public function posts()
-    {
-        $posts = Post::with('author')->latest()->paginate(20);
-
-        return view('admin.posts', compact('posts'));
-    }
-
-    public function storePost(Request $request)
-    {
-        $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'excerpt' => ['nullable', 'string', 'max:500'],
-            'content' => ['required', 'string'],
-        ]);
-
-        Post::create([
-            'user_id' => auth()->id(),
-            'title' => $request->title,
-            'slug' => Str::slug($request->title).'-'.time(),
-            'excerpt' => $request->excerpt,
-            'content' => $request->content,
-            'published_at' => $request->boolean('publish_now') ? now() : null,
-        ]);
-
-        return back()->with('success', 'Article créé.');
-    }
-
-    public function publishPost(Post $post)
-    {
-        $wasPublished = (bool) $post->published_at;
-        $post->update(['published_at' => $wasPublished ? null : now()]);
-
-        return back()->with('success', $wasPublished ? 'Article dépublié.' : 'Article publié.');
-    }
-
-    public function destroyPost(Post $post)
-    {
-        $post->delete();
-
-        return back()->with('success', 'Article supprimé.');
-    }
 }

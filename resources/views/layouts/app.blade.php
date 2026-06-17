@@ -60,13 +60,21 @@
     {{-- Sidebar --}}
     <aside class="app-sidebar" :class="{ 'open': sidebarOpen, 'collapsed': sidebarCollapsed }" role="navigation" aria-label="Navigation principale"
            x-trap.noscroll="sidebarOpen">
-        <a href="{{ route('dashboard') }}" class="sidebar-logo" aria-label="Retour au tableau de bord">
-            <picture>
-                <source srcset="{{ asset('images/element-logo.webp') }}" type="image/webp">
-                <img src="{{ asset('images/element-logo.png') }}" alt="TontineSN" width="36" height="36">
-            </picture>
-            <span class="sidebar-logo-text">TontineSN</span>
-        </a>
+        <div class="sidebar-header">
+            <a href="{{ route('dashboard') }}" class="sidebar-logo" aria-label="Retour au tableau de bord">
+                <picture>
+                    <source srcset="{{ asset('images/element-logo.webp') }}" type="image/webp">
+                    <img src="{{ asset('images/element-logo.png') }}" alt="TontineSN" width="36" height="36">
+                </picture>
+                <span class="sidebar-logo-text">TontineSN</span>
+            </a>
+            <button class="sidebar-collapse-btn d-none d-md-flex"
+                    @click="sidebarCollapsed = !sidebarCollapsed; localStorage.setItem('sidebar-collapsed', sidebarCollapsed)"
+                    :title="sidebarCollapsed ? 'Développer la barre latérale' : 'Réduire la barre latérale'"
+                    aria-label="Basculer la barre latérale">
+                <i class="fas fa-chevron-left" :class="{ 'fa-rotate-180': sidebarCollapsed }"></i>
+            </button>
+        </div>
 
         <nav class="sidebar-nav">
             @if(auth()->user()->isAdmin())
@@ -95,13 +103,8 @@
                 <a href="{{ route('admin.logs') }}" class="sidebar-link {{ request()->routeIs('admin.logs') ? 'active' : '' }}">
                     <i class="fas fa-list-alt"></i><span class="sidebar-link-text">Journaux</span>
                 </a>
-                <a href="{{ route('admin.api.docs') }}" class="sidebar-link {{ request()->routeIs('admin.api.docs') ? 'active' : '' }}">
+                <a href="{{ route('admin.api-docs') }}" class="sidebar-link {{ request()->routeIs('admin.api-docs') ? 'active' : '' }}">
                     <i class="fas fa-code"></i><span class="sidebar-link-text">API Docs</span>
-                </a>
-                <div class="sidebar-divider"></div>
-                <span class="sidebar-section-label">Contenu</span>
-                <a href="{{ route('admin.posts') }}" class="sidebar-link {{ request()->routeIs('admin.posts*') ? 'active' : '' }}">
-                    <i class="fas fa-newspaper"></i><span class="sidebar-link-text">Actualités</span>
                 </a>
             @else
                 {{-- Navigation MEMBRE --}}
@@ -124,9 +127,6 @@
                     <span class="badge bg-danger ms-auto">{{ $unreadNotificationsCount }}</span>
                     @endif
                 </a>
-                <a href="{{ route('profile.show') }}" class="sidebar-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
-                    <i class="fas fa-user"></i><span class="sidebar-link-text">Profil</span>
-                </a>
                 <div class="sidebar-divider"></div>
                 <a href="{{ route('historique.index') }}" class="sidebar-link {{ request()->routeIs('historique.*') ? 'active' : '' }}">
                     <i class="fas fa-history"></i><span class="sidebar-link-text">Historique</span>
@@ -138,47 +138,25 @@
         </nav>
 
         <div class="sidebar-footer">
-            <div class="sidebar-user mb-2">
+            <a href="{{ route('profile.show') }}" class="sidebar-user sidebar-user-link">
                 <div class="sidebar-user-avatar" aria-hidden="true">
                     {{ strtoupper(substr(auth()->user()->name ?? auth()->user()->email, 0, 1)) }}
                 </div>
-                <div class="overflow-hidden">
+                <div class="sidebar-user-info">
                     <div class="sidebar-user-name text-truncate">{{ auth()->user()->name ?? auth()->user()->email }}</div>
-                    <div class="sidebar-user-role">{{ match(auth()->user()->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => __('member.member') } }}</div>
+                    <div class="sidebar-user-role">{{ match(auth()->user()->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => __('member.member') } }} · SN-{{ str_pad(auth()->id(), 4, '0', STR_PAD_LEFT) }}</div>
                 </div>
-            </div>
-            <div class="sidebar-session-info">
-                <i class="fas fa-fingerprint me-1"></i>
-                <span>Session: {{ auth()->user()->identifier ?? 'SN-' . str_pad(auth()->id(), 4, '0', STR_PAD_LEFT) }}</span>
-            </div>
-            <div class="sidebar-footer-links">
-                <a href="{{ route('profile.show') }}" class="sidebar-footer-link">
-                    <i class="fas fa-cog"></i> Paramètres généraux
-                </a>
-            </div>
-            <div class="mb-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary w-100"
-                        @click="dark = !dark; localStorage.setItem('tontine-theme', dark ? 'dark' : 'light')">
-                    <i class="fas me-2" :class="dark ? 'fa-sun' : 'fa-moon'"></i>
-                    <span x-text="dark ? 'Mode clair' : 'Mode sombre'"></span>
-                </button>
-            </div>
-            <form method="POST" action="{{ route('auth.logout') }}">
+                <i class="fas fa-chevron-right sidebar-user-chevron" aria-hidden="true"></i>
+            </a>
+            <form method="POST" action="{{ route('auth.logout') }}" class="sidebar-footer-actions">
                 @csrf
-                <button type="submit" class="btn btn-outline-danger btn-sm w-100">
-                    <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                <button type="submit" class="sidebar-footer-action-btn sidebar-footer-action-btn--danger">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="sidebar-action-label">Déconnexion</span>
                 </button>
             </form>
         </div>
     </aside>
-
-    {{-- Sidebar collapse toggle (positionnÃ© sur la jointure) --}}
-    <button class="sidebar-collapse-btn d-none d-md-flex"
-            @click="sidebarCollapsed = !sidebarCollapsed; localStorage.setItem('sidebar-collapsed', sidebarCollapsed)"
-            :title="sidebarCollapsed ? 'DÃ©velopper la barre latÃ©rale' : 'RÃ©duire la barre latÃ©rale'"
-            aria-label="Basculer la barre latÃ©rale">
-        <i class="fas fa-chevron-left" :class="{ 'fa-rotate-180': sidebarCollapsed }"></i>
-    </button>
 
     {{-- Contenu principal --}}
     <div class="app-main" id="main-content">
@@ -254,24 +232,18 @@
                         </div>
                         <div class="topbar-dropdown-divider"></div>
                         <a href="{{ route('profile.show') }}" class="topbar-dropdown-item">
-                            <i class="fas fa-user"></i> Mon Profil
-                        </a>
-                        <a href="{{ route('profile.show') }}" class="topbar-dropdown-item">
-                            <i class="fas fa-cog"></i> Paramètres du compte
+                            <i class="fas fa-user"></i> Mon Profil &amp; Paramètres
                         </a>
                         <div class="topbar-dropdown-divider"></div>
                         <form method="POST" action="{{ route('auth.logout') }}">
                             @csrf
                             <button type="submit" class="topbar-dropdown-item text-danger">
-                                <i class="fas fa-sign-out-alt text-danger"></i> Se déconnecter
+                                <i class="fas fa-sign-out-alt text-danger"></i> Déconnexion
                             </button>
                         </form>
                     </div>
                 </div>
 
-                <span class="text-muted small d-none d-md-inline">
-                    {{ now()->isoFormat('dddd D MMMM YYYY') }}
-                </span>
             </div>
         </header>
 
@@ -280,12 +252,6 @@
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
-                </div>
-            @endif
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
                 </div>
             @endif
@@ -322,6 +288,7 @@
                 <a href="{{ route('privacy') }}" class="text-muted text-decoration-none">Confidentialité</a>
                 @if(!auth()->user()->isAdmin())
                 <a href="{{ route('faq.index') }}" class="text-muted text-decoration-none">FAQ</a>
+                <a href="{{ route('contact') }}" class="text-muted text-decoration-none">Support</a>
                 @endif
             </div>
             &copy; {{ date('Y') }} TontineSN. Tous droits réservés.
@@ -343,9 +310,6 @@
             </a>
             <a href="{{ route('admin.transactions') }}" class="bottom-nav-link {{ request()->routeIs('admin.transactions*') ? 'active' : '' }}">
                 <i class="fas fa-exchange-alt"></i><span>Transactions</span>
-            </a>
-            <a href="{{ route('admin.posts') }}" class="bottom-nav-link {{ request()->routeIs('admin.posts*') ? 'active' : '' }}">
-                <i class="fas fa-newspaper"></i><span>Actualités</span>
             </a>
             <a href="{{ route('admin.stats') }}" class="bottom-nav-link {{ request()->routeIs('admin.stats') ? 'active' : '' }}">
                 <i class="fas fa-chart-line"></i><span>Stats</span>

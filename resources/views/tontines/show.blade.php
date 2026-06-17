@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title', $tontine->name . ' — Tontine en ligne | TontineSN')
-@section('meta_description', "Tontine {$tontine->name} — {$tontine->type_label}, montant: ".number_format($tontine->amount, 0, ',', ' ')." FCFA, {$tontine->active_members_count} membre(s).")
+@section('meta_description', "Tontine {$tontine->name} — {$tontine->type_label}, montant: ".number_format($tontine->amount, 0, ',', ' ')." FCFA.")
 @section('og_title', $tontine->name . ' — Tontine TontineSN')
 @section('og_image', route('tontines.og', $tontine->code))
 
@@ -169,9 +169,9 @@
     <div class="card mb-4">
         <h6 class="fw-semibold mb-1">🎯 Bénéficiaire de l'événement</h6>
         <p class="text-muted small mb-3">Le membre désigné recevra le pot collecté à la date de l'événement.</p>
-        <form method="POST" action="{{ route('tontines.beneficiary', $tontine) }}" class="d-flex gap-2">
+        <form method="POST" action="{{ route('tontines.beneficiary', $tontine) }}" class="d-flex gap-2 flex-wrap">
             @csrf
-            <select name="beneficiary_id" class="form-select" required>
+            <select name="beneficiary_id" class="form-select flex-grow-1" required>
                 <option value="">Sélectionner un membre...</option>
                 @foreach($tontine->members->where('pivot.status', 'active') as $member)
                 <option value="{{ $member->id }}"

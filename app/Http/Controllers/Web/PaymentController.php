@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\InitiatePaymentRequest;
 use App\Models\Cycle;
 use App\Models\Transaction;
 use App\Services\CycleService;
@@ -38,6 +39,10 @@ class PaymentController extends Controller
             403
         );
 
+        $hasPaid = $cycle->successfulTransactions()
+            ->where('user_id', Auth::id())
+            ->exists();
+
         try {
             $penalty = $cycle->isOverdue() && $cycle->tontine->penalty_rate > 0
                 ? (int) round($cycle->tontine->amount * $cycle->tontine->penalty_rate / 100)
@@ -49,15 +54,11 @@ class PaymentController extends Controller
             return back()->withErrors(['error' => 'Impossible de charger le formulaire de paiement.']);
         }
 
-        return view('cycles.pay', compact('cycle', 'penalty', 'totalAmount'));
+        return view('cycles.pay', compact('cycle', 'penalty', 'totalAmount', 'hasPaid'));
     }
 
-    public function initiate(Request $request, Cycle $cycle)
+    public function initiate(InitiatePaymentRequest $request, Cycle $cycle)
     {
-        $request->validate([
-            'method' => 'required|in:wave,orange_money,free_money,card,cash',
-        ]);
-
         $user = Auth::user();
 
         abort_unless($cycle->tontine->status === 'active', 403, 'Cette tontine est suspendue ou inactive.');
@@ -120,15 +121,28 @@ class PaymentController extends Controller
             }
 
             if ($transaction->cycle?->tontine) {
+                $tontine = $transaction->cycle->tontine;
                 $method = $transaction->method;
                 $isDigital = in_array($method, ['wave', 'orange_money', 'free_money', 'card'], true);
 
-                $message = "Votre paiement de {$transaction->amount} FCFA pour {$transaction->cycle->tontine->name} a été marqué comme annulé.";
+                $message = "Votre paiement de {$transaction->amount} FCFA pour {$tontine->name} a été marqué comme annulé.";
                 if ($isDigital) {
                     $message .= ' Pour le remboursement réel, contactez directement votre opérateur de paiement.';
                 }
 
                 $this->notifier->send($transaction->user, 'general', $message);
+
+                // Notifier le créateur si c'est un paiement espèces confirmé qu'un membre annule
+                if ($method === 'cash') {
+                    $creator = \App\Models\User::find($tontine->created_by);
+                    if ($creator && $creator->id !== Auth::id()) {
+                        $this->notifier->send(
+                            $creator,
+                            'general',
+                            "{$transaction->user->name} a annulé son paiement espèces de {$transaction->amount} FCFA (cycle {$transaction->cycle->cycle_number}) dans la tontine « {$tontine->name} »."
+                        );
+                    }
+                }
             }
 
             $successMsg = $transaction->method === 'cash'

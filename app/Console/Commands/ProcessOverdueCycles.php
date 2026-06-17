@@ -7,6 +7,7 @@ use App\Models\Tontine;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\CycleService;
+use App\Services\DrawService;
 use App\Services\NotificationService;
 use Illuminate\Console\Command;
 
@@ -18,8 +19,9 @@ class ProcessOverdueCycles extends Command
 
     public function handle(): int
     {
-        $notifier = app(NotificationService::class);
+        $notifier     = app(NotificationService::class);
         $cycleService = app(CycleService::class);
+        $drawService  = app(DrawService::class);
 
         // ── 1. Cycles en retard ─────────────────────────────────────────────────────
         $overdue = Cycle::with('tontine.activeMembers')
@@ -75,8 +77,40 @@ class ProcessOverdueCycles extends Command
             }
         }
 
+        // ── 3. Tirage automatique des cycles d'enchères arrivés à échéance ─────────
+        $auctionCyclesDue = Cycle::with(['tontine.activeMembers', 'beneficiary'])
+            ->whereHas('tontine', fn ($q) => $q->where('type', 'auction')->where('status', 'active'))
+            ->whereNull('beneficiary_id')
+            ->where('due_date', '<', now())
+            ->get();
+
+        $auctionDrawCount = 0;
+        foreach ($auctionCyclesDue as $cycle) {
+            try {
+                $error = $drawService->canDraw($cycle);
+                if ($error) {
+                    $this->warn("Cycle enchère #{$cycle->cycle_number} — {$cycle->tontine->name} : {$error}");
+                    continue;
+                }
+
+                $drawService->drawBeneficiary($cycle);
+                $cycle->refresh();
+
+                if ($cycle->beneficiary_id) {
+                    $amount = $cycle->bid_amount
+                        ?? $cycle->tontine->amount * $cycle->tontine->activeMembers()->count();
+                    $notifier->notifyBeneficiary($cycle->beneficiary, $cycle->tontine->name, $amount);
+                    $auctionDrawCount++;
+                    $this->info("Enchère tirée : {$cycle->tontine->name} cycle #{$cycle->cycle_number} → {$cycle->beneficiary->name}.");
+                }
+            } catch (\Throwable $e) {
+                $this->error("Erreur tirage enchère cycle #{$cycle->id} : {$e->getMessage()}");
+            }
+        }
+
         $this->info("{$overdueCount} cycle(s) marqué(s) en retard.");
         $this->info("{$closedCount} épargne(s) forcée(s) clôturée(s) automatiquement.");
+        $this->info("{$auctionDrawCount} tirage(s) d'enchère(s) effectué(s) automatiquement.");
 
         return Command::SUCCESS;
     }

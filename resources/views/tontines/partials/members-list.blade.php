@@ -90,12 +90,21 @@
 @endif
 
 <h6 class="fw-semibold mb-3">Membres actifs ({{ $membersList->count() }})</h6>
+
+@php
+    $benefitedIds = $tontine->cycles->whereNotNull('beneficiary_id')->pluck('beneficiary_id')->unique();
+@endphp
+
 <div id="members-limited">
 @foreach($visibleMembers as $member)
+@php
+    $memberScore = $member->creditScore;
+    $hasBenefited = $benefitedIds->contains($member->id);
+@endphp
 <div class="card mb-2 py-2">
     <div class="d-flex align-items-center gap-3">
         <div class="member-avatar">{{ strtoupper(substr($member->name ?? $member->phone_number, 0, 2)) }}</div>
-        <div class="flex-grow-1">
+        <div class="flex-grow-1 min-width-0">
             <p class="mb-0 fw-semibold small">
                 <a href="{{ route('members.show', $member) }}" class="text-decoration-none text-reset">
                     {{ $member->name ?? $member->phone_number }}
@@ -103,26 +112,54 @@
                 @if($member->id === $tontine->created_by)
                     <span class="badge badge-info ms-1">Créateur</span>
                 @endif
+                @if($hasBenefited)
+                    <span class="badge bg-warning text-dark ms-1" title="A déjà reçu le pot">🏆 Reçu</span>
+                @endif
             </p>
             <small class="text-muted">
                 Position {{ $member->pivot->position ?? '—' }}
                 @if(($member->pivot->start_cycle_number ?? 1) > 1)
                     · <span class="text-warning fw-semibold">Dès cycle {{ $member->pivot->start_cycle_number }}</span>
                 @endif
+                @if($memberScore && $memberScore->score > 0)
+                    · <span class="fw-semibold" style="color:{{ $memberScore->score >= 7 ? '#009639' : ($memberScore->score >= 4 ? '#f59e0b' : '#ef4444') }}">
+                        ★ {{ $memberScore->score }}/10
+                    </span>
+                @endif
             </small>
         </div>
-        <span class="badge badge-success">Actif</span>
+        <div class="d-flex align-items-center gap-1">
+            <span class="badge badge-success">Actif</span>
+            @if($isCreator && $member->id !== $tontine->created_by && $member->id !== auth()->id())
+            <form method="POST" action="{{ route('tontines.members.exclude', [$tontine, $member]) }}"
+                  class="d-inline"
+                  onsubmit="return confirm('Exclure {{ addslashes($member->name ?? 'ce membre') }} de la tontine ? Cette action est irréversible.')">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-0"
+                        style="width:26px;height:26px;line-height:1;"
+                        title="Exclure ce membre"
+                        {{ $hasBenefited ? 'disabled' : '' }}>
+                    <i class="fas fa-user-times" style="font-size:10px;"></i>
+                </button>
+            </form>
+            @endif
+        </div>
     </div>
 </div>
 @endforeach
 </div>
+
 @if($hiddenCount > 0)
 <div id="members-all" style="display:none;">
 @foreach($membersList->skip(20) as $member)
+@php
+    $memberScore = $member->creditScore;
+    $hasBenefited = $benefitedIds->contains($member->id);
+@endphp
 <div class="card mb-2 py-2">
     <div class="d-flex align-items-center gap-3">
         <div class="member-avatar">{{ strtoupper(substr($member->name ?? $member->phone_number, 0, 2)) }}</div>
-        <div class="flex-grow-1">
+        <div class="flex-grow-1 min-width-0">
             <p class="mb-0 fw-semibold small">
                 <a href="{{ route('members.show', $member) }}" class="text-decoration-none text-reset">
                     {{ $member->name ?? $member->phone_number }}
@@ -130,15 +167,38 @@
                 @if($member->id === $tontine->created_by)
                     <span class="badge badge-info ms-1">Créateur</span>
                 @endif
+                @if($hasBenefited)
+                    <span class="badge bg-warning text-dark ms-1">🏆 Reçu</span>
+                @endif
             </p>
             <small class="text-muted">
                 Position {{ $member->pivot->position ?? '—' }}
                 @if(($member->pivot->start_cycle_number ?? 1) > 1)
                     · <span class="text-warning fw-semibold">Dès cycle {{ $member->pivot->start_cycle_number }}</span>
                 @endif
+                @if($memberScore && $memberScore->score > 0)
+                    · <span class="fw-semibold" style="color:{{ $memberScore->score >= 7 ? '#009639' : ($memberScore->score >= 4 ? '#f59e0b' : '#ef4444') }}">
+                        ★ {{ $memberScore->score }}/10
+                    </span>
+                @endif
             </small>
         </div>
-        <span class="badge badge-success">Actif</span>
+        <div class="d-flex align-items-center gap-1">
+            <span class="badge badge-success">Actif</span>
+            @if($isCreator && $member->id !== $tontine->created_by && $member->id !== auth()->id())
+            <form method="POST" action="{{ route('tontines.members.exclude', [$tontine, $member]) }}"
+                  class="d-inline"
+                  onsubmit="return confirm('Exclure {{ addslashes($member->name ?? 'ce membre') }} de la tontine ?')">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-0"
+                        style="width:26px;height:26px;line-height:1;"
+                        title="Exclure ce membre"
+                        {{ $hasBenefited ? 'disabled' : '' }}>
+                    <i class="fas fa-user-times" style="font-size:10px;"></i>
+                </button>
+            </form>
+            @endif
+        </div>
     </div>
 </div>
 @endforeach

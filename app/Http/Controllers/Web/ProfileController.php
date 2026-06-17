@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdatePasswordRequest;
+use App\Http\Requests\UpdateProfileRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,23 +24,9 @@ class ProfileController extends Controller
         return view('profile.show', compact('user', 'referralLink', 'referralsCount'));
     }
 
-    public function update(Request $request)
+    public function update(UpdateProfileRequest $request)
     {
         $user = Auth::user();
-
-        $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'email', 'unique:users,email,'.$user->id],
-            'phone_number' => ['nullable', 'string', 'regex:/^\+?[0-9\s\-]{7,20}$/'],
-            'avatar' => ['nullable', 'image', 'max:2048'],
-        ], [
-            'name.required' => 'Le nom est obligatoire.',
-            'email.required' => "L'email est obligatoire.",
-            'email.unique' => 'Cet email est déjà utilisé.',
-            'avatar.image' => 'Le fichier doit être une image.',
-            'avatar.max' => "L'image ne doit pas dépasser 2 Mo.",
-            'phone_number.regex' => 'Format de téléphone invalide (ex: +221 77 000 00 00).',
-        ]);
 
         try {
             $data = [
@@ -64,22 +52,13 @@ class ProfileController extends Controller
         }
     }
 
-    public function updatePassword(Request $request)
+    public function updatePassword(UpdatePasswordRequest $request)
     {
         $user = Auth::user();
 
         if (empty($user->password)) {
             return back()->withErrors(['current_password' => 'Votre compte est connecté via Google. Vous ne pouvez pas définir un mot de passe ici.']);
         }
-
-        $request->validate([
-            'current_password' => ['required'],
-            'password' => ['required', 'min:8', 'confirmed'],
-        ], [
-            'current_password.required' => 'Le mot de passe actuel est obligatoire.',
-            'password.min' => 'Le nouveau mot de passe doit contenir au moins 8 caractères.',
-            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
-        ]);
 
         try {
             if (! Hash::check($request->current_password, $user->password)) {

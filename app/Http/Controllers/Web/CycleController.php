@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BidCycleRequest;
 use App\Models\AuctionBid;
 use App\Models\Cycle;
 use App\Models\CycleVeto;
@@ -50,7 +51,7 @@ class CycleController extends Controller
         }
     }
 
-    public function bid(Request $request, Cycle $cycle)
+    public function bid(BidCycleRequest $request, Cycle $cycle)
     {
         abort_unless($cycle->tontine->type === 'auction', 403);
         abort_unless(
@@ -65,14 +66,6 @@ class CycleController extends Controller
         if ($cycle->due_date->isPast()) {
             return back()->withErrors(['bid_rate' => 'La date limite des enchères est dépassée.']);
         }
-
-        $request->validate([
-            'bid_rate' => ['required', 'numeric', 'min:0.5', 'max:30'],
-        ], [
-            'bid_rate.required' => 'Le taux d\'enchère est obligatoire.',
-            'bid_rate.min' => 'Le taux minimum est 0.5%.',
-            'bid_rate.max' => 'Le taux maximum est 30%.',
-        ]);
 
         try {
             AuctionBid::updateOrCreate(

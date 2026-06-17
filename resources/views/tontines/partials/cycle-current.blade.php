@@ -8,6 +8,30 @@
         @endif
     </h6>
 
+    {{-- Countdown pour tontine cérémonielle --}}
+    @if($tontine->type === 'ceremonial' && $currentCycle->due_date->isFuture())
+    @php
+        $daysLeft = (int) now()->diffInDays($currentCycle->due_date, false);
+        $hoursLeft = (int) now()->diffInHours($currentCycle->due_date, false);
+    @endphp
+    <div class="d-flex align-items-center gap-3 p-3 rounded mb-3"
+         style="background:linear-gradient(135deg,#fdf2f8,#fce7f3);border:1px solid #fbcfe8;">
+        <div class="text-center flex-shrink-0">
+            <div style="font-size:2rem;font-weight:800;color:#ec4899;line-height:1;">
+                {{ $daysLeft > 0 ? $daysLeft : max(1, $hoursLeft) }}
+            </div>
+            <div style="font-size:0.7rem;color:#9d174d;font-weight:600;text-transform:uppercase;">
+                {{ $daysLeft > 0 ? ($daysLeft > 1 ? 'jours' : 'jour') : ($hoursLeft > 1 ? 'heures' : 'heure') }}
+            </div>
+        </div>
+        <div class="flex-grow-1">
+            <p class="fw-semibold mb-0 small" style="color:#9d174d;">Compte à rebours avant l'événement</p>
+            <small class="text-muted">{{ $currentCycle->due_date->isoFormat('dddd D MMMM YYYY') }}</small>
+        </div>
+        <i class="fas fa-calendar-alt flex-shrink-0" style="color:#ec4899;font-size:1.4rem;"></i>
+    </div>
+    @endif
+
     {{-- Bannière bénéficiaire prominent --}}
     @if($currentCycle->beneficiary_id === auth()->id())
     <div class="your-turn-banner" role="status" aria-live="polite">
@@ -200,7 +224,7 @@
             <form method="POST" action="{{ route('tontines.cash.confirm', [$tontine, $cashTx]) }}">
                 @csrf
                 <button type="submit" class="btn btn-sm btn-success rounded-pill"
-                        onclick="return confirm('Confirmer la remise en espèces de {{ $cashTx->user->name ?? \"ce membre\" }} ?')">
+                        onclick="return confirm('Confirmer la remise en espèces de {{ $cashTx->user->name ?? \'ce membre\' }} ?')">
                     <i class="fas fa-check"></i> Valider
                 </button>
             </form>
@@ -220,15 +244,20 @@
     @endif
 
     <div class="d-flex gap-2 mt-2 flex-wrap">
+        @php
+            $payPenalty = $currentCycle->isOverdue() && $tontine->penalty_rate > 0
+                ? (int) round($tontine->amount * $tontine->penalty_rate / 100) : 0;
+            $payTotal = $tontine->amount + $payPenalty;
+        @endphp
         @if($tontine->type === 'forced_saving')
             @if($hasPaid)
             <div class="btn btn-success flex-grow-1 disabled"><i class="fas fa-check-circle me-2"></i>{{ __('member.paid_contribution') }}</div>
             @elseif($paymentPending ?? false)
             <div class="btn btn-warning flex-grow-1 disabled"><i class="fas fa-clock me-2"></i>{{ __('member.payment_validating_btn') }}</div>
             @else
-            <a href="{{ route('cycles.pay', $currentCycle) }}" class="btn btn-primary flex-grow-1">
-                <i class="fas fa-piggy-bank me-2"></i>{{ __('member.pay_amount') }} — {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA
-            </a>
+            <button type="button" class="btn btn-primary flex-grow-1" data-bs-toggle="modal" data-bs-target="#payModal">
+                <i class="fas fa-piggy-bank me-2"></i>{{ __('member.pay_amount') }} — {{ number_format($payTotal, 0, ',', ' ') }} FCFA
+            </button>
             @endif
         @elseif($tontine->type === 'ceremonial')
             @if($hasPaid)
@@ -236,9 +265,9 @@
             @elseif($paymentPending ?? false)
             <div class="btn btn-warning flex-grow-1 disabled"><i class="fas fa-clock me-2"></i>{{ __('member.contribution_validating') }}</div>
             @else
-            <a href="{{ route('cycles.pay', $currentCycle) }}" class="btn btn-primary flex-grow-1">
-                <i class="fas fa-heart me-2"></i>{{ __('member.contribute') }} — {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA
-            </a>
+            <button type="button" class="btn btn-primary flex-grow-1" data-bs-toggle="modal" data-bs-target="#payModal">
+                <i class="fas fa-heart me-2"></i>{{ __('member.contribute') }} — {{ number_format($payTotal, 0, ',', ' ') }} FCFA
+            </button>
             @endif
         @else
             @if($hasPaid)
@@ -246,9 +275,9 @@
             @elseif($paymentPending ?? false)
             <div class="btn btn-warning flex-grow-1 disabled"><i class="fas fa-clock me-2"></i>{{ __('member.payment_validating_btn') }}</div>
             @else
-            <a href="{{ route('cycles.pay', $currentCycle) }}" class="btn btn-primary flex-grow-1">
-                <i class="fas fa-money-bill-wave me-2"></i>{{ __('member.pay_amount') }} — {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA
-            </a>
+            <button type="button" class="btn btn-primary flex-grow-1" data-bs-toggle="modal" data-bs-target="#payModal">
+                <i class="fas fa-money-bill-wave me-2"></i>{{ __('member.pay_amount') }} — {{ number_format($payTotal, 0, ',', ' ') }} FCFA
+            </button>
             @endif
             @if(auth()->id() === $tontine->created_by)
                 @if($canDraw)
@@ -264,4 +293,100 @@
         @endif
     </div>
 </div>
+
+{{-- Modal paiement inline — évite la navigation vers une page dédiée --}}
+@if(!$hasPaid && !($paymentPending ?? false))
+@php $payPenalty2 = $currentCycle->isOverdue() && $tontine->penalty_rate > 0 ? (int) round($tontine->amount * $tontine->penalty_rate / 100) : 0; $payTotal2 = $tontine->amount + $payPenalty2; @endphp
+<div class="modal fade" id="payModal" tabindex="-1" aria-labelledby="payModalLabel" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" x-data="{ method: 'wave', submitting: false }">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold" id="payModalLabel">
+                    @if($tontine->type === 'forced_saving') Épargner
+                    @elseif($tontine->type === 'ceremonial') Contribuer
+                    @else Payer ma cotisation
+                    @endif
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-3 mb-4 bg-light rounded">
+                    <p class="text-muted small mb-1">{{ $tontine->name }} · Cycle {{ $currentCycle->cycle_number }}</p>
+                    <div class="fw-bold fs-3 text-green">{{ number_format($payTotal2, 0, ',', ' ') }} FCFA</div>
+                    <small class="text-muted">Date limite : {{ $currentCycle->due_date->format('d/m/Y') }}</small>
+                    @if($payPenalty2 > 0)
+                    <div class="alert alert-warning mt-2 mb-0 py-2 small text-start">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Pénalité : {{ number_format($tontine->amount, 0, ',', ' ') }} + {{ number_format($payPenalty2, 0, ',', ' ') }} FCFA ({{ $tontine->penalty_rate }}%)
+                    </div>
+                    @endif
+                </div>
+                @error('payment')
+                <div class="alert alert-danger py-2 mb-3"><i class="fas fa-exclamation-circle me-2"></i>{{ $message }}</div>
+                @enderror
+                <form method="POST" action="{{ route('cycles.pay.initiate', $currentCycle) }}" id="payModalForm">
+                    @csrf
+                    <h6 class="fw-semibold mb-3">Mode de paiement</h6>
+                    <div class="payment-methods mb-3">
+                        <label class="payment-option" :class="method === 'wave' ? 'payment-wave' : ''">
+                            <input type="radio" name="method" value="wave" x-model="method" class="d-none">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="payment-logo wave-logo"><img src="{{ asset('images/logo wave.webp') }}" alt="Wave" class="pay-method-icon"></div>
+                                <div><p class="fw-semibold mb-0">Wave</p><small class="text-muted">Paiement instantané</small></div>
+                                <template x-if="method === 'wave'"><span class="badge bg-success ms-auto">Recommandé</span></template>
+                                <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'wave'" x-cloak></i>
+                            </div>
+                        </label>
+                        <label class="payment-option" :class="method === 'orange_money' ? 'payment-orange' : ''">
+                            <input type="radio" name="method" value="orange_money" x-model="method" class="d-none">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="payment-logo om-logo"><img src="{{ asset('images/logo orange money.webp') }}" alt="Orange Money" class="pay-method-icon"></div>
+                                <div><p class="fw-semibold mb-0">Orange Money</p><small class="text-muted">Paiement mobile</small></div>
+                                <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'orange_money'" x-cloak></i>
+                            </div>
+                        </label>
+                        <label class="payment-option" :class="method === 'free_money' ? 'payment-free' : ''">
+                            <input type="radio" name="method" value="free_money" x-model="method" class="d-none">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="payment-logo" style="background:#E8F5E9;border:1.5px solid #E2E8F0;"><span class="fw-bold text-green" style="font-size:11px;">FREE</span></div>
+                                <div><p class="fw-semibold mb-0">Free Money</p><small class="text-muted">Free Sénégal</small></div>
+                                <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'free_money'" x-cloak></i>
+                            </div>
+                        </label>
+                        <label class="payment-option" :class="method === 'card' ? 'payment-card' : ''">
+                            <input type="radio" name="method" value="card" x-model="method" class="d-none">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="payment-logo card-logo"><img src="{{ asset('images/carte bancaire.webp') }}" alt="Carte" class="pay-method-icon"></div>
+                                <div><p class="fw-semibold mb-0">Carte bancaire</p><small class="text-muted">Visa / Mastercard</small></div>
+                                <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'card'" x-cloak></i>
+                            </div>
+                        </label>
+                        <label class="payment-option" :class="method === 'cash' ? 'payment-cash' : ''">
+                            <input type="radio" name="method" value="cash" x-model="method" class="d-none">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="payment-logo cash-logo"><i class="fas fa-money-bill"></i></div>
+                                <div><p class="fw-semibold mb-0">Espèces</p><small class="text-muted">Remise en main propre</small></div>
+                                <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'cash'" x-cloak></i>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="alert alert-light d-flex gap-2 align-items-start mb-0" x-show="method !== 'cash'" x-cloak>
+                        <i class="fas fa-info-circle text-muted mt-1 flex-shrink-0"></i>
+                        <small class="text-muted">Traitement sécurisé via <strong>PayTech</strong>. Vous serez redirigé vers la page de paiement.</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" form="payModalForm" class="btn btn-primary px-4"
+                        :disabled="submitting"
+                        @click="submitting = true">
+                    <span x-show="!submitting"><i class="fas fa-lock me-2"></i>Confirmer — {{ number_format($payTotal2, 0, ',', ' ') }} FCFA</span>
+                    <span x-show="submitting" x-cloak><span class="spinner-border spinner-border-sm me-2"></span>Traitement...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 @endif

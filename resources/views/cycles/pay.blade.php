@@ -16,6 +16,20 @@
 
     <h4 class="fw-bold mb-4">Payer ma cotisation</h4>
 
+    {{-- Guard : cycle déjà payé --}}
+    @if($hasPaid ?? false)
+    <div class="alert alert-success d-flex align-items-center gap-3 mb-4">
+        <i class="fas fa-check-circle fa-2x text-success flex-shrink-0"></i>
+        <div>
+            <strong>Cotisation déjà réglée pour ce cycle.</strong><br>
+            <small class="text-muted">Vous avez déjà payé votre cotisation pour le cycle {{ $cycle->cycle_number }} de « {{ $cycle->tontine->name }} ».</small>
+        </div>
+    </div>
+    <a href="{{ route('tontines.show', $cycle->tontine) }}" class="btn btn-outline-primary rounded-pill">
+        <i class="fas fa-arrow-left me-2"></i>Retour à la tontine
+    </a>
+    @else
+
     {{-- Récapitulatif --}}
     <div class="card mb-4">
         <div class="text-center py-3">
@@ -218,3 +232,5 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+
+@endif {{-- end @else (hasPaid) --}}

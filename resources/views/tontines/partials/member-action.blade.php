@@ -13,13 +13,13 @@
                     <p class="mb-0 small text-muted">{{ __('member.payment_validating') }}</p>
                 @elseif($currentCycle && !$hasPaid && $tontine->type !== 'forced_saving')
                     <p class="mb-2 small">{{ __('member.contribution_due') }} <strong>{{ $currentCycle->due_date->format('d/m/Y') }}</strong>.</p>
-                    <a href="{{ route('cycles.pay', $currentCycle) }}" class="btn btn-sm btn-primary rounded-pill">
-                        <i class="fas fa-money-bill-wave me-1"></i>{{ __('member.pay') }} — {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA
+                    <a href="#cycle" class="btn btn-sm btn-outline-primary rounded-pill">
+                        <i class="fas fa-arrow-down me-1"></i>Voir le paiement
                     </a>
                 @elseif($tontine->type === 'forced_saving' && $currentCycle && !$hasPaid)
                     <p class="mb-2 small">{{ __('member.contribution_due') }} <strong>{{ $currentCycle->due_date->format('d/m/Y') }}</strong>.</p>
-                    <a href="{{ route('cycles.pay', $currentCycle) }}" class="btn btn-sm btn-primary rounded-pill">
-                        <i class="fas fa-piggy-bank me-1"></i>{{ __('member.pay') }} — {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA
+                    <a href="#cycle" class="btn btn-sm btn-outline-primary rounded-pill">
+                        <i class="fas fa-arrow-down me-1"></i>Voir le paiement
                     </a>
                 @elseif($tontine->type === 'auction' && $currentCycle && !$currentCycle->beneficiary_id && !($bidDeadlinePassed ?? false))
                     <p class="mb-2 small">{{ __('member.type_auction_help') }}</p>

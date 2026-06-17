@@ -25,11 +25,11 @@
         </ol>
     </nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-1">
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-1 flex-wrap">
         <h4 class="fw-bold mb-0">Historique des paiements</h4>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-shrink-0">
             <a href="{{ route('historique.export') . '?' . http_build_query(request()->query()) }}" class="btn btn-sm btn-outline-primary rounded-pill">
-                <i class="fas fa-download me-1"></i>CSV
+                <i class="fas fa-download me-1"></i><span class="d-none d-sm-inline">Export </span>CSV
             </a>
             <a href="{{ route('historique.export.pdf') . '?' . http_build_query(request()->query()) }}" class="btn btn-sm btn-outline-danger rounded-pill">
                 <i class="fas fa-file-pdf me-1"></i>PDF

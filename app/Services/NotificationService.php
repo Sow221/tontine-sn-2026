@@ -9,9 +9,10 @@ use App\Models\NotificationLog;
 use App\Models\Tontine;
 use App\Models\User;
 use App\Services\WhatsApp\GreenApiService;
-use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Minishlink\WebPush\Subscription;
+use Minishlink\WebPush\WebPush;
 
 class NotificationService
 {
@@ -33,65 +34,74 @@ class NotificationService
 
     const EVENT_KYC_REJECTED = 'kyc_rejected';
 
+    const EVENT_REFERRAL = 'referral_joined';
+
     public function __construct(
         private GreenApiService $greenApi,
     ) {}
 
     public function sendWebPush(User $user, string $title, string $body, string $url = '/dashboard'): bool
     {
-        $tokens = FcmToken::where('user_id', $user->id)->get();
+        $publicKey  = config('services.vapid.public_key');
+        $privateKey = config('services.vapid.private_key');
 
+        if (! $publicKey || ! $privateKey) {
+            Log::debug('Web Push désactivé — VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY manquants');
+
+            return false;
+        }
+
+        $tokens = FcmToken::where('user_id', $user->id)->get();
         if ($tokens->isEmpty()) {
             return false;
         }
 
-        $payload = json_encode([
-            'notification' => [
-                'title' => $title,
-                'body' => $body,
-                'icon' => '/images/icon-192.png',
-            ],
-            'data' => [
-                'url' => $url,
+        $webPush = new WebPush([
+            'VAPID' => [
+                'subject'    => config('services.vapid.subject'),
+                'publicKey'  => $publicKey,
+                'privateKey' => $privateKey,
             ],
         ]);
 
-        $client = new Client;
+        $payload = json_encode([
+            'title' => $title,
+            'body'  => $body,
+            'icon'  => '/images/icon-192.png',
+            'url'   => $url,
+        ]);
+
         $success = false;
 
         foreach ($tokens as $token) {
             try {
-                // Envoyer le push notification à l'endpoint Web Push
-                $response = $client->post($token->endpoint, [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'TTL' => '3600',
+                $subscription = Subscription::create([
+                    'endpoint' => $token->endpoint,
+                    'keys'     => [
+                        'p256dh' => $token->p256dh ?? '',
+                        'auth'   => $token->auth ?? '',
                     ],
-                    'json' => [
-                        'notification' => [
-                            'title' => $title,
-                            'body' => $body,
-                            'icon' => '/images/icon-192.png',
-                        ],
-                        'data' => [
-                            'url' => $url,
-                        ],
-                    ],
-                    'http_errors' => false,
                 ]);
 
-                if ($response->getStatusCode() === 201 || $response->getStatusCode() === 200) {
+                $report = $webPush->sendOneNotification($subscription, $payload);
+
+                if ($report->isSuccess()) {
                     $token->update(['last_used_at' => now()]);
                     $success = true;
-                } elseif ($response->getStatusCode() === 410 || $response->getStatusCode() === 404) {
-                    // Token expiré ou invalid, le supprimer
+                } elseif ($report->isSubscriptionExpired()) {
                     $token->delete();
+                } else {
+                    Log::warning('Web Push échoué', [
+                        'user_id'  => $user->id,
+                        'endpoint' => $token->endpoint,
+                        'reason'   => $report->getReason(),
+                    ]);
                 }
-            } catch (\Exception $e) {
-                Log::warning('Web Push failed', [
-                    'user_id' => $user->id,
+            } catch (\Throwable $e) {
+                Log::warning('Web Push exception', [
+                    'user_id'  => $user->id,
                     'endpoint' => $token->endpoint,
-                    'error' => $e->getMessage(),
+                    'error'    => $e->getMessage(),
                 ]);
             }
         }
@@ -223,6 +233,8 @@ class NotificationService
         $montant = number_format($amount, 0, ',', ' ');
         $msg = "🎉 Bonjour {$user->name}, c'est votre tour ! Vous êtes bénéficiaire de la tontine {$tontineName}. Montant à recevoir : {$montant} FCFA. Connectez-vous sur TontineSN.";
 
+        $this->sendWebPush($user, "🎉 C'est votre tour !", "Bénéficiaire de {$tontineName} — {$montant} FCFA à recevoir");
+
         if ($this->wantsChannel($user, 'beneficiary_whatsapp')) {
             $this->sendWhatsApp($user, $msg, self::EVENT_BENEFICIARY);
         }
@@ -252,6 +264,8 @@ class NotificationService
             'cycleNumber' => $cycleNumber,
         ];
 
+        $this->sendWebPush($user, '✅ Paiement confirmé', "Cotisation{$cycleInfo} de {$montant} FCFA — {$tontineName}");
+
         if ($this->wantsChannel($user, 'payment_whatsapp')) {
             $this->sendWhatsApp($user, $msg, self::EVENT_PAYMENT, $receipt);
         }
@@ -271,6 +285,8 @@ class NotificationService
     public function notifyMemberApproved(User $user, string $tontineName): void
     {
         $msg = "✅ Bonjour {$user->name}, votre adhésion à la tontine {$tontineName} a été approuvée ! Bienvenue dans le groupe. Connectez-vous sur TontineSN.";
+
+        $this->sendWebPush($user, '✅ Adhésion approuvée', "Bienvenue dans {$tontineName} !");
 
         if ($this->wantsChannel($user, 'member_whatsapp')) {
             $this->sendWhatsApp($user, $msg, self::EVENT_MEMBER_APPROVED);
@@ -292,6 +308,8 @@ class NotificationService
         $montant = number_format($amount, 0, ',', ' ');
         $msg = "🔔 Bonjour {$user->name}, rappel : votre cotisation de {$montant} FCFA pour la tontine {$tontineName} est due dans {$daysLeft} jour(s). Payez à temps pour garder votre score crédit.";
 
+        $this->sendWebPush($user, '🔔 Rappel cotisation', "{$montant} FCFA — dans {$daysLeft} j — {$tontineName}");
+
         if ($this->wantsChannel($user, 'reminder_whatsapp')) {
             $this->sendWhatsApp($user, $msg, self::EVENT_REMINDER);
         }
@@ -311,6 +329,8 @@ class NotificationService
     public function notifyCycleStart(User $user, string $tontineName, string $dueDate): void
     {
         $msg = "📅 Bonjour {$user->name}, nouveau cycle démarré pour la tontine {$tontineName}. Date limite : {$dueDate}. Connectez-vous sur TontineSN pour payer.";
+
+        $this->sendWebPush($user, '📅 Nouveau cycle démarré', "{$tontineName} — Limite : {$dueDate}");
 
         if ($this->wantsChannel($user, 'cycle_whatsapp')) {
             $this->sendWhatsApp($user, $msg, self::EVENT_CYCLE_START);
@@ -353,6 +373,8 @@ class NotificationService
     {
         $msg = "👤 Bonjour {$creator->name}, {$newMember->name} souhaite rejoindre votre tontine {$tontine->name}. Connectez-vous pour approuver ou refuser.";
 
+        $this->sendWebPush($creator, '👤 Demande d\'adhésion', "{$newMember->name} veut rejoindre {$tontine->name}");
+
         $this->sendWhatsApp($creator, $msg, self::EVENT_MEMBER_REQUEST);
         $this->sendEmail(
             $creator,
@@ -362,6 +384,25 @@ class NotificationService
             Connectez-vous à TontineSN pour approuver ou refuser cette demande.",
             self::EVENT_MEMBER_REQUEST
         );
+    }
+
+    public function notifyReferralJoined(User $referrer, User $newUser): void
+    {
+        $msg = "🎁 Bonjour {$referrer->name}, {$newUser->name} vient de rejoindre TontineSN grâce à votre code de parrainage. Merci de développer la communauté !";
+
+        if ($this->wantsChannel($referrer, 'referral_whatsapp')) {
+            $this->sendWhatsApp($referrer, $msg, self::EVENT_REFERRAL);
+        }
+        if ($this->wantsChannel($referrer, 'referral_email')) {
+            $this->sendEmail(
+                $referrer,
+                "🎁 Nouveau filleul — {$newUser->name} a rejoint TontineSN",
+                "Bonjour <strong>{$referrer->name}</strong>,<br><br>
+            <strong>{$newUser->name}</strong> a rejoint TontineSN grâce à votre code de parrainage.<br><br>
+            Merci de contribuer à la croissance de notre communauté !",
+                self::EVENT_REFERRAL
+            );
+        }
     }
 
     private function subjectFromType(string $type): string

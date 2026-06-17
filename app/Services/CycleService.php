@@ -113,16 +113,30 @@ class CycleService
 
     public function updateCycleTotal(Cycle $cycle): void
     {
+        $tontine = $cycle->tontine;
+
         $total = $cycle->successfulTransactions()
             ->excludeRedistribution()
             ->sum('amount');
         $expected = $cycle->expectedTotal();
 
+        // Pour les tontines avec quorum, le cycle est "payé" dès que le nombre
+        // de membres ayant cotisé atteint le seuil, même si 100% n'est pas collecté.
+        $memberCount = $tontine->activeMembers()->count();
+        $paidCount   = $cycle->successfulTransactions()
+            ->excludeRedistribution()
+            ->distinct('user_id')
+            ->count('user_id');
+
+        $quorumMet = $tontine->quorum > 1
+            ? $paidCount >= (int) ceil($memberCount * $tontine->quorum / 100)
+            : $total >= $expected;
+
         $status = match (true) {
-            $total >= $expected => 'paid',
-            $total > 0 => 'partial',
+            $quorumMet          => 'paid',
+            $total > 0          => 'partial',
             $cycle->isOverdue() => 'overdue',
-            default => 'pending',
+            default             => 'pending',
         };
 
         $cycle->update(['total_collected' => $total, 'status' => $status]);

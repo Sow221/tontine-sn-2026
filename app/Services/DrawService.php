@@ -9,6 +9,7 @@ use App\Models\CreditScore;
 use App\Models\Cycle;
 use App\Models\CycleVeto;
 use App\Models\Transaction;
+use Illuminate\Support\Facades\DB;
 
 class DrawService
 {
@@ -53,37 +54,48 @@ class DrawService
             return;
         }
 
-        $tontine = $cycle->tontine;
+        DB::transaction(function () use ($cycle) {
+            // Verrou exclusif pour éviter un double tirage concurrent
+            $locked = Cycle::lockForUpdate()->findOrFail($cycle->id);
 
-        $alreadyWon = Cycle::where('tontine_id', $tontine->id)
-            ->whereNotNull('beneficiary_id')
-            ->pluck('beneficiary_id');
+            if ($locked->beneficiary_id) {
+                return;
+            }
 
-        $eligible = $tontine->activeMembers()
-            ->whereNotIn('users.id', $alreadyWon)
-            ->get();
+            $tontine = $locked->tontine;
 
-        if ($eligible->isEmpty()) {
-            return;
-        }
+            $alreadyWon = Cycle::where('tontine_id', $tontine->id)
+                ->whereNotNull('beneficiary_id')
+                ->pluck('beneficiary_id');
 
-        if ($tontine->type === 'auction') {
-            $winner = $this->resolveAuctionWinner($cycle, $eligible);
-        } elseif ($tontine->weighted_draw) {
-            $winner = $this->weightedRandomDraw($eligible);
-        } else {
-            $winner = $tontine->draw_method === 'random'
-                ? $eligible->random()
-                : $eligible->sortBy(fn ($u) => $u->pivot->position)->first();
-        }
+            $eligible = $tontine->activeMembers()
+                ->whereNotIn('users.id', $alreadyWon)
+                ->get();
 
-        $hash = hash('sha256', $tontine->id.$cycle->cycle_number.$winner->id.now()->timestamp);
+            if ($eligible->isEmpty()) {
+                return;
+            }
 
-        $cycle->update([
-            'beneficiary_id' => $winner->id,
-            'draw_hash' => $hash,
-            'drawn_at' => now(),
-        ]);
+            if ($tontine->type === 'auction') {
+                $winner = $this->resolveAuctionWinner($locked, $eligible);
+            } elseif ($tontine->weighted_draw) {
+                $winner = $this->weightedRandomDraw($eligible);
+            } else {
+                $winner = $tontine->draw_method === 'random'
+                    ? $eligible->random()
+                    : $eligible->sortBy(fn ($u) => $u->pivot->position)->first();
+            }
+
+            $hash = hash('sha256', $tontine->id.$locked->cycle_number.$winner->id.now()->timestamp);
+
+            $locked->update([
+                'beneficiary_id' => $winner->id,
+                'draw_hash' => $hash,
+                'drawn_at' => now(),
+            ]);
+        });
+
+        $cycle->refresh();
     }
 
     /**
@@ -105,12 +117,12 @@ class DrawService
         $alreadyWon = Cycle::where('tontine_id', $tontine->id)
             ->whereNotNull('beneficiary_id')
             ->pluck('beneficiary_id');
-        $eligible = $tontine->activeMembers()
+        $hasEligible = $tontine->activeMembers()
             ->whereNotIn('users.id', $alreadyWon)
             ->when($vetoedUserId, fn ($q) => $q->where('users.id', '!=', $vetoedUserId))
-            ->count();
+            ->exists();
 
-        if ($eligible === 0) {
+        if (! $hasEligible) {
             $this->notifier->send(
                 $tontine->creator,
                 'general',

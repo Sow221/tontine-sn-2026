@@ -18,6 +18,7 @@ use App\Services\TontineService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class TontineController extends Controller
@@ -58,10 +59,10 @@ class TontineController extends Controller
 
             $sort = $request->input('sort', 'latest');
             match ($sort) {
-                'amount_asc' => $query->orderBy('amount', 'asc'),
+                'amount_asc'  => $query->orderBy('amount', 'asc'),
                 'amount_desc' => $query->orderBy('amount', 'desc'),
-                'spots' => $query->orderByRaw('(tontines.max_members - (SELECT COUNT(*) FROM tontine_members WHERE tontine_members.tontine_id = tontines.id AND tontine_members.status = ?)) desc', ['active']),
-                default => $query->latest(),
+                'spots'       => $query->orderByDesc(DB::raw('(tontines.max_members - active_members_count)')),
+                default       => $query->latest(),
             };
 
             $tontines = $query->paginate(12)->withQueryString();
@@ -148,7 +149,7 @@ class TontineController extends Controller
         try {
             // Chargement unique et complet — évite le double load et les N+1
             $tontine->load([
-                'members',
+                'members.creditScore',
                 'cycles' => fn ($q) => $q->select('id', 'tontine_id', 'cycle_number', 'due_date', 'status', 'total_collected', 'beneficiary_id', 'drawn_at', 'bid_amount')->orderBy('cycle_number'),
                 'currentCycle.transactions',
                 'currentCycle.auctionBids',
@@ -157,6 +158,7 @@ class TontineController extends Controller
             $currentCycle = $tontine->currentCycle;
             $user = Auth::user();
             $userId = $user->id;
+            $memberCount = $tontine->members->filter(fn ($m) => $m->pivot->status === 'active')->count();
 
             $hasPaid = $currentCycle
                 && Transaction::success()->forCycle($currentCycle->id)->forUser($userId)->exists();
@@ -177,7 +179,7 @@ class TontineController extends Controller
             $hasVetoed = $currentCycle && $this->drawService->hasVoted($currentCycle, $userId);
             $vetoCount = $currentCycle ? $this->drawService->vetoCount($currentCycle) : 0;
             $vetoRequired = $currentCycle && $tontine->veto_threshold
-                ? (int) ceil($tontine->activeMembers()->count() * $tontine->veto_threshold / 100)
+                ? (int) ceil($memberCount * $tontine->veto_threshold / 100)
                 : 0;
 
             $myMember = $tontine->members->firstWhere('id', $userId);
@@ -191,7 +193,7 @@ class TontineController extends Controller
                 ->forUser($userId)
                 ->excludeRedistribution()
                 ->sum('amount');
-            $expectedPot = $tontine->amount * $tontine->activeMembers()->count();
+            $expectedPot = $tontine->amount * $memberCount;
             $myPastWin = $tontine->cycles->firstWhere('beneficiary_id', $userId);
             $turnEstimate = $myMemberStatus === 'active'
                 ? $tontine->turnEstimateFor($userId)
@@ -284,14 +286,18 @@ class TontineController extends Controller
                 return back()->withErrors(['activate' => 'Cette tontine a déjà été activée.']);
             }
 
-            $tontine->update(['status' => 'active']);
-
             if (config('queue.default') === 'sync') {
-                $this->cycleService->createCycles($tontine);
+                // En mode sync, cycles et statut dans une seule transaction
+                DB::transaction(function () use ($tontine) {
+                    $tontine->update(['status' => 'active']);
+                    $this->cycleService->createCycles($tontine);
+                });
 
                 return back()->with('success', 'Tontine activée et '.$tontine->cycles()->count().' cycles générés.');
             }
 
+            // En mode async, le job se charge de créer les cycles après activation
+            $tontine->update(['status' => 'active']);
             ProcessCycle::dispatch($tontine)->afterResponse();
 
             return back()->with('success', 'Tontine activée. Les cycles sont en cours de génération (quelques secondes).');
@@ -408,7 +414,7 @@ SVG;
 
             return redirect()->route('tontines.show', $tontine)->with('success', $result['message']);
         } catch (\Throwable $e) {
-            \Log::error('Erreur adhésion tontine', ['error' => $e->getMessage(), 'class' => get_class($e)]);
+            Log::error('Erreur adhésion tontine', ['error' => $e->getMessage(), 'class' => get_class($e)]);
 
             return back()->withErrors(['code' => 'Erreur lors de l\'adhésion.']);
         }
@@ -542,6 +548,35 @@ SVG;
         }
     }
 
+    public function excludeMember(Tontine $tontine, User $user)
+    {
+        $this->authorize('update', $tontine);
+
+        abort_if($user->id === $tontine->created_by, 403, 'Impossible d\'exclure le créateur.');
+
+        $member = $tontine->members()->where('users.id', $user->id)->wherePivot('status', 'active')->first();
+        abort_if(! $member, 422, 'Ce membre n\'est pas actif dans cette tontine.');
+
+        $hasBenefited = $tontine->cycles()->where('beneficiary_id', $user->id)->exists();
+        abort_if($hasBenefited, 422, 'Ce membre a déjà reçu le pot — impossible de l\'exclure rétroactivement.');
+
+        try {
+            $tontine->members()->updateExistingPivot($user->id, ['status' => 'excluded']);
+            Cache::forget("tontine_member_{$tontine->id}_{$user->id}");
+            $this->notifier->send(
+                $user,
+                'general',
+                "Vous avez été exclu(e) de la tontine « {$tontine->name} » par le créateur."
+            );
+
+            return back()->with('success', ($user->name ?? 'Ce membre').' a été exclu(e) de la tontine.');
+        } catch (\Throwable $e) {
+            Log::error('Erreur exclusion membre', ['tontine' => $tontine->id, 'user' => $user->id, 'error' => $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Erreur lors de l\'exclusion.']);
+        }
+    }
+
     public function setBeneficiary(Request $request, Tontine $tontine)
     {
         abort_unless($tontine->type === 'ceremonial', 403);
@@ -622,7 +657,7 @@ SVG;
             $this->notifier->send(
                 $newOwner,
                 'general',
-                "Vous êtes maintenant propriétaire de la tontine \u00ab\ {$tontine->name}\ \u00bb. Bonne gestion !"
+                "Vous êtes maintenant propriétaire de la tontine « {$tontine->name} ». Bonne gestion !"
             );
 
             return back()->with('success', 'Propriété transférée à '.($newOwner?->name ?? 'ce membre').'.');

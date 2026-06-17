@@ -188,10 +188,14 @@ class PaymentService
 
     public function confirmWithdrawal(SavingsWithdrawal $withdrawal): void
     {
-        if ($withdrawal->status === 'paid') {
-            return;
-        }
+        DB::transaction(function () use ($withdrawal) {
+            $locked = SavingsWithdrawal::lockForUpdate()->find($withdrawal->id);
 
-        $withdrawal->update(['status' => 'paid', 'paid_at' => now()]);
+            if (! $locked || $locked->status === 'paid') {
+                return;
+            }
+
+            $locked->update(['status' => 'paid', 'paid_at' => now()]);
+        });
     }
 }

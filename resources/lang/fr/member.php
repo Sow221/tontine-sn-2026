@@ -84,4 +84,5 @@ return [
     'cycle_label' => 'Cycle',
     'tontine_label' => 'Tontine',
     'payment_in_progress' => 'Paiement en cours...',
+    'status' => 'Statut',
 ];

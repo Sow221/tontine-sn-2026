@@ -40,7 +40,7 @@ class Tontine extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'tontine_members')
-            ->withPivot('status', 'position', 'joined_at', 'start_cycle_number')
+            ->withPivot('status', 'position', 'joined_at')
             ->withTimestamps();
     }
 
@@ -67,6 +67,16 @@ class Tontine extends Model
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
+
+    public function getTypeLabelAttribute(): string
+    {
+        return match($this->type) {
+            'auction'       => 'Tontine enchères',
+            'forced_saving' => 'Épargne forcée',
+            'ceremonial'    => 'Tontine cérémoniale',
+            default         => 'Tontine classique',
+        };
+    }
 
     public function isPublic(): bool
     {

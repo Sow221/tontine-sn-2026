@@ -105,7 +105,7 @@
                     <form method="POST" action="{{ route('admin.users.role', $user) }}" class="d-inline">
                         @csrf
                         <select name="role" class="form-select form-select-sm" style="width:auto;font-size:11px;"
-                                onchange="this.form.submit()">
+                                onchange="if(confirm('Changer le rôle de {{ addslashes($user->name ?? $user->email) }} vers ' + this.options[this.selectedIndex].text + ' ?')) { this.form.submit(); } else { this.value = '{{ $user->role }}'; }">
                             @foreach(['member' => 'Membre', 'admin' => 'Admin', 'super_admin' => 'Super Admin'] as $val => $label)
                             <option value="{{ $val }}" {{ $user->role === $val ? 'selected' : '' }}>{{ $label }}</option>
                             @endforeach

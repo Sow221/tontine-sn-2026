@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -20,11 +21,24 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $fillable = [
         'email', 'name', 'password', 'avatar', 'phone_number',
-        'google_id', 'role', 'kyc_verified', 'kyc_status', 'kyc_rejected_reason',
+        'google_id', 'kyc_verified', 'kyc_status', 'kyc_rejected_reason',
         'kyc_document', 'kyc_document_hash', 'is_active', 'last_seen_at', 'email_verified_at',
         'payment_streak', 'max_streak', 'notification_settings',
-        'preferred_language',
+        'preferred_language', 'referral_code', 'referred_by', 'onboarding_completed',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $user) {
+            if (empty($user->referral_code)) {
+                do {
+                    $code = strtoupper(Str::random(8));
+                } while (self::where('referral_code', $code)->exists());
+
+                $user->referral_code = $code;
+            }
+        });
+    }
 
     protected $casts = [
         'password' => 'hashed',
@@ -35,6 +49,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'payment_streak' => 'integer',
         'max_streak' => 'integer',
         'notification_settings' => 'array',
+        'onboarding_completed' => 'boolean',
     ];
 
     protected $hidden = ['password', 'remember_token'];

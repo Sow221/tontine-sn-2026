@@ -7,13 +7,14 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "dompdf/dompdf": "^2.0",
+        "dompdf/dompdf": "^3.0",
         "intervention/image": "^2.7",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.3",
         "laravel/socialite": "^5.27",
         "laravel/tinker": "^2.10.1",
-        "predis/predis": "^2.0",
+        "minishlink/web-push": "^10.1",
+        "predis/predis": "^3.0",
         "resend/resend-laravel": "^1.3"
     },
     "require-dev": {
@@ -92,9 +93,8 @@
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
         },
-        "platform": {
-            "php": "8.2"
-        }
+        "platform": {}
+
     },
     "minimum-stability": "stable",
     "prefer-stable": true

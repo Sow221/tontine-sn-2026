@@ -299,7 +299,7 @@
 
     {{-- ── GAMIFICATION (score, streak, badges, leaderboard) ─────────── --}}
     <div class="section-divider" id="section-gamification"></div>
-    <div class="gamif-panel" x-data="{ open: false }">
+    <div class="gamif-panel" x-data="{ open: true }">
         <button type="button" class="gamif-panel__toggle" @click="open = !open" :aria-expanded="open">
             <span><i class="fas fa-trophy me-2 text-warning"></i>Score, badges &amp; classement</span>
             <i class="fas fa-chevron-down gamif-panel__toggle-arrow"></i>
@@ -308,9 +308,16 @@
     <div class="row g-3 mb-4">
         {{-- Score crédit --}}
         <div class="col-12 col-md-5">
-            <div class="score-panel">
+            <div class="score-panel" x-data="{ showScoreInfo: false }">
                 <div class="score-panel__left">
-                    <p class="score-panel__label">Score crédit</p>
+                    <div class="d-flex align-items-center gap-1 mb-1">
+                        <p class="score-panel__label mb-0">Score crédit</p>
+                        <button type="button" @click="showScoreInfo = !showScoreInfo"
+                                class="btn p-0 border-0 bg-transparent text-muted"
+                                style="font-size:13px;" title="Comment fonctionne le score ?">
+                            <i class="fas fa-question-circle"></i>
+                        </button>
+                    </div>
                     <h3 class="score-panel__value">{{ $creditScore->score }}<span class="score-panel__max">/10</span></h3>
                     <span class="badge bg-{{ $creditScore->badgeColor() }}">{{ $creditScore->badgeLabel() }}</span>
                     @if($scoreCalculating ?? false)
@@ -318,6 +325,22 @@
                     @elseif($creditScore->score == 0)
                     <p class="score-panel__hint">Effectuez votre premier paiement pour construire votre score.</p>
                     @endif
+
+                    {{-- Explication du score --}}
+                    <div x-show="showScoreInfo" x-collapse
+                         class="mt-2 p-2 rounded small" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+                        <p class="fw-semibold mb-1" style="color:#166534;">Comment améliorer votre score ?</p>
+                        <ul class="mb-1 ps-3" style="color:#15803d;">
+                            <li>✅ Paiement à l'heure → <strong>+1 pt</strong></li>
+                            <li>🔥 Série de paiements → bonus streak</li>
+                            <li>⚠️ Paiement en retard → <strong>-0.5 pt</strong></li>
+                            <li>❌ Non-paiement → <strong>-1 pt</strong></li>
+                        </ul>
+                        <p class="mb-0 text-muted" style="font-size:11px;">
+                            🥉 Bronze 0–4 · 🥈 Argent 4–7 · 🥇 Or 7–10<br>
+                            Un score élevé augmente vos chances dans le tirage pondéré.
+                        </p>
+                    </div>
                 </div>
                 <div class="score-panel__ring">
                     <svg viewBox="0 0 36 36" class="score-svg" style="width:72px;height:72px;">
@@ -369,7 +392,7 @@
         </div>
     </div>
     @push('scripts')
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('paymentChart');
         if (!ctx) return;
@@ -499,7 +522,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 // Highlight onglet actif selon section visible
 (function () {
     const tabs = document.querySelectorAll('.dash-nav-tab');

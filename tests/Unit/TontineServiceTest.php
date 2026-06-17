@@ -637,4 +637,84 @@ class TontineServiceTest extends TestCase
         $this->assertEquals('paid', $cycle->status);
         $this->assertEquals(200000, $cycle->total_collected);
     }
+
+    // ─── Cycle Status Tests ───────────────────────────────────────────────────
+
+    public function test_update_cycle_total_marks_overdue_when_no_payment_and_past_due(): void
+    {
+        $tontine = Tontine::factory()->create(['amount' => 50000]);
+        $member = User::factory()->create();
+        $tontine->members()->attach($member, ['status' => 'active']);
+
+        $cycle = Cycle::factory()->create([
+            'tontine_id' => $tontine->id,
+            'due_date'   => now()->subDays(2),
+            'status'     => 'pending',
+            'total_collected' => 0,
+        ]);
+
+        $this->cycleService->updateCycleTotal($cycle);
+
+        $cycle->refresh();
+        $this->assertEquals('overdue', $cycle->status);
+        $this->assertEquals(0, $cycle->total_collected);
+    }
+
+    public function test_update_cycle_total_marks_partial_when_partial_payment_and_overdue(): void
+    {
+        $tontine = Tontine::factory()->create(['amount' => 50000]);
+        $member1 = User::factory()->create();
+        $member2 = User::factory()->create();
+        $tontine->members()->attach([$member1->id, $member2->id], ['status' => 'active']);
+
+        $cycle = Cycle::factory()->create([
+            'tontine_id'      => $tontine->id,
+            'due_date'        => now()->subDays(1),
+            'status'          => 'pending',
+            'total_collected' => 0,
+        ]);
+
+        Transaction::factory()->create([
+            'cycle_id' => $cycle->id,
+            'user_id'  => $member1->id,
+            'amount'   => 50000,
+            'status'   => 'success',
+        ]);
+
+        $this->cycleService->updateCycleTotal($cycle);
+
+        $cycle->refresh();
+        $this->assertEquals('partial', $cycle->status);
+        $this->assertEquals(50000, $cycle->total_collected);
+    }
+
+    public function test_cycle_is_overdue_when_due_date_passed_and_not_paid(): void
+    {
+        $cycle = Cycle::factory()->create([
+            'due_date' => now()->subDays(3),
+            'status'   => 'pending',
+        ]);
+
+        $this->assertTrue($cycle->isOverdue());
+    }
+
+    public function test_cycle_is_not_overdue_when_due_date_future(): void
+    {
+        $cycle = Cycle::factory()->create([
+            'due_date' => now()->addDays(3),
+            'status'   => 'pending',
+        ]);
+
+        $this->assertFalse($cycle->isOverdue());
+    }
+
+    public function test_cycle_is_not_overdue_when_already_paid(): void
+    {
+        $cycle = Cycle::factory()->create([
+            'due_date' => now()->subDays(3),
+            'status'   => 'paid',
+        ]);
+
+        $this->assertFalse($cycle->isOverdue());
+    }
 }

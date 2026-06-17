@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cycle;
 use App\Models\Tontine;
+use App\Models\Transaction;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -55,11 +57,45 @@ class AdminTontineController extends Controller
             $totalCollected = $tontine->cycles->sum('total_collected');
             $cyclesPaid = $tontine->cycles->where('status', 'paid')->count();
 
-            return view('admin.tontine-detail', compact('tontine', 'members', 'totalCollected', 'cyclesPaid'));
+            $currentCycle = $tontine->cycles->first(fn ($c) => in_array($c->status, ['active', 'partial', 'overdue']));
+            $cycleTransactions = $currentCycle
+                ? Transaction::where('cycle_id', $currentCycle->id)
+                    ->whereIn('status', ['success', 'pending'])
+                    ->with('user')
+                    ->get()
+                    ->keyBy('user_id')
+                : collect();
+
+            return view('admin.tontine-detail', compact('tontine', 'members', 'totalCollected', 'cyclesPaid', 'currentCycle', 'cycleTransactions'));
         } catch (\Throwable $e) {
             Log::error('Erreur détail tontine admin', ['tontine' => $tontine->id, 'error' => $e->getMessage()]);
 
             return back()->withErrors(['error' => 'Erreur lors du chargement.']);
+        }
+    }
+
+    public function forceCloseCycle(Tontine $tontine, Cycle $cycle)
+    {
+        try {
+            if (! in_array($cycle->status, ['active', 'partial', 'overdue'])) {
+                return back()->withErrors(['error' => 'Ce cycle ne peut pas être forcé (statut incompatible).']);
+            }
+
+            $cycle->update(['status' => 'paid']);
+
+            $this->notifications->send(
+                $tontine->creator,
+                'general',
+                "Le cycle {$cycle->cycle_number} de la tontine « {$tontine->name} » a été clôturé manuellement par un administrateur."
+            );
+
+            Cache::forget('admin.stats');
+
+            return back()->with('success', "Cycle {$cycle->cycle_number} clôturé.");
+        } catch (\Throwable $e) {
+            Log::error('Erreur clôture forcée cycle', ['cycle' => $cycle->id, 'error' => $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Erreur lors de la clôture du cycle.']);
         }
     }
 
