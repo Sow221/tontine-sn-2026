@@ -5,10 +5,6 @@
 @section('content')
 <div class="container py-4">
 
-    <a href="{{ route('tontines.show', $tontine) }}" class="back-link">
-        <i class="fas fa-arrow-left"></i>{{ $tontine->name }}
-    </a>
-
     <div class="d-flex align-items-center gap-2 mb-4">
         <a href="{{ route('tontines.show', $tontine) }}" class="btn-back">
             <i class="fas fa-arrow-left" aria-hidden="true"></i>
@@ -156,11 +152,14 @@
                     </label>
                     <select name="draw_method" class="form-select"
                             {{ $tontine->status === 'active' ? 'disabled' : '' }}
-                            x-bind:disabled="weightedDraw"
+                            x-bind:class="{ 'bg-light text-muted': weightedDraw }"
                             x-effect="if (weightedDraw) $el.value = 'random'">
                         <option value="sequential" {{ old('draw_method', $tontine->draw_method) === 'sequential' ? 'selected' : '' }}>Séquentiel</option>
                         <option value="random"     {{ old('draw_method', $tontine->draw_method) === 'random'     ? 'selected' : '' }}>Aléatoire</option>
                     </select>
+                    <template x-if="weightedDraw">
+                        <input type="hidden" name="draw_method" value="random">
+                    </template>
                 </div>
             </div>
 

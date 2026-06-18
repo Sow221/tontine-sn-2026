@@ -398,15 +398,23 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/serviceworker.js', { scope: '/' })
             .then((reg) => {
-                // Détection de mise à jour disponible
                 reg.addEventListener('updatefound', () => {
                     const newWorker = reg.installing;
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            const controller = navigator.serviceWorker.controller;
                             const bar = document.createElement('div');
                             bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#2D2F53;color:white;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;z-index:9999;font-size:13px;';
-                            bar.innerHTML = '<span>🔄 Nouvelle version disponible</span><button onclick="controller.postMessage({type:\'SKIP_WAITING\'});window.location.reload();" style="background:#009639;color:white;border:none;border-radius:999px;padding:6px 16px;font-weight:700;cursor:pointer;">Mettre à jour</button>';
+                            const msg = document.createElement('span');
+                            msg.textContent = '🔄 Nouvelle version disponible';
+                            const btn = document.createElement('button');
+                            btn.textContent = 'Mettre à jour';
+                            btn.style.cssText = 'background:#009639;color:white;border:none;border-radius:999px;padding:6px 16px;font-weight:700;cursor:pointer;';
+                            btn.onclick = () => {
+                                navigator.serviceWorker.controller?.postMessage({type: 'SKIP_WAITING'});
+                                window.location.reload();
+                            };
+                            bar.appendChild(msg);
+                            bar.appendChild(btn);
                             document.body.appendChild(bar);
                         }
                     });

@@ -13,10 +13,6 @@
     }
 }">
 
-    <a href="{{ route('tontines.index') }}" class="back-link">
-        <i class="fas fa-arrow-left"></i>Mes tontines
-    </a>
-
     <div class="d-flex align-items-center gap-2 mb-4">
         <a href="{{ route('tontines.index') }}" class="btn-back">
             <i class="fas fa-arrow-left" aria-hidden="true"></i>

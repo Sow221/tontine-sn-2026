@@ -5,6 +5,10 @@
 @php
     $h = now()->hour;
     $greeting = $h < 6 || $h >= 18 ? __('member.greeting_evening') : ($h < 13 ? __('member.greeting_morning') : __('member.greeting_afternoon'));
+    $recentTransactions ??= collect();
+    $activeTontines ??= collect();
+    $upcomingPayments ??= collect();
+    $overduePayments ??= collect();
     $totalCotise = $recentTransactions->where('status', 'success')->sum('amount');
     $activeTontinesCount = $activeTontines->count();
     $upcomingCount = $upcomingPayments->count();
@@ -35,7 +39,7 @@
             <p class="dash-hero__greeting">{{ $greeting }}</p>
             <h2 class="dash-hero__name">{{ $user->name ?? __('member.member') }}</h2>
             <div class="dash-hero__meta">
-                @if($creditScore->score > 0)
+                @if($creditScore && $creditScore->score > 0)
                 <span class="dash-hero__score-badge bg-{{ $creditScore->badgeColor() }}">
                     ★ {{ $creditScore->score }}/10
                 </span>
@@ -320,12 +324,17 @@
                             <i class="fas fa-question-circle"></i>
                         </button>
                     </div>
+                    @if($creditScore)
                     <h3 class="score-panel__value">{{ $creditScore->score }}<span class="score-panel__max">/10</span></h3>
                     <span class="badge bg-{{ $creditScore->badgeColor() }}">{{ $creditScore->badgeLabel() }}</span>
                     @if($scoreCalculating ?? false)
                     <p class="score-panel__hint"><i class="fas fa-spinner fa-spin me-1"></i>Score en cours de calcul…</p>
                     @elseif($creditScore->score == 0)
                     <p class="score-panel__hint">Effectuez votre premier paiement pour construire votre score.</p>
+                    @endif
+                    @else
+                    <h3 class="score-panel__value">--<span class="score-panel__max">/10</span></h3>
+                    <p class="score-panel__hint">Connectez-vous à une tontine pour générer votre score.</p>
                     @endif
 
                     {{-- Explication du score --}}
@@ -345,11 +354,12 @@
                     </div>
                 </div>
                 <div class="score-panel__ring">
+                    @php $scoreVal = $creditScore ? $creditScore->score : 0; @endphp
                     <svg viewBox="0 0 36 36" class="score-svg" style="width:72px;height:72px;">
                         <path class="score-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                        <path class="score-fill" stroke-dasharray="{{ $creditScore->score * 10 }}, 100"
+                        <path class="score-fill" stroke-dasharray="{{ $scoreVal * 10 }}, 100"
                               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                        <text x="18" y="20.35" class="score-text">{{ $creditScore->score }}</text>
+                        <text x="18" y="20.35" class="score-text">{{ $scoreVal }}</text>
                     </svg>
                 </div>
             </div>

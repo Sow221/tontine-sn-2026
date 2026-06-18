@@ -4,10 +4,6 @@
 @section('content')
 <div class="container py-4" style="max-width:720px;">
 
-    <a href="{{ route('chat.index') }}" class="back-link">
-        <i class="fas fa-arrow-left"></i>Messagerie
-    </a>
-
     <div class="d-flex align-items-center gap-2 mb-3">
         <a href="{{ route('chat.index') }}" class="btn-back">
             <i class="fas fa-arrow-left" aria-hidden="true"></i>
@@ -101,6 +97,7 @@ const streamUrl  = '{{ route('chat.stream', $tontine) }}';
 const pollUrl    = '{{ route('chat.poll', $tontine) }}';
 const typingUrl  = '{{ route('chat.typing', $tontine) }}';
 const myId       = {{ auth()->id() }};
+const csrfToken  = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 let typingTimer  = null;
 let isTyping     = false;
 

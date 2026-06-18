@@ -273,7 +273,14 @@ class TontineController extends Controller
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             abort(403);
         } catch (\Throwable $e) {
-            Log::error('Erreur affichage tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+            Log::error('Erreur affichage tontine', [
+                'tontine' => $tontine->id ?? null,
+                'error' => $e->getMessage(),
+                'class' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return back()->withErrors(['error' => 'Erreur lors du chargement de la tontine.']);
         }

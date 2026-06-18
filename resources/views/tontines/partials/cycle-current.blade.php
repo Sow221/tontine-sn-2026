@@ -224,7 +224,7 @@
             <form method="POST" action="{{ route('tontines.cash.confirm', [$tontine, $cashTx]) }}">
                 @csrf
                 <button type="submit" class="btn btn-sm btn-success rounded-pill"
-                        onclick="return confirm('Confirmer la remise en espèces de {{ $cashTx->user->name ?? \'ce membre\' }} ?')">
+                        onclick="return confirm('Confirmer la remise en espèces de {{ $cashTx->user->name ?? 'ce membre' }} ?')">
                     <i class="fas fa-check"></i> Valider
                 </button>
             </form>

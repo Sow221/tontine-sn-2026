@@ -115,7 +115,8 @@
             };
         @endphp
         <div class="col-12 col-md-6 col-lg-4">
-            <div class="card h-100 {{ $gradClass }}">
+            <a href="{{ route('tontines.show', $tontine) }}"
+               class="card h-100 text-decoration-none {{ $gradClass }}">
                 <div class="card-body d-flex flex-column">
                     {{-- En-tête --}}
                     <div class="d-flex align-items-start gap-3 mb-3">
@@ -183,11 +184,13 @@
                     <div class="mt-auto d-flex gap-2">
                         @if($isMember)
                             <a href="{{ route('tontines.show', $tontine) }}"
-                               class="btn btn-sm btn-outline-success rounded-pill flex-grow-1">
+                               class="btn btn-sm btn-outline-success rounded-pill flex-grow-1"
+                               onclick="event.stopPropagation()">
                                 <i class="fas fa-eye me-1"></i>Voir ma tontine
                             </a>
                         @elseif($canJoin)
-                            <form method="POST" action="{{ route('tontines.join') }}" class="flex-grow-1">
+                            <form method="POST" action="{{ route('tontines.join') }}" class="flex-grow-1"
+                                  onclick="event.stopPropagation()">
                                 @csrf
                                 <input type="hidden" name="code" value="{{ $tontine->code }}">
                                 <button type="submit" class="btn btn-sm btn-primary rounded-pill w-100">
@@ -195,19 +198,20 @@
                                 </button>
                             </form>
                         @else
-                            <button class="btn btn-sm btn-outline-secondary rounded-pill flex-grow-1" disabled>
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill flex-grow-1" disabled
+                                    onclick="event.stopPropagation()">
                                 <i class="fas fa-lock me-1"></i>{{ $isFull ? 'Complet' : 'Indisponible' }}
                             </button>
                         @endif
                         <button type="button"
                                 class="btn btn-sm btn-outline-secondary rounded-pill"
-                                onclick="copyToClipboard('{{ route('tontines.join.form', ['code' => $tontine->code]) }}')"
+                                onclick="event.stopPropagation();copyToClipboard('{{ route('tontines.join.form', ['code' => $tontine->code]) }}')"
                                 title="Partager ce lien">
                             <i class="fas fa-share-alt"></i>
                         </button>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         @endforeach
     </div>

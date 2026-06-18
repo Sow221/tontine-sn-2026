@@ -140,6 +140,7 @@ class DatabaseSeeder extends Seeder
                 'kyc_verified' => $kycStatus === 'approved',
                 'is_active' => $active,
                 'onboarding_completed' => true,
+                'email_verified_at' => $this->now->copy()->subMonths($monthsAgo),
                 'created_at' => $this->now->copy()->subMonths($monthsAgo),
             ]
         );

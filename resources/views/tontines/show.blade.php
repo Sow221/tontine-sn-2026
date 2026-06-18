@@ -35,10 +35,6 @@
     </div>
     @endif
 
-    <a href="{{ route('tontines.index') }}" class="back-link">
-        <i class="fas fa-arrow-left"></i>{{ __('member.my_tontines') }}
-    </a>
-
     {{-- NAVIGATION ANCRES --}}
     <nav class="dash-nav-tabs mb-3" aria-label="Sections de la tontine">
         <a href="#section-cycle" class="dash-nav-tab"><i class="fas fa-sync-alt"></i>Cycle</a>
