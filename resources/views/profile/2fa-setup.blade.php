@@ -4,13 +4,9 @@
 @section('content')
 <div class="container py-4" style="max-width:480px;">
 
-    <nav aria-label="breadcrumb" class="mb-3 small">
-        <ol class="breadcrumb bg-transparent p-0 m-0">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('profile.show') }}" class="text-green">Mon profil</a></li>
-            <li class="breadcrumb-item active">Authentification 2FA</li>
-        </ol>
-    </nav>
+    <a href="{{ route('profile.show') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>Mon profil
+    </a>
 
     <div class="d-flex align-items-center gap-2 mb-4">
         <a href="{{ route('profile.show') }}" class="btn-back">

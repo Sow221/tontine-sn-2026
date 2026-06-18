@@ -18,12 +18,9 @@
 
 <div class="container py-4">
 
-    <nav aria-label="breadcrumb" class="mb-3 small">
-        <ol class="breadcrumb bg-transparent p-0 m-0">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Historique</li>
-        </ol>
-    </nav>
+    <a href="{{ route('dashboard') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>Tableau de bord
+    </a>
 
     <div class="d-flex justify-content-between align-items-center gap-2 mb-1 flex-wrap">
         <h4 class="fw-bold mb-0">Historique des paiements</h4>

@@ -35,14 +35,9 @@
     </div>
     @endif
 
-    {{-- 2. BREADCRUMB + EN-TÊTE --}}
-    <nav aria-label="breadcrumb" class="mb-3 small">
-        <ol class="breadcrumb bg-transparent p-0 m-0">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">{{ __('member.home') }}</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('tontines.index') }}" class="text-green">{{ __('member.my_tontines') }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ $tontine->name }}</li>
-        </ol>
-    </nav>
+    <a href="{{ route('tontines.index') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>{{ __('member.my_tontines') }}
+    </a>
 
     {{-- NAVIGATION ANCRES --}}
     <nav class="dash-nav-tabs mb-3" aria-label="Sections de la tontine">

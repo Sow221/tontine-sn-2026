@@ -5,14 +5,9 @@
 @section('content')
 <div class="container py-4">
 
-    {{-- Breadcrumbs --}}
-    <nav aria-label="breadcrumb" class="mb-3 small">
-        <ol class="breadcrumb bg-transparent p-0 m-0">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('tontines.show', $cycle->tontine) }}" class="text-green">{{ $cycle->tontine->name }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Paiement</li>
-        </ol>
-    </nav>
+    <a href="{{ route('tontines.show', $cycle->tontine) }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>{{ $cycle->tontine->name }}
+    </a>
 
     <h4 class="fw-bold mb-4">Payer ma cotisation</h4>
 

@@ -4,12 +4,9 @@
 @section('content')
 <div class="container py-5" style="max-width:640px;">
 
-    <nav aria-label="breadcrumb" class="mb-3 small">
-        <ol class="breadcrumb bg-transparent p-0 m-0">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Contact & Support</li>
-        </ol>
-    </nav>
+    <a href="{{ route('dashboard') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>Tableau de bord
+    </a>
 
     <div class="text-center mb-5">
         <div style="font-size:2.5rem;">💬</div>

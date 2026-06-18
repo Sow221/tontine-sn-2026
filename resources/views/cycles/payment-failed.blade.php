@@ -7,13 +7,9 @@
     <div class="text-center" style="max-width:400px; margin:0 auto;">
 
         @if($cycle)
-        <nav aria-label="breadcrumb" class="mb-4 small text-start">
-            <ol class="breadcrumb bg-transparent p-0 m-0">
-                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('tontines.show', $cycle->tontine) }}" class="text-green">{{ $cycle->tontine->name }}</a></li>
-                <li class="breadcrumb-item active">Paiement annulé</li>
-            </ol>
-        </nav>
+        <a href="{{ route('tontines.show', $cycle->tontine) }}" class="back-link">
+            <i class="fas fa-arrow-left"></i>{{ $cycle->tontine->name }}
+        </a>
         @endif
 
         <div class="mb-4" style="font-size:64px;">❌</div>

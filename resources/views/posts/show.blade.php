@@ -5,13 +5,9 @@
 
 @section('content')
 <div class="container py-5" style="max-width:720px;">
-    <nav aria-label="breadcrumb" class="mb-3 small">
-        <ol class="breadcrumb bg-transparent p-0 m-0">
-            <li class="breadcrumb-item"><a href="{{ route('home') }}" class="text-green">Accueil</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('posts.index') }}" class="text-green">Blog</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ Str::limit($post->title, 40) }}</li>
-        </ol>
-    </nav>
+    <a href="{{ route('posts.index') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>Blog
+    </a>
 
     <h1 class="fw-bold mb-2">{{ $post->title }}</h1>
 

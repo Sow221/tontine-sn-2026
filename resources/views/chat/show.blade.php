@@ -4,13 +4,9 @@
 @section('content')
 <div class="container py-4" style="max-width:720px;">
 
-    <nav aria-label="breadcrumb" class="mb-3 small">
-        <ol class="breadcrumb bg-transparent p-0 m-0">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('chat.index') }}" class="text-green">Messagerie</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ $tontine->name }}</li>
-        </ol>
-    </nav>
+    <a href="{{ route('chat.index') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>Messagerie
+    </a>
 
     <div class="d-flex align-items-center gap-2 mb-3">
         <a href="{{ route('chat.index') }}" class="btn-back">

@@ -4,13 +4,9 @@
 @section('content')
 <div class="container py-4">
 
-    <nav aria-label="breadcrumb" class="mb-3 small">
-        <ol class="breadcrumb bg-transparent p-0 m-0">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('profile.show') }}" class="text-green">Mon profil</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Notifications</li>
-        </ol>
-    </nav>
+    <a href="{{ route('profile.show') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>Mon profil
+    </a>
 
     <h4 class="fw-bold mb-4">Préférences de notification</h4>
 

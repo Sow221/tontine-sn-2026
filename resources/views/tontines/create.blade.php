@@ -13,13 +13,9 @@
     }
 }">
 
-    <nav aria-label="breadcrumb" class="mb-3 small">
-        <ol class="breadcrumb bg-transparent p-0 m-0">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('tontines.index') }}" class="text-green">Mes tontines</a></li>
-            <li class="breadcrumb-item active">Nouvelle tontine</li>
-        </ol>
-    </nav>
+    <a href="{{ route('tontines.index') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>Mes tontines
+    </a>
 
     <div class="d-flex align-items-center gap-2 mb-4">
         <a href="{{ route('tontines.index') }}" class="btn-back">

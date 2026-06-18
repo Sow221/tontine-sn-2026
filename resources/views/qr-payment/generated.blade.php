@@ -4,13 +4,9 @@
 @section('content')
 <div class="container py-4" style="max-width:480px;">
 
-    <nav aria-label="breadcrumb" class="mb-3 small">
-        <ol class="breadcrumb bg-transparent p-0 m-0">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-green">Accueil</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('qr-payment.show') }}" class="text-green">Paiement QR</a></li>
-            <li class="breadcrumb-item active">QR Code</li>
-        </ol>
-    </nav>
+    <a href="{{ route('qr-payment.show') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>Paiement QR
+    </a>
 
     <div class="card text-center mb-4">
         <h5 class="fw-bold mb-1">Votre QR Code de paiement</h5>
