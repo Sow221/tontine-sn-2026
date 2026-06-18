@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}" x-data="{ sidebarOpen: false }" @keydown.escape.window="sidebarOpen = false">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -38,7 +38,7 @@
     <link href="{{ asset('css/tontine.css') }}" rel="stylesheet">
     @stack('styles')
 </head>
-<body class="bg-off-white" x-data="{ dark: localStorage.getItem('tontine-theme') === 'dark' || (!localStorage.getItem('tontine-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches), sidebarCollapsed: localStorage.getItem('sidebar-collapsed') === 'true' }" :class="{ 'dark-mode': dark }">
+<body class="bg-off-white" x-data="{ sidebarOpen: false, dark: localStorage.getItem('tontine-theme') === 'dark' || (!localStorage.getItem('tontine-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches), sidebarCollapsed: localStorage.getItem('sidebar-collapsed') === 'true' }" :class="{ 'dark-mode': dark }" @keydown.escape.window="sidebarOpen = false">
 
     {{-- Anti-FOUC + blocage transition au chargement --}}
     <script nonce="{{ $cspNonce }}">
