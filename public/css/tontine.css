@@ -1604,20 +1604,10 @@ body.dark-mode .input-group:focus-within > .input-group-text {
    Micro-animations — polish de niveau produit
    ============================================================ */
 
-/* 1. Entrée des pages */
-@keyframes tsn-page-in {
-  from { opacity: 0; transform: translateY(7px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.main-content > .container,
-.main-content > .container-fluid {
-  animation: tsn-page-in 0.22s ease both;
-}
-
-/* 2. Entrée + stagger des cartes tontine */
+/* 2. Entrée + stagger des cartes tontine (transform seul — pas d'opacity pour garder les cartes cliquables) */
 @keyframes tsn-fade-up {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { transform: translateY(10px); }
+  to   { transform: translateY(0); }
 }
 .tontine-card {
   animation: tsn-fade-up 0.2s ease both;
@@ -1993,8 +1983,25 @@ body,
     border-color 0.15s ease;
 }
 
-/* Ne pas animer lors du chargement initial — supprimé après 300ms par Alpine */
+/* Bloque les transitions dark-mode lors du chargement initial — supprimé après 50ms */
 .no-dm-transition,
-.no-dm-transition * {
+.no-dm-transition .app-sidebar,
+.no-dm-transition .app-topbar,
+.no-dm-transition .app-main,
+.no-dm-transition .card,
+.no-dm-transition .tontine-card,
+.no-dm-transition .stat-card,
+.no-dm-transition .dash-hero,
+.no-dm-transition .dash-kpi,
+.no-dm-transition .action-banner,
+.no-dm-transition .profile-hero,
+.no-dm-transition .member-action-card,
+.no-dm-transition .form-control,
+.no-dm-transition .form-select,
+.no-dm-transition .input-group-text,
+.no-dm-transition .btn-light,
+.no-dm-transition .sidebar-link,
+.no-dm-transition .sidebar-user-link,
+.no-dm-transition .sidebar-footer-action-btn {
   transition: none !important;
 }
