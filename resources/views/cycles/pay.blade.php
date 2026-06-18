@@ -204,7 +204,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('paymentConfirmModal');
     if (modal) {

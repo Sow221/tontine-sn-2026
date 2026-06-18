@@ -100,7 +100,7 @@
 
 @push('scripts')
 @if($transaction->method !== 'cash')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 const statusUrl  = "{{ route('payment.status', $transaction) }}";
 const maxRetries = 20; // 20 × 3s = 60s max
 let   retries    = 0;

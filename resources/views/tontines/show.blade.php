@@ -101,7 +101,7 @@
         </button>
     </div>
     @push('scripts')
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
     (function pollCycles() {
         let attempts = 0;
         const maxAttempts = 10;
@@ -490,7 +490,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 (function () {
     const tabs = document.querySelectorAll('.dash-nav-tab');
     const sections = ['section-cycle','section-stats','section-membres','section-gestion'];

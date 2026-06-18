@@ -242,6 +242,6 @@
 
 </div>
 @push('scripts')
-<script>document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));</script>
+<script nonce="{{ $cspNonce ?? '' }}">document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));</script>
 @endpush
 @endsection

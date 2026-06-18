@@ -231,7 +231,7 @@
 </div>
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const ctx = document.getElementById('adminChart');
     if (!ctx) return;

@@ -66,7 +66,7 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 QRCode.toCanvas(document.createElement('canvas'), {{ Js::from($otpUri) }}, { width: 200, margin: 1 }, function(err, canvas) {
     if (!err) document.getElementById('qrcode').appendChild(canvas);
 });

@@ -92,7 +92,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 const chatBox    = document.getElementById('chat-messages');
 const chatInput  = document.getElementById('chat-input');
 const chatForm   = document.getElementById('chat-form');

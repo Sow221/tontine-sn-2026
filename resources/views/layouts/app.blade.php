@@ -122,9 +122,6 @@
                 <a href="{{ route('admin.logs') }}" class="sidebar-link {{ request()->routeIs('admin.logs') ? 'active' : '' }}">
                     <i class="fas fa-list-alt"></i><span class="sidebar-link-text">Journaux</span>
                 </a>
-                <a href="{{ route('admin.api-docs') }}" class="sidebar-link {{ request()->routeIs('admin.api-docs') ? 'active' : '' }}">
-                    <i class="fas fa-code"></i><span class="sidebar-link-text">API Docs</span>
-                </a>
             @else
                 {{-- Navigation MEMBRE --}}
                 <span class="sidebar-section-label">Menu</span>
@@ -207,8 +204,8 @@
                         <span class="badge bg-danger position-absolute" style="top:2px;right:2px;font-size:9px;min-width:15px;height:15px;line-height:9px;padding:3px;">{{ ($unreadNotificationsCount ?? 0) > 9 ? '9+' : $unreadNotificationsCount }}</span>
                         @endif
                     </button>
-                    <div x-show="notifOpen" x-cloak
-                         x-transition:enter="dropdown-enter" x-transition:enter-start="dropdown-enter-start" x-transition:enter-end="dropdown-enter-end"
+                    <template x-if="notifOpen">
+                    <div x-transition:enter="dropdown-enter" x-transition:enter-start="dropdown-enter-start" x-transition:enter-end="dropdown-enter-end"
                          x-transition:leave="dropdown-leave" x-transition:leave-start="dropdown-leave-start" x-transition:leave-end="dropdown-leave-end"
                          class="topbar-dropdown-menu" style="min-width:280px;">
                         <div class="topbar-dropdown-header d-flex align-items-center justify-content-between">
@@ -231,6 +228,7 @@
                             Voir tout
                         </a>
                     </div>
+                    </template>
                 </div>
 
                 {{-- User dropdown --}}
@@ -241,10 +239,10 @@
                         <span class="topbar-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? auth()->user()->email, 0, 1)) }}</span>
                         <i class="fas fa-chevron-down topbar-chevron" :class="{ 'open': dropdownOpen }"></i>
                     </button>
-                    <div class="topbar-dropdown-menu" x-show="dropdownOpen"
-                         x-transition:enter="dropdown-enter" x-transition:enter-start="dropdown-enter-start" x-transition:enter-end="dropdown-enter-end"
+                    <template x-if="dropdownOpen">
+                    <div x-transition:enter="dropdown-enter" x-transition:enter-start="dropdown-enter-start" x-transition:enter-end="dropdown-enter-end"
                          x-transition:leave="dropdown-leave" x-transition:leave-start="dropdown-leave-start" x-transition:leave-end="dropdown-leave-end"
-                         x-cloak>
+                         class="topbar-dropdown-menu">
                         <div class="topbar-dropdown-header">
                             <span class="topbar-dropdown-name">{{ auth()->user()->name ?? auth()->user()->email }}</span>
                             <span class="topbar-dropdown-role">{{ match(auth()->user()->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => 'Membre' } }}</span>
@@ -261,6 +259,7 @@
                             </button>
                         </form>
                     </div>
+                    </template>
                 </div>
 
             </div>
