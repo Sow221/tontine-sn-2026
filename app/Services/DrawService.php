@@ -8,6 +8,7 @@ use App\Models\AuctionBid;
 use App\Models\CreditScore;
 use App\Models\Cycle;
 use App\Models\CycleVeto;
+use App\Models\TontineDebt;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +18,7 @@ class DrawService
         private NotificationService $notifier,
     ) {}
 
-    public function canDraw(Cycle $cycle): ?string
+    public function canDraw(Cycle $cycle, bool $force = false): ?string
     {
         if ($cycle->beneficiary_id) {
             return 'Le tirage a déjà été effectué.';
@@ -40,7 +41,15 @@ class DrawService
                 }
             } else {
                 if ($cycle->completionRate() < 100) {
-                    return 'Tirage impossible : '.$cycle->completionRate().'% collecté seulement.';
+                    if (! $force) {
+                        return 'Tirage impossible : '.$cycle->completionRate().'% collecté seulement.';
+                    }
+                    if (! $cycle->due_date->isPast()) {
+                        return 'Le tirage forcé n\'est possible qu\'après la date d\'échéance.';
+                    }
+                    if ($paidCount === 0) {
+                        return 'Tirage impossible : aucun membre n\'a payé ce cycle.';
+                    }
                 }
             }
         }
@@ -48,13 +57,13 @@ class DrawService
         return null;
     }
 
-    public function drawBeneficiary(Cycle $cycle): void
+    public function drawBeneficiary(Cycle $cycle, bool $force = false): void
     {
         if (in_array($cycle->tontine->type, ['forced_saving', 'ceremonial'])) {
             return;
         }
 
-        DB::transaction(function () use ($cycle) {
+        DB::transaction(function () use ($cycle, $force) {
             // Verrou exclusif pour éviter un double tirage concurrent
             $locked = Cycle::lockForUpdate()->findOrFail($cycle->id);
 
@@ -64,13 +73,52 @@ class DrawService
 
             $tontine = $locked->tontine;
 
+            // Tirage forcé : créer les dettes pour les membres n'ayant pas payé ce cycle
+            $paidUserIds = collect();
+            if ($force) {
+                $paidUserIds = $locked->successfulTransactions()->pluck('user_id');
+                $allMembers = $tontine->activeMembers()->get();
+
+                foreach ($allMembers as $member) {
+                    if (! $paidUserIds->contains($member->id)) {
+                        TontineDebt::firstOrCreate(
+                            ['cycle_id' => $locked->id, 'user_id' => $member->id],
+                            ['tontine_id' => $tontine->id, 'amount' => $tontine->amount, 'status' => 'pending']
+                        );
+                        // Pénaliser le score crédit du débiteur
+                        $score = \App\Models\CreditScore::firstOrCreate(
+                            ['user_id' => $member->id],
+                            ['score' => 5.0, 'badge' => 'silver']
+                        );
+                        $newScore = max(0, round($score->score - 1, 1));
+                        $badge = $newScore >= 7 ? 'gold' : ($newScore >= 4 ? 'silver' : 'bronze');
+                        $score->update(['score' => $newScore, 'badge' => $badge]);
+                    }
+                }
+            }
+
             $alreadyWon = Cycle::where('tontine_id', $tontine->id)
                 ->whereNotNull('beneficiary_id')
                 ->pluck('beneficiary_id');
 
-            $eligible = $tontine->activeMembers()
-                ->whereNotIn('users.id', $alreadyWon)
-                ->get();
+            // Membres éligibles :
+            // - force : uniquement ceux qui ont payé CE cycle ET pas déjà gagnants
+            // - normal : tous les actifs sans dette pendante ET pas déjà gagnants
+            if ($force) {
+                $eligible = $tontine->activeMembers()
+                    ->whereNotIn('users.id', $alreadyWon)
+                    ->whereIn('users.id', $paidUserIds)
+                    ->get();
+            } else {
+                $debtorIds = TontineDebt::where('tontine_id', $tontine->id)
+                    ->where('status', 'pending')
+                    ->pluck('user_id');
+
+                $eligible = $tontine->activeMembers()
+                    ->whereNotIn('users.id', $alreadyWon)
+                    ->whereNotIn('users.id', $debtorIds)
+                    ->get();
+            }
 
             if ($eligible->isEmpty()) {
                 return;
@@ -90,8 +138,8 @@ class DrawService
 
             $locked->update([
                 'beneficiary_id' => $winner->id,
-                'draw_hash' => $hash,
-                'drawn_at' => now(),
+                'draw_hash'      => $hash,
+                'drawn_at'       => now(),
             ]);
         });
 

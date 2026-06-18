@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Jobs\RecalculateCreditScore;
 use App\Models\Cycle;
 use App\Models\SavingsWithdrawal;
+use App\Models\TontineDebt;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -90,6 +91,12 @@ class PaymentService
             $transaction->load('cycle.tontine', 'user');
 
             $this->cycleService->updateCycleTotal($transaction->cycle);
+
+            // Solde automatique de la dette si le membre paye ce cycle en retard
+            TontineDebt::where('cycle_id', $transaction->cycle_id)
+                ->where('user_id', $transaction->user_id)
+                ->where('status', 'pending')
+                ->update(['status' => 'paid', 'paid_at' => now()]);
 
             $cycle = $transaction->cycle->fresh();
             $cycle->load('tontine');

@@ -116,9 +116,11 @@ Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
     Route::get('/payment/pending/{transaction}', [PaymentController::class, 'pending'])->name('payment.pending');
     Route::get('/payment/status/{transaction}', [PaymentController::class, 'status'])->name('payment.status');
     Route::post('/cycles/{cycle}/draw', [CycleController::class, 'draw'])->name('cycles.draw')->middleware('throttle:3,1');
+    Route::post('/cycles/{cycle}/force-draw', [CycleController::class, 'forceDraw'])->name('cycles.force-draw')->middleware('throttle:3,1');
     Route::post('/cycles/{cycle}/bid', [CycleController::class, 'bid'])->name('cycles.bid')->middleware('throttle:10,1');
     Route::post('/cycles/{cycle}/close-saving', [CycleController::class, 'closeForcedSaving'])->name('cycles.close-saving');
     Route::post('/cycles/{cycle}/veto', [CycleController::class, 'veto'])->name('cycles.veto');
+    Route::post('/tontines/{tontine}/debts/{debt}/clear', [TontineController::class, 'clearDebt'])->name('tontines.debts.clear');
     Route::get('/transactions/{transaction}/recu', [PaymentController::class, 'receipt'])->name('transactions.receipt');
     Route::post('/transactions/{transaction}/reverse', [PaymentController::class, 'reverse'])->name('transactions.reverse')->middleware('throttle:3,1');
     Route::post('/transactions/{transaction}/dispute', [PaymentController::class, 'dispute'])->name('transactions.dispute')->middleware('throttle:3,1');

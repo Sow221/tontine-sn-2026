@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateTontineRequest;
 use App\Jobs\ProcessCycle;
 use App\Models\SavingsWithdrawal;
 use App\Models\Tontine;
+use App\Models\TontineDebt;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\CycleService;
@@ -175,6 +176,30 @@ class TontineController extends Controller
                 && ! $currentCycle->beneficiary_id
                 && $drawBlockReason === null;
 
+            // Tirage forcé : cycle échu, pas de bénéficiaire, au moins 1 paiement, pas 100%
+            $forceDrawAvailable = $currentCycle
+                && ! $currentCycle->beneficiary_id
+                && $currentCycle->due_date->isPast()
+                && $currentCycle->completionRate() < 100
+                && $currentCycle->completionRate() > 0
+                && $userId === $tontine->created_by;
+
+            // Dettes en attente pour cette tontine (pour le créateur)
+            $memberDebts = $userId === $tontine->created_by
+                ? TontineDebt::where('tontine_id', $tontine->id)
+                    ->where('status', 'pending')
+                    ->with('user', 'cycle')
+                    ->get()
+                : collect();
+
+            // Dette personnelle du membre connecté dans cette tontine
+            $myPendingDebts = TontineDebt::where('tontine_id', $tontine->id)
+                ->where('user_id', $userId)
+                ->where('status', 'pending')
+                ->with('cycle')
+                ->get();
+            $myTotalDebt = $myPendingDebts->sum('amount');
+
             $canVeto = $currentCycle && $this->drawService->canVeto($currentCycle, $userId);
             $hasVetoed = $currentCycle && $this->drawService->hasVoted($currentCycle, $userId);
             $vetoCount = $currentCycle ? $this->drawService->vetoCount($currentCycle) : 0;
@@ -237,7 +262,8 @@ class TontineController extends Controller
                 'canVeto', 'hasVetoed', 'vetoCount', 'vetoRequired',
                 'myMemberStatus', 'totalCollecte', 'cyclesPaids', 'myPosition', 'myPastWin', 'turnEstimate',
                 'inviteUrl', 'acceptsNewMembers', 'mySaved', 'myWithdrawal', 'withdrawals', 'pastCycles',
-                'bidDeadlinePassed', 'lastSuccessTransaction', 'myContribution', 'expectedPot'
+                'bidDeadlinePassed', 'lastSuccessTransaction', 'myContribution', 'expectedPot',
+                'forceDrawAvailable', 'memberDebts', 'myTotalDebt', 'myPendingDebts'
             ));
         } catch (\Throwable $e) {
             Log::error('Erreur affichage tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
@@ -545,6 +571,32 @@ SVG;
             Log::error('Erreur refus membre', ['tontine' => $tontine->id, 'user' => $user->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
 
             return back()->withErrors(['error' => 'Erreur lors du refus.']);
+        }
+    }
+
+    public function clearDebt(Tontine $tontine, TontineDebt $debt)
+    {
+        $this->authorize('update', $tontine);
+        abort_if($debt->tontine_id !== $tontine->id, 403);
+
+        try {
+            $debt->markPaid();
+            Cache::forget("tontine_member_{$tontine->id}_{$debt->user_id}");
+
+            $user = $debt->user;
+            $this->notifier->send(
+                $user,
+                'general',
+                "✅ Votre dette de ".number_format($debt->amount, 0, ',', ' ')." FCFA"
+                    ." envers la tontine « {$tontine->name} » a été soldée par le créateur."
+                    ." Vous êtes à nouveau éligible au tirage."
+            );
+
+            return back()->with('success', ($user->name ?? 'Ce membre').' — dette soldée. Il est à nouveau éligible au tirage.');
+        } catch (\Throwable $e) {
+            Log::error('Erreur solde dette', ['debt' => $debt->id, 'error' => $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Erreur lors du solde de la dette.']);
         }
     }
 

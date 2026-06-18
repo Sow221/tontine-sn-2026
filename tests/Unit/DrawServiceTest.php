@@ -7,6 +7,7 @@ use App\Models\CreditScore;
 use App\Models\Cycle;
 use App\Models\CycleVeto;
 use App\Models\Tontine;
+use App\Models\TontineDebt;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\DrawService;
@@ -393,5 +394,96 @@ class DrawServiceTest extends TestCase
         $this->service->drawBeneficiary($cycle->fresh());
 
         $this->assertNull($cycle->fresh()->beneficiary_id);
+    }
+
+    // ── 7. Tirage forcé + dettes ──────────────────────────────────────────
+
+    public function test_force_draw_creates_debt_for_non_payer(): void
+    {
+        $owner  = User::factory()->create();
+        $member = User::factory()->create();
+        $tontine = $this->activeTontine(['created_by' => $owner->id]);
+        $this->attachMember($tontine, $owner, 1);
+        $this->attachMember($tontine, $member, 2);
+
+        $cycle = $this->pendingCycle($tontine);
+        // Seul owner paie
+        $this->payForAll($cycle, [$owner], $tontine->amount);
+
+        $this->service->drawBeneficiary($cycle->fresh(), force: true);
+
+        $this->assertDatabaseHas('tontine_debts', [
+            'tontine_id' => $tontine->id,
+            'user_id'    => $member->id,
+            'cycle_id'   => $cycle->id,
+            'status'     => 'pending',
+        ]);
+    }
+
+    public function test_force_draw_eligible_only_includes_payers(): void
+    {
+        $owner  = User::factory()->create();
+        $member = User::factory()->create();
+        $tontine = $this->activeTontine(['created_by' => $owner->id, 'draw_method' => 'sequential']);
+        $this->attachMember($tontine, $owner, 1);
+        $this->attachMember($tontine, $member, 2);
+
+        $cycle = $this->pendingCycle($tontine);
+        // Seul owner paie → seul owner peut gagner
+        $this->payForAll($cycle, [$owner], $tontine->amount);
+
+        $this->service->drawBeneficiary($cycle->fresh(), force: true);
+
+        $this->assertEquals($owner->id, $cycle->fresh()->beneficiary_id);
+    }
+
+    public function test_normal_draw_excludes_members_with_pending_debt(): void
+    {
+        $owner  = User::factory()->create();
+        $member = User::factory()->create();
+        $tontine = $this->activeTontine(['created_by' => $owner->id, 'draw_method' => 'sequential']);
+        $this->attachMember($tontine, $owner, 2);
+        $this->attachMember($tontine, $member, 1);
+
+        // member a une dette pendante sur un cycle précédent
+        $pastCycle = $this->pendingCycle($tontine, 0);
+        TontineDebt::create([
+            'tontine_id' => $tontine->id,
+            'user_id'    => $member->id,
+            'cycle_id'   => $pastCycle->id,
+            'amount'     => $tontine->amount,
+            'status'     => 'pending',
+        ]);
+
+        $cycle = $this->pendingCycle($tontine, 1);
+        $this->payForAll($cycle, [$owner, $member], $tontine->amount);
+
+        // member est à la position 1 (devrait gagner en séquentiel) mais a une dette → owner gagne
+        $this->service->drawBeneficiary($cycle->fresh());
+
+        $this->assertEquals($owner->id, $cycle->fresh()->beneficiary_id);
+    }
+
+    public function test_canDraw_force_allows_partial_payment_after_due_date(): void
+    {
+        $owner  = User::factory()->create();
+        $member = User::factory()->create();
+        $tontine = $this->activeTontine(['created_by' => $owner->id]);
+        $this->attachMember($tontine, $owner, 1);
+        $this->attachMember($tontine, $member, 2);
+
+        $cycle = Cycle::factory()->create([
+            'tontine_id'      => $tontine->id,
+            'cycle_number'    => 1,
+            'status'          => 'overdue',
+            'total_collected' => $tontine->amount,
+            'due_date'        => now()->subDay(),
+        ]);
+        $this->payForAll($cycle, [$owner], $tontine->amount);
+
+        // Normal → bloqué
+        $this->assertNotNull($this->service->canDraw($cycle->fresh()));
+        // Force → autorisé
+        $this->assertNull($this->service->canDraw($cycle->fresh(), force: true));
     }
 }

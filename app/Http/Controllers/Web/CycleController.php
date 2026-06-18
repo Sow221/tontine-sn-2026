@@ -7,6 +7,7 @@ use App\Http\Requests\BidCycleRequest;
 use App\Models\AuctionBid;
 use App\Models\Cycle;
 use App\Models\CycleVeto;
+use App\Models\TontineDebt;
 use App\Models\User;
 use App\Services\CycleService;
 use App\Services\DrawService;
@@ -48,6 +49,58 @@ class CycleController extends Controller
             Log::error('Erreur tirage', ['cycle' => $cycle->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
 
             return back()->withErrors(['draw' => 'Erreur lors du tirage. Veuillez réessayer.']);
+        }
+    }
+
+    public function forceDraw(Cycle $cycle)
+    {
+        $this->authorize('update', $cycle->tontine);
+
+        abort_if(! $cycle->due_date->isPast(), 422, 'Le cycle n\'est pas encore échu.');
+        abort_if($cycle->beneficiary_id !== null, 422, 'Le tirage a déjà été effectué.');
+
+        try {
+            $error = $this->drawService->canDraw($cycle, force: true);
+            if ($error) {
+                return back()->withErrors(['draw' => $error]);
+            }
+
+            $this->drawService->drawBeneficiary($cycle, force: true);
+            $cycle->refresh();
+
+            // Notifier le bénéficiaire
+            if ($cycle->beneficiary_id) {
+                $pot = $cycle->tontine->amount * $cycle->tontine->activeMembers()->count();
+                $this->notifier->notifyBeneficiary($cycle->beneficiary, $cycle->tontine->name, $pot);
+            }
+
+            // Notifier les débiteurs
+            $newDebts = TontineDebt::where('cycle_id', $cycle->id)
+                ->where('status', 'pending')
+                ->with('user')
+                ->get();
+
+            foreach ($newDebts as $debt) {
+                $this->notifier->send(
+                    $debt->user,
+                    'general',
+                    "⚠️ Dette enregistrée : vous devez ".number_format($debt->amount, 0, ',', ' ')." FCFA"
+                        ." à la tontine « {$cycle->tontine->name} » (cycle #{$cycle->cycle_number})."
+                        ." Réglez cette dette pour pouvoir recevoir le pot lors de votre tour."
+                );
+            }
+
+            $debtCount = $newDebts->count();
+            $msg = 'Tirage forcé effectué avec succès.';
+            if ($debtCount > 0) {
+                $msg .= " {$debtCount} membre(s) enregistré(s) comme débiteur(s) — ils ne pourront pas recevoir le pot tant que leur dette n'est pas réglée.";
+            }
+
+            return back()->with('success', $msg);
+        } catch (\Throwable $e) {
+            Log::error('Erreur tirage forcé', ['cycle' => $cycle->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
+
+            return back()->withErrors(['draw' => 'Erreur lors du tirage forcé. Veuillez réessayer.']);
         }
     }
 
