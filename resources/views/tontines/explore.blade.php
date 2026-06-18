@@ -116,7 +116,7 @@
         @endphp
         <div class="col-12 col-md-6 col-lg-4">
             <a href="{{ route('tontines.show', $tontine) }}"
-               class="card h-100 text-decoration-none {{ $gradClass }}">
+               class="card h-100 d-flex flex-column text-decoration-none {{ $gradClass }}">
                 <div class="card-body d-flex flex-column">
                     {{-- En-tête --}}
                     <div class="d-flex align-items-start gap-3 mb-3">

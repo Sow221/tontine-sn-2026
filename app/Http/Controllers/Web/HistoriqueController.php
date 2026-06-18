@@ -85,7 +85,7 @@ class HistoriqueController extends Controller
                 if ($request->type_flux === 'cotisation') {
                     $query->where('type', 'cotisation');
                 } else {
-                    $query->whereIn('type', ['retrait', 'redistribution', 'withdrawal', 'gain']);
+                    $query->whereIn('type', ['redistribution', 'payout', 'p2p_transfer']);
                 }
             }
             if ($request->filled('date_debut')) {
