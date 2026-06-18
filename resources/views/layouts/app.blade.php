@@ -40,6 +40,25 @@
 </head>
 <body class="bg-off-white" x-data="{ dark: localStorage.getItem('tontine-theme') === 'dark' || (!localStorage.getItem('tontine-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches), sidebarCollapsed: localStorage.getItem('sidebar-collapsed') === 'true' }" :class="{ 'dark-mode': dark }">
 
+    {{-- Anti-FOUC + blocage transition au chargement --}}
+    <script nonce="{{ $cspNonce }}">
+        (function () {
+            try {
+                var t = localStorage.getItem('tontine-theme');
+                if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme:dark)').matches)) {
+                    document.body.classList.add('dark-mode');
+                }
+                // Bloque les transitions pendant l'init (évite le flash de transition au chargement)
+                document.body.classList.add('no-dm-transition');
+                window.addEventListener('DOMContentLoaded', function () {
+                    setTimeout(function () {
+                        document.body.classList.remove('no-dm-transition');
+                    }, 50);
+                });
+            } catch (e) {}
+        })();
+    </script>
+
     <a href="#main-content" class="skip-link">Aller au contenu principal</a>
 
     <noscript>

@@ -1931,3 +1931,70 @@ body.dark-mode .tontine-code {
   padding: 1px 6px;
   font-weight: 700;
 }
+
+/* ============================================================
+   Dark mode — transition fluide lors du toggle
+   ============================================================ */
+
+/* Éléments structurels (fond principal) */
+body,
+.app-sidebar,
+.app-topbar,
+.app-main {
+  transition:
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease;
+}
+
+/* Cartes et surfaces */
+.card,
+.tontine-card,
+.stat-card,
+.dash-hero,
+.dash-kpi,
+.action-banner,
+.profile-hero,
+.member-action-card {
+  transition:
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* Inputs — fusionner avec la transition focus existante */
+.form-control,
+.form-select,
+.input-group-text {
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.22s ease,
+    color 0.22s ease;
+}
+
+/* Bouton light (topbar) */
+.btn-light {
+  transition:
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease;
+}
+
+/* Sidebar links */
+.sidebar-link,
+.sidebar-user-link,
+.sidebar-footer-action-btn {
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+/* Ne pas animer lors du chargement initial — supprimé après 300ms par Alpine */
+.no-dm-transition,
+.no-dm-transition * {
+  transition: none !important;
+}
