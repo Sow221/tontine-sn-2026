@@ -389,9 +389,16 @@
             <h6 class="section-header__title mb-0">Mes cotisations (12 mois)</h6>
             <a href="{{ route('historique.index') }}" class="section-header__link">Historique complet</a>
         </div>
+        @if($chartData['payments']->sum() > 0)
         <div style="position:relative;height:160px;">
             <canvas id="paymentChart"></canvas>
         </div>
+        @else
+        <div class="text-center py-4 text-muted small">
+            <i class="fas fa-chart-bar fa-2x mb-2 d-block" style="opacity:.3;"></i>
+            Aucune cotisation enregistrée sur les 12 derniers mois.
+        </div>
+        @endif
     </div>
     @push('scripts')
     <script nonce="{{ $cspNonce ?? '' }}">

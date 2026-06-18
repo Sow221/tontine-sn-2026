@@ -184,20 +184,24 @@ class TontineController extends Controller
                 && $currentCycle->completionRate() > 0
                 && $userId === $tontine->created_by;
 
-            // Dettes en attente pour cette tontine (pour le créateur)
-            $memberDebts = $userId === $tontine->created_by
-                ? TontineDebt::where('tontine_id', $tontine->id)
-                    ->where('status', 'pending')
-                    ->with('user', 'cycle')
-                    ->get()
-                : collect();
+            // Dettes en attente (graceful fallback si table absente)
+            try {
+                $memberDebts = $userId === $tontine->created_by
+                    ? TontineDebt::where('tontine_id', $tontine->id)
+                        ->where('status', 'pending')
+                        ->with('user', 'cycle')
+                        ->get()
+                    : collect();
 
-            // Dette personnelle du membre connecté dans cette tontine
-            $myPendingDebts = TontineDebt::where('tontine_id', $tontine->id)
-                ->where('user_id', $userId)
-                ->where('status', 'pending')
-                ->with('cycle')
-                ->get();
+                $myPendingDebts = TontineDebt::where('tontine_id', $tontine->id)
+                    ->where('user_id', $userId)
+                    ->where('status', 'pending')
+                    ->with('cycle')
+                    ->get();
+            } catch (\Throwable) {
+                $memberDebts  = collect();
+                $myPendingDebts = collect();
+            }
             $myTotalDebt = $myPendingDebts->sum('amount');
 
             $canVeto = $currentCycle && $this->drawService->canVeto($currentCycle, $userId);

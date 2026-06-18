@@ -57,7 +57,7 @@
     <div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>{{ $message }}</div>
     @enderror
 
-    <form method="POST" action="{{ route('cycles.pay.initiate', $cycle) }}" x-data="{ method: 'wave', submitting: false }">
+    <form id="paymentForm" method="POST" action="{{ route('cycles.pay.initiate', $cycle) }}" x-data="{ method: 'wave', submitting: false }">
         @csrf
 
         <h6 class="fw-semibold mb-3">Choisir le mode de paiement</h6>
@@ -75,8 +75,8 @@
                         <p class="fw-semibold mb-0">Wave</p>
                         <small class="text-muted">Paiement instantané</small>
                     </div>
-                    <template x-if="method === 'wave'"><span class="badge bg-success ms-auto">Recommandé</span></template>
-                    <i class="fas fa-check-circle ms-auto text-green" x-show="method === 'wave'"></i>
+                    <span class="badge bg-success ms-auto">Recommandé</span>
+                    <i class="fas fa-check-circle text-green" x-show="method === 'wave'" style="flex-shrink:0;"></i>
                 </div>
             </label>
 
@@ -168,9 +168,9 @@
                     </div>
                     <div class="modal-footer border-0 justify-content-center gap-2">
                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
-                        <button type="submit" class="btn btn-primary px-5"
+                        <button type="button" class="btn btn-primary px-5"
                                 :disabled="submitting"
-                                @click="submitting = true; $el.closest('form').submit()">
+                                @click="submitting = true; document.getElementById('paymentForm').submit()">
                             <span x-show="!submitting">Confirmer</span>
                             <span x-show="submitting">
                                 <span class="spinner-border spinner-border-sm me-2"></span>Traitement...
