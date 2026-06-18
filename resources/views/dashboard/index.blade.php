@@ -383,6 +383,9 @@
 
     {{-- ── GRAPHIQUE ───────────────────────────────────────────────────── --}}
     @if($chartData['months']->isNotEmpty())
+    @push('head-scripts')
+    <script src="{{ asset('js/vendor/chart.min.js') }}"></script>
+    @endpush
     <div class="section-divider"></div>
     <div class="card mb-4">
         <div class="section-header mb-3">
@@ -405,41 +408,28 @@
     document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('paymentChart');
         if (!ctx) return;
-        const observer = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (entry.isIntersecting) {
-                    observer.disconnect();
-                    var s = document.createElement('script');
-                    s.src = '{{ asset('js/vendor/chart.min.js') }}';
-                    s.onload = function () {
-                        new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels: @json($chartData['months']),
-                                datasets: [{
-                                    data: @json($chartData['payments']),
-                                    backgroundColor: 'rgba(0,150,57,0.15)',
-                                    borderColor: '#009639',
-                                    borderWidth: 2,
-                                    borderRadius: 6,
-                                    hoverBackgroundColor: 'rgba(0,150,57,0.3)',
-                                }]
-                            },
-                            options: {
-                                responsive: true, maintainAspectRatio: false,
-                                plugins: { legend: { display: false } },
-                                scales: {
-                                    y: { beginAtZero: true, ticks: { callback: function (v) { return (v/1000).toFixed(0)+'K'; }, color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.08)' } },
-                                    x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
-                                }
-                            }
-                        });
-                    };
-                    document.head.appendChild(s);
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: @json($chartData['months']),
+                datasets: [{
+                    data: @json($chartData['payments']),
+                    backgroundColor: 'rgba(0,150,57,0.15)',
+                    borderColor: '#009639',
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    hoverBackgroundColor: 'rgba(0,150,57,0.3)',
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: function (v) { return (v/1000).toFixed(0)+'K'; }, color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.08)' } },
+                    x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
                 }
-            });
-        }, { threshold: 0.1 });
-        observer.observe(ctx);
+            }
+        });
     });
     </script>
     @endpush
