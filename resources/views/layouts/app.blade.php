@@ -192,7 +192,7 @@
                         @click.prevent="dark = !dark; localStorage.setItem('tontine-theme', dark ? 'dark' : 'light')"
                         :title="dark ? 'Mode clair' : 'Mode sombre'"
                         aria-label="Basculer le thème">
-                    <i :class="dark ? 'fas fa-sun' : 'fas fa-moon'"></i>
+                    <i class="fas" :class="dark ? 'fa-sun' : 'fa-moon'"></i>
                 </button>
 
                 <div class="position-relative" x-data="{ notifOpen: false }" @click.outside="notifOpen = false">

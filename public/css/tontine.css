@@ -1105,6 +1105,12 @@ body.dark-mode .sidebar-collapse-btn:hover {
   border-color: var(--green);
   background: var(--gray-soft);
 }
+.topbar-user-btn:focus { outline: none; }
+.topbar-user-btn:focus-visible {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(0,150,57,0.18);
+}
 .topbar-user-avatar {
   width: 28px;
   height: 28px;

@@ -23,7 +23,7 @@ class SecurityHeaders
         $appUrl = rtrim(config('app.url'), '/');
         $response->headers->set('Content-Security-Policy', implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'nonce-{$nonce}' https://cdn.jsdelivr.net",
+            "script-src 'self' 'nonce-{$nonce}' 'unsafe-eval' https://cdn.jsdelivr.net",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https:",
             "font-src 'self' data:",
