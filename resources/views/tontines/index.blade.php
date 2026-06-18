@@ -73,25 +73,25 @@
 
     @foreach($tontines as $tontine)
     @php
-        $statusCycle = $tontine->currentCycle;
-        $gradClass   = match($tontine->type) {
-            'auction'       => 'tontine-gradient-auction',
-            'ceremonial'    => 'tontine-gradient-ceremonial',
-            'forced_saving' => 'tontine-gradient-saving',
-            default         => 'tontine-gradient-standard',
+        $statusCycle  = $tontine->currentCycle;
+        [$tcBg, $tcBorder] = match($tontine->type) {
+            'auction'       => ['#fffbeb', '#d97706'],
+            'ceremonial'    => ['#fdf4ff', '#a855f7'],
+            'forced_saving' => ['#f0f9ff', '#0284c7'],
+            default         => ['#f0fdf4', '#009639'],
         };
         $memberStatus = $tontine->pivot->status;
         $isCreator    = $tontine->created_by === auth()->id();
     @endphp
 
     <a href="{{ route('tontines.show', $tontine) }}"
-       class="card mb-3 text-decoration-none text-dark {{ $gradClass }} {{ $memberStatus === 'pending' ? 'opacity-75' : '' }}"
-       style="border-left: 4px solid {{ $isCreator ? '#009639' : '#e2e8f0' }};">
-        <div class="d-flex align-items-center gap-3">
-            <div class="tontine-avatar">{{ strtoupper(substr($tontine->name, 0, 2)) }}</div>
+       class="tontine-card mb-3 text-decoration-none {{ $memberStatus === 'pending' ? 'opacity-75' : '' }}"
+       style="--tc-bg:{{ $tcBg }};--tc-border:{{ $tcBorder }};">
+        <div class="tontine-card__top">
+            <div class="tontine-card__avatar">{{ strtoupper(substr($tontine->name, 0, 2)) }}</div>
             <div class="flex-grow-1 min-width-0">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <h6 class="fw-semibold mb-0 text-truncate">{{ $tontine->name }}</h6>
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <span class="fw-semibold text-truncate" style="color:var(--indigo,#2D2F53);font-size:15px;">{{ $tontine->name }}</span>
                     @if($isCreator)
                         <span class="badge badge-success" style="font-size:10px;">👑 Créateur</span>
                     @endif
@@ -102,23 +102,25 @@
                         <span class="badge bg-info text-white" style="font-size:10px;"><i class="fas fa-globe me-1"></i>Public</span>
                     @endif
                 </div>
-                <small class="text-muted">
-                    {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA ·
-                    {{ match($tontine->frequency) { 'daily' => 'Quotidienne', 'weekly' => 'Hebdo', 'monthly' => 'Mensuelle', default => $tontine->frequency } }} ·
-                    Code : <strong>{{ $tontine->code }}</strong>
-                </small>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <small class="text-muted">
+                        {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA ·
+                        {{ match($tontine->frequency) { 'daily' => 'Quotidienne', 'weekly' => 'Hebdo', 'monthly' => 'Mensuelle', default => $tontine->frequency } }}
+                    </small>
+                    <code class="tontine-code">{{ $tontine->code }}</code>
+                </div>
                 @if($statusCycle)
                 <div class="mt-1">
-                    <small class="text-muted">Cycle {{ $statusCycle->cycle_number }} · Échéance {{ $statusCycle->due_date->format('d/m/Y') }}</small>
+                    <small class="text-muted">Cycle {{ $statusCycle->cycle_number }} · Échéance <strong>{{ $statusCycle->due_date->format('d/m/Y') }}</strong></small>
                 </div>
                 @endif
             </div>
-            <div class="text-end flex-shrink-0">
+            <div class="text-end flex-shrink-0 ms-2">
                 <span class="badge badge-{{ match($tontine->status) { 'active' => 'success', 'completed' => 'secondary', 'suspended' => 'danger', default => 'warning' } }}"
-                      role="status" aria-label="Statut : {{ match($tontine->status) { 'active' => 'Active', 'completed' => 'Terminée', 'pending' => 'En attente', 'suspended' => 'Suspendue', default => ucfirst($tontine->status) } }}">
+                      role="status">
                     {{ match($tontine->status) { 'active' => 'Active', 'completed' => 'Terminée', 'pending' => 'En attente', 'suspended' => 'Suspendue', default => ucfirst($tontine->status) } }}
                 </span>
-                <div class="small text-muted mt-1">{{ $tontine->active_members_count }} membre(s)</div>
+                <div class="small text-muted mt-1">{{ $tontine->active_members_count }} memb.</div>
             </div>
         </div>
     </a>

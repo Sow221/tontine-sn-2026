@@ -138,6 +138,7 @@
         </div>
     </div>
 
+    <div class="tontines-bento">
     @foreach($activeTontines as $tontine)
     @php
         $currentCycle = $tontine->currentCycle;
@@ -150,7 +151,7 @@
         $tc = $typeColors[$tontine->type] ?? $typeColors['default'];
         $progress = $currentCycle ? $currentCycle->completionRate() : 0;
     @endphp
-    <a href="{{ route('tontines.show', $tontine) }}" class="tontine-card mb-3 text-decoration-none"
+    <a href="{{ route('tontines.show', $tontine) }}" class="tontine-card text-decoration-none"
        style="--tc-bg:{{ $tc['bg'] }};--tc-border:{{ $tc['border'] }};">
         <div class="tontine-card__top">
             <div class="tontine-card__avatar">
@@ -204,6 +205,7 @@
         </div>
     </a>
     @endforeach
+    </div>{{-- .tontines-bento --}}
 
     @else
     {{-- Aucune tontine --}}
@@ -401,7 +403,7 @@
                 if (entry.isIntersecting) {
                     observer.disconnect();
                     var s = document.createElement('script');
-                    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+                    s.src = '{{ asset('js/vendor/chart.min.js') }}';
                     s.onload = function () {
                         new Chart(ctx, {
                             type: 'bar',

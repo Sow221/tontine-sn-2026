@@ -14,7 +14,7 @@
         $daysLeft = (int) now()->diffInDays($currentCycle->due_date, false);
         $hoursLeft = (int) now()->diffInHours($currentCycle->due_date, false);
     @endphp
-    <div class="d-flex align-items-center gap-3 p-3 rounded mb-3"
+    <div class="ceremonial-countdown d-flex align-items-center gap-3 p-3 rounded mb-3"
          style="background:linear-gradient(135deg,#fdf2f8,#fce7f3);border:1px solid #fbcfe8;">
         <div class="text-center flex-shrink-0">
             <div style="font-size:2rem;font-weight:800;color:#ec4899;line-height:1;">
@@ -285,9 +285,19 @@
                     <i class="fas fa-random"></i>
                 </button>
                 @elseif(!$currentCycle->beneficiary_id)
-                <button class="btn btn-outline-secondary" disabled title="{{ $drawBlockReason ?? 'Tirage non disponible' }}">
-                    <i class="fas fa-random"></i>
-                </button>
+                    @if($forceDrawAvailable ?? false)
+                    <form method="POST" action="{{ route('cycles.force-draw', $currentCycle) }}" class="d-inline"
+                          onsubmit="return confirm('⚡ Forcer le tirage ?\n\nLes membres n\'ayant pas payé seront enregistrés comme débiteurs et exclus de ce tirage.\nIls ne pourront pas recevoir le pot tant que leur dette n\'est pas réglée.')">
+                        @csrf
+                        <button type="submit" class="btn btn-warning" title="Forcer le tirage malgré les cotisations manquantes">
+                            <i class="fas fa-bolt me-1"></i>Forcer
+                        </button>
+                    </form>
+                    @else
+                    <button class="btn btn-outline-secondary" disabled title="{{ $drawBlockReason ?? 'Tirage non disponible' }}">
+                        <i class="fas fa-random"></i>
+                    </button>
+                    @endif
                 @endif
             @endif
         @endif

@@ -10,9 +10,7 @@
 <meta property="og:image" content="{{ asset('images/hero-community.webp') }}">
 <meta property="og:url" content="{{ url('/') }}">
 <meta property="og:type" content="website">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="{{ asset('css/vendor/google-fonts.css') }}" rel="stylesheet">
 <link rel="canonical" href="{{ url('/') }}">
 <link rel="icon" type="image/svg+xml" href="{{ asset('images/icon-192.svg') }}">
 <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('images/icon-192.png') }}">

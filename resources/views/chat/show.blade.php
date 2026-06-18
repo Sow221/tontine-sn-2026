@@ -13,8 +13,9 @@
     </nav>
 
     <div class="d-flex align-items-center gap-2 mb-3">
-        <a href="{{ route('chat.index') }}" class="btn btn-sm btn-light rounded-circle">
-            <i class="fas fa-arrow-left"></i>
+        <a href="{{ route('chat.index') }}" class="btn-back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            Messages
         </a>
         <h5 class="fw-bold mb-0">{{ $tontine->name }}</h5>
         <span class="badge bg-light text-muted ms-auto" id="chat-online"></span>

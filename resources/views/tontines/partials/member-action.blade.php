@@ -12,18 +12,40 @@
                 @elseif($paymentPending ?? false)
                     <p class="mb-0 small text-muted">{{ __('member.payment_validating') }}</p>
                 @elseif($currentCycle && !$hasPaid && $tontine->type !== 'forced_saving')
-                    <p class="mb-2 small">{{ __('member.contribution_due') }} <strong>{{ $currentCycle->due_date->format('d/m/Y') }}</strong>.</p>
-                    <a href="#cycle" class="btn btn-sm btn-outline-primary rounded-pill">
-                        <i class="fas fa-arrow-down me-1"></i>Voir le paiement
-                    </a>
+                    @php
+                        $actionPenalty = $currentCycle->isOverdue() && $tontine->penalty_rate > 0
+                            ? (int) round($tontine->amount * $tontine->penalty_rate / 100) : 0;
+                        $actionTotal = $tontine->amount + $actionPenalty;
+                    @endphp
+                    <p class="mb-2 small">
+                        {{ __('member.contribution_due') }} <strong>{{ $currentCycle->due_date->format('d/m/Y') }}</strong>
+                        @if($currentCycle->isOverdue()) <span class="badge bg-danger ms-1">En retard</span> @endif
+                    </p>
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill"
+                            data-bs-toggle="modal" data-bs-target="#payModal">
+                        <i class="fas fa-money-bill-wave me-1"></i>Payer — {{ number_format($actionTotal, 0, ',', ' ') }} FCFA
+                    </button>
                 @elseif($tontine->type === 'forced_saving' && $currentCycle && !$hasPaid)
                     <p class="mb-2 small">{{ __('member.contribution_due') }} <strong>{{ $currentCycle->due_date->format('d/m/Y') }}</strong>.</p>
-                    <a href="#cycle" class="btn btn-sm btn-outline-primary rounded-pill">
-                        <i class="fas fa-arrow-down me-1"></i>Voir le paiement
-                    </a>
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill"
+                            data-bs-toggle="modal" data-bs-target="#payModal">
+                        <i class="fas fa-piggy-bank me-1"></i>Épargner — {{ number_format($tontine->amount, 0, ',', ' ') }} FCFA
+                    </button>
                 @elseif($tontine->type === 'auction' && $currentCycle && !$currentCycle->beneficiary_id && !($bidDeadlinePassed ?? false))
                     <p class="mb-2 small">{{ __('member.type_auction_help') }}</p>
                     <a href="#cycle" class="btn btn-sm btn-warning rounded-pill">{{ __('member.pay') }} / Enchère</a>
+                @elseif(($myTotalDebt ?? 0) > 0)
+                    <p class="mb-1 small fw-semibold" style="color:#dc2626;">⚠️ Vous avez une dette envers cette tontine</p>
+                    <p class="mb-2 small text-muted">
+                        Montant dû : <strong>{{ number_format($myTotalDebt, 0, ',', ' ') }} FCFA</strong>
+                        @foreach($myPendingDebts ?? [] as $d)
+                            (cycle&nbsp;#{{ $d->cycle->cycle_number ?? '?' }})
+                        @endforeach
+                    </p>
+                    <p class="mb-0 small text-muted">
+                        Vous ne pourrez pas recevoir le pot tant que votre dette n'est pas soldée par le créateur.
+                        Réglez-la directement auprès de lui.
+                    </p>
                 @elseif($turnEstimate && ($turnEstimate['status'] ?? '') === 'waiting')
                     <p class="mb-0 small text-muted">
                         {{ __('member.queue_estimate', [

@@ -10,15 +10,6 @@
         if (this.type === 'ceremonial')    return 'Date de l\'événement *'
         if (this.type === 'forced_saving') return 'Date de clôture de l\'épargne *'
         return 'Date de fin (optionnelle)'
-    },
-    typeDescription() {
-        const d = {
-            fixed:         'Chaque membre cotise le même montant. Le pot tourne selon l\'ordre défini.',
-            auction:       'Les membres enchérissent pour recevoir le pot en premier. Celui qui propose le taux le plus élevé gagne — mais reçoit moins.',
-            forced_saving: 'Chaque membre épargne pour lui-même jusqu\'à la date de clôture. Pas de bénéficiaire rotatif.',
-            ceremonial:    'Tous les membres cotisent pour un événement unique (mariage, baptême...). Le créateur reçoit le pot à la date de l\'événement.'
-        }
-        return d[this.type] || ''
     }
 }">
 
@@ -31,8 +22,9 @@
     </nav>
 
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('tontines.index') }}" class="btn btn-sm btn-light rounded-circle">
-            <i class="fas fa-arrow-left"></i>
+        <a href="{{ route('tontines.index') }}" class="btn-back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            Mes tontines
         </a>
         <h4 class="fw-bold mb-0">Nouvelle tontine</h4>
     </div>
@@ -59,14 +51,33 @@
 
             <div class="mb-0">
                 <label class="form-label fw-semibold">Type de tontine <span class="text-danger">*</span></label>
-                <select name="type" x-model="type" class="form-select @error('type') is-invalid @enderror" required>
-                    <option value="fixed"         {{ old('type') === 'fixed'         ? 'selected' : '' }}>Fixe — Rotation classique</option>
-                    <option value="auction"       {{ old('type') === 'auction'       ? 'selected' : '' }}>Enchères — Le plus offrant reçoit en premier</option>
-                    <option value="forced_saving" {{ old('type') === 'forced_saving' ? 'selected' : '' }}>Épargne forcée — Chacun épargne pour soi</option>
-                    <option value="ceremonial"    {{ old('type') === 'ceremonial'    ? 'selected' : '' }}>Cérémonielle — Mariage, baptême, funérailles</option>
-                </select>
-                <div class="alert alert-light py-2 mt-2 small" x-text="typeDescription()" x-show="typeDescription()"></div>
-                @error('type') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                <div class="type-picker">
+                    <label class="type-card" :class="{ 'type-card--active': type === 'fixed' }">
+                        <input type="radio" name="type" value="fixed" x-model="type" class="d-none">
+                        <span class="type-card__icon">🤝</span>
+                        <span class="type-card__label">Fixe</span>
+                        <small class="type-card__desc">Rotation classique — le pot tourne à chaque cycle</small>
+                    </label>
+                    <label class="type-card" :class="{ 'type-card--active': type === 'auction' }">
+                        <input type="radio" name="type" value="auction" x-model="type" class="d-none">
+                        <span class="type-card__icon">🏷️</span>
+                        <span class="type-card__label">Enchères</span>
+                        <small class="type-card__desc">Le plus offrant reçoit le pot en premier</small>
+                    </label>
+                    <label class="type-card" :class="{ 'type-card--active': type === 'forced_saving' }">
+                        <input type="radio" name="type" value="forced_saving" x-model="type" class="d-none">
+                        <span class="type-card__icon">💰</span>
+                        <span class="type-card__label">Épargne forcée</span>
+                        <small class="type-card__desc">Chacun épargne pour soi jusqu'à la clôture</small>
+                    </label>
+                    <label class="type-card" :class="{ 'type-card--active': type === 'ceremonial' }">
+                        <input type="radio" name="type" value="ceremonial" x-model="type" class="d-none">
+                        <span class="type-card__icon">🎊</span>
+                        <span class="type-card__label">Cérémonielle</span>
+                        <small class="type-card__desc">Mariage, baptême, funérailles…</small>
+                    </label>
+                </div>
+                @error('type') <div class="invalid-feedback d-block mt-1">{{ $message }}</div> @enderror
             </div>
             <div class="mb-0">
                 <label class="form-label fw-semibold">Visibilité</label>

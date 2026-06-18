@@ -14,6 +14,7 @@ use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\TontineService;
 use App\Services\WebhookOutboundService;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
@@ -37,6 +38,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Paginator::defaultView('pagination::bootstrap-5');
+        Paginator::defaultSimpleView('pagination::simple-bootstrap-5');
+
         Route::aliasMiddleware('role', RoleMiddleware::class);
 
         Gate::policy(Tontine::class, TontinePolicy::class);

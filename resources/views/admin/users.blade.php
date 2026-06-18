@@ -5,8 +5,9 @@
 <div class="container py-4">
 
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-light rounded-circle">
-            <i class="fas fa-arrow-left"></i>
+        <a href="{{ route('admin.dashboard') }}" class="btn-back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            Tableau de bord
         </a>
         <h4 class="fw-bold mb-0">Utilisateurs</h4>
         <span class="badge bg-secondary ms-1">{{ $users->total() }}</span>

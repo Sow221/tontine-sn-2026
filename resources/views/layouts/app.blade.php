@@ -237,8 +237,8 @@
                         <div class="topbar-dropdown-divider"></div>
                         <form method="POST" action="{{ route('auth.logout') }}">
                             @csrf
-                            <button type="submit" class="topbar-dropdown-item text-danger">
-                                <i class="fas fa-sign-out-alt text-danger"></i> Déconnexion
+                            <button type="submit" class="topbar-dropdown-item topbar-dropdown-item--danger">
+                                <i class="fas fa-sign-out-alt"></i> Déconnexion
                             </button>
                         </form>
                     </div>
@@ -262,14 +262,22 @@
                 </div>
             @endif
             @if($errors->any())
+            @php
+                $inlineHandled  = ['activate', 'new_owner_id', 'draw', 'error', 'bid_rate', 'veto', 'payment', 'reverse'];
+                $globalMessages = collect($errors->getBag('default')->toArray())
+                    ->reject(fn($msgs, $key) => in_array($key, $inlineHandled))
+                    ->flatten();
+            @endphp
+            @if($globalMessages->isNotEmpty())
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <ul class="mb-0">
-                        @foreach($errors->all() as $error)
+                        @foreach($globalMessages as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
                 </div>
+            @endif
             @endif
         </div>
 
@@ -363,8 +371,8 @@
 @endauth
 
 <script defer src="{{ asset('js/vendor/bootstrap.bundle.min.js') }}"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.14.1/dist/cdn.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.1/dist/cdn.min.js"></script>
+<script defer src="{{ asset('js/vendor/alpine-focus.min.js') }}"></script>
+<script defer src="{{ asset('js/vendor/alpine-collapse.min.js') }}"></script>
 <script defer src="{{ asset('js/vendor/alpine.min.js') }}"></script>
 <script defer src="{{ asset('js/tontine.js') }}"></script>
 <script nonce="{{ $cspNonce ?? '' }}">

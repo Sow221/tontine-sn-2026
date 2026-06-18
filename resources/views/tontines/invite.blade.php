@@ -15,7 +15,7 @@
     <meta name="twitter:description" content="{{ $excerpt }}">
     <meta name="twitter:image" content="{{ $ogImage }}">
     <link rel="canonical" href="{{ url()->current() }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('css/vendor/bootstrap.min.css') }}" rel="stylesheet">
     <style>
         body { font-family: Inter, system-ui, Arial, sans-serif; background: #f7fafc; color: #111827; }
         .invite-card { max-width: 900px; margin: 40px auto; padding: 32px; background: white; border-radius: 20px; box-shadow: 0 22px 60px rgba(15, 23, 42, .08); }

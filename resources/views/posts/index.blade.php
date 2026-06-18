@@ -4,8 +4,9 @@
 @section('content')
 <div class="container py-5" style="max-width:860px;">
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('home') }}" class="btn btn-sm btn-light rounded-circle">
-            <i class="fas fa-arrow-left"></i>
+        <a href="{{ route('home') }}" class="btn-back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            Accueil
         </a>
         <h4 class="fw-bold mb-0">Blog TontineSN</h4>
     </div>

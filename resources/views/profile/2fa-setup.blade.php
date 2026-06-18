@@ -13,8 +13,9 @@
     </nav>
 
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('profile.show') }}" class="btn btn-sm btn-light rounded-circle">
-            <i class="fas fa-arrow-left"></i>
+        <a href="{{ route('profile.show') }}" class="btn-back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            Mon profil
         </a>
         <h4 class="fw-bold mb-0">Activer le 2FA</h4>
     </div>

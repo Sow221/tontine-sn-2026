@@ -3,13 +3,14 @@
 
 @section('content')
 @push('head-scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/vendor/chart.min.js') }}"></script>
 @endpush
 <div class="container py-4">
 
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-light rounded-circle">
-            <i class="fas fa-arrow-left"></i>
+        <a href="{{ route('admin.dashboard') }}" class="btn-back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            Tableau de bord
         </a>
         <h4 class="fw-bold mb-0">Statistiques plateforme</h4>
     </div>

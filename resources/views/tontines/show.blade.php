@@ -55,8 +55,9 @@
     </nav>
 
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('tontines.index') }}" class="btn btn-sm btn-light rounded-circle" aria-label="Retour">
+        <a href="{{ route('tontines.index') }}" class="btn-back">
             <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            Mes tontines
         </a>
         <div class="flex-grow-1 min-width-0">
             <h4 class="fw-bold mb-0 text-truncate">{{ $tontine->name }}</h4>
@@ -148,6 +149,16 @@
     @endif
 
     @if($myMemberStatus !== 'excluded')
+
+    {{-- Erreurs tirage / actions créateur --}}
+    @foreach(['draw', 'error', 'bid_rate', 'veto'] as $_errKey)
+    @error($_errKey)
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
+        <i class="fas fa-exclamation-circle flex-shrink-0"></i>
+        <span class="small">{{ $message }}</span>
+    </div>
+    @enderror
+    @endforeach
 
     {{-- 5. ACTION PRINCIPALE : CYCLE EN COURS (priorité absolue) --}}
     <div id="section-cycle">
@@ -266,6 +277,10 @@
                     @elseif(($turnEstimate['status'] ?? '') === 'already_won')
                         <div class="stat-value text-success fs-6">✓ Reçu</div>
                         <div class="stat-label">Pot cycle #{{ $myPastWin?->cycle_number ?? '—' }}</div>
+                    @elseif(($myTotalDebt ?? 0) > 0)
+                        <div class="stat-value text-danger fs-6">⚠️</div>
+                        <div class="stat-label">Dette en attente</div>
+                        <small class="text-muted d-block" style="font-size:10px;">{{ number_format($myTotalDebt, 0, ',', ' ') }} FCFA</small>
                     @elseif(($turnEstimate['status'] ?? '') === 'waiting')
                         @php $estimatedCycle = $tontine->cycles->where('status', '!=', 'paid')->sortBy('cycle_number')->skip($turnEstimate['members_ahead'])->first(); @endphp
                         <div class="stat-value text-indigo fs-6">~{{ $turnEstimate['members_ahead'] }} tour(s)</div>

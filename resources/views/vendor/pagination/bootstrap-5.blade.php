@@ -1,5 +1,5 @@
 @if ($paginator->hasPages())
-<nav aria-label="Pagination" class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2">
+<nav aria-label="Pagination" class="d-flex align-items-center justify-content-center justify-content-sm-between flex-wrap gap-2 mt-2">
 
     {{-- Résumé (masqué sur très petits écrans) --}}
     <p class="small text-muted mb-0 d-none d-sm-block">
@@ -8,7 +8,7 @@
     </p>
 
     {{-- Pagination --}}
-    <ul class="pagination mb-0">
+    <ul class="pagination mb-0 flex-wrap justify-content-center" style="row-gap:4px;">
 
         {{-- Précédent --}}
         @if ($paginator->onFirstPage())

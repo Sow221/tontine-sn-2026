@@ -15,8 +15,9 @@
     </nav>
 
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('tontines.show', $tontine) }}" class="btn btn-sm btn-light rounded-circle">
-            <i class="fas fa-arrow-left"></i>
+        <a href="{{ route('tontines.show', $tontine) }}" class="btn-back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            {{ $tontine->name }}
         </a>
         <h4 class="fw-bold mb-0">Modifier la tontine</h4>
     </div>

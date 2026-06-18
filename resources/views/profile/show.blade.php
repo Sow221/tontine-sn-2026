@@ -11,24 +11,58 @@
         </ol>
     </nav>
 
-    <h4 class="fw-bold mb-4">Mon profil</h4>
-
-    {{-- Avatar + infos en-tête --}}
-    <div class="text-center mb-4">
-        @if($user->avatar)
-            @php $avatarUrl = str_starts_with($user->avatar, 'http') ? $user->avatar : asset('storage/' . $user->avatar); @endphp
-            <img src="{{ $avatarUrl }}" class="rounded-circle" width="80" height="80" alt="avatar" style="object-fit:cover">
-        @else
-            <div class="mx-auto d-flex align-items-center justify-content-center bg-green text-white"
-                 style="width:80px;height:80px;border-radius:50%;font-size:2rem;font-weight:700;">
-                {{ strtoupper(substr($user->name ?? $user->email, 0, 1)) }}
+    {{-- Hero profil --}}
+    @php
+        $avatarUrl = $user->avatar
+            ? (str_starts_with($user->avatar, 'http') ? $user->avatar : asset('storage/' . $user->avatar))
+            : null;
+        $kycStatus = $user->kyc_verified ? 'ok' : ($user->kyc_status === 'rejected' ? 'err' : ($user->kyc_document ? 'wait' : 'none'));
+        $memberMonths = (int) $user->created_at->diffInMonths(now());
+    @endphp
+    <div class="profile-hero mb-4">
+        <div class="profile-hero__left">
+            <div class="profile-hero__avatar">
+                @if($avatarUrl)
+                    <img src="{{ $avatarUrl }}" alt="avatar">
+                @else
+                    {{ strtoupper(substr($user->name ?? $user->email, 0, 1)) }}
+                @endif
             </div>
-        @endif
-        <p class="fw-semibold mt-2 mb-0">{{ $user->name }}</p>
-        <p class="text-muted small mb-0">{{ $user->email }}</p>
-        <span class="badge badge-{{ match($user->role) { 'super_admin' => 'danger', 'admin' => 'warning', default => 'secondary' } }} mt-1">
-            {{ match($user->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => 'Membre' } }}
-        </span>
+            <div>
+                <h5 class="fw-bold mb-1" style="color:#fff;">{{ $user->name }}</h5>
+                <p class="mb-1" style="font-size:13px;opacity:.75;color:#e2e8f0;">{{ $user->email }}</p>
+                <span class="badge badge-{{ match($user->role) { 'super_admin' => 'danger', 'admin' => 'warning', default => 'secondary' } }}">
+                    {{ match($user->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => 'Membre' } }}
+                </span>
+            </div>
+        </div>
+        <div class="profile-hero__stats">
+            <div class="profile-stat">
+                <span class="profile-stat__val">
+                    @if($kycStatus === 'ok') <i class="fas fa-shield-alt"></i>
+                    @elseif($kycStatus === 'wait') <i class="fas fa-clock"></i>
+                    @else <i class="fas fa-user-slash"></i>
+                    @endif
+                </span>
+                <span class="profile-stat__key">KYC</span>
+            </div>
+            @if($user->creditScore)
+            <div class="profile-stat">
+                <span class="profile-stat__val">{{ $user->creditScore->score }}<span style="font-size:11px;font-weight:400;">/10</span></span>
+                <span class="profile-stat__key">Score</span>
+            </div>
+            @endif
+            <div class="profile-stat">
+                <span class="profile-stat__val">{{ $memberMonths }}<span style="font-size:11px;font-weight:400;">m</span></span>
+                <span class="profile-stat__key">Ancienneté</span>
+            </div>
+            @if($referralsCount > 0)
+            <div class="profile-stat">
+                <span class="profile-stat__val">{{ $referralsCount }}</span>
+                <span class="profile-stat__key">Parrainages</span>
+            </div>
+            @endif
+        </div>
     </div>
 
     {{-- Formulaire unique : nom + email + téléphone + avatar --}}

@@ -5,8 +5,9 @@
 <div class="container py-4">
 
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('admin.users') }}" class="btn btn-sm btn-light rounded-circle">
-            <i class="fas fa-arrow-left"></i>
+        <a href="{{ route('admin.users') }}" class="btn-back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            Utilisateurs
         </a>
         <h4 class="fw-bold mb-0">Profil utilisateur</h4>
     </div>

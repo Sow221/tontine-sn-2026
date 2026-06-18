@@ -93,13 +93,16 @@
 
 @php
     $benefitedIds = $tontine->cycles->whereNotNull('beneficiary_id')->pluck('beneficiary_id')->unique();
+    $debtsByUser  = ($memberDebts ?? collect())->groupBy('user_id');
 @endphp
 
 <div id="members-limited">
 @foreach($visibleMembers as $member)
 @php
-    $memberScore = $member->creditScore;
-    $hasBenefited = $benefitedIds->contains($member->id);
+    $memberScore   = $member->creditScore;
+    $hasBenefited  = $benefitedIds->contains($member->id);
+    $memberDebtsRow = $debtsByUser->get($member->id, collect());
+    $totalDebt      = $memberDebtsRow->sum('amount');
 @endphp
 <div class="card mb-2 py-2">
     <div class="d-flex align-items-center gap-3">
@@ -115,6 +118,9 @@
                 @if($hasBenefited)
                     <span class="badge bg-warning text-dark ms-1" title="A déjà reçu le pot">🏆 Reçu</span>
                 @endif
+                @if($totalDebt > 0)
+                    <span class="badge bg-danger ms-1" title="Dette envers la tontine">⚠️ {{ number_format($totalDebt, 0, ',', ' ') }} FCFA</span>
+                @endif
             </p>
             <small class="text-muted">
                 Position {{ $member->pivot->position ?? '—' }}
@@ -127,6 +133,20 @@
                     </span>
                 @endif
             </small>
+            @if($isCreator && $memberDebtsRow->isNotEmpty())
+            <div class="mt-1">
+                @foreach($memberDebtsRow as $debt)
+                <form method="POST" action="{{ route('tontines.debts.clear', [$tontine, $debt]) }}" class="d-inline"
+                      onsubmit="return confirm('Solder la dette de {{ number_format($debt->amount, 0, ',', ' ') }} FCFA (cycle #{{ $debt->cycle->cycle_number ?? '?' }}) ?')">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-2 py-0"
+                            style="font-size:10px;">
+                        <i class="fas fa-check me-1"></i>Solder cycle #{{ $debt->cycle->cycle_number ?? '?' }}
+                    </button>
+                </form>
+                @endforeach
+            </div>
+            @endif
         </div>
         <div class="d-flex align-items-center gap-1">
             <span class="badge badge-success">Actif</span>
@@ -153,8 +173,10 @@
 <div id="members-all" style="display:none;">
 @foreach($membersList->skip(20) as $member)
 @php
-    $memberScore = $member->creditScore;
-    $hasBenefited = $benefitedIds->contains($member->id);
+    $memberScore    = $member->creditScore;
+    $hasBenefited   = $benefitedIds->contains($member->id);
+    $memberDebtsRow = $debtsByUser->get($member->id, collect());
+    $totalDebt      = $memberDebtsRow->sum('amount');
 @endphp
 <div class="card mb-2 py-2">
     <div class="d-flex align-items-center gap-3">
@@ -170,6 +192,9 @@
                 @if($hasBenefited)
                     <span class="badge bg-warning text-dark ms-1">🏆 Reçu</span>
                 @endif
+                @if($totalDebt > 0)
+                    <span class="badge bg-danger ms-1">⚠️ {{ number_format($totalDebt, 0, ',', ' ') }} FCFA</span>
+                @endif
             </p>
             <small class="text-muted">
                 Position {{ $member->pivot->position ?? '—' }}
@@ -182,6 +207,19 @@
                     </span>
                 @endif
             </small>
+            @if($isCreator && $memberDebtsRow->isNotEmpty())
+            <div class="mt-1">
+                @foreach($memberDebtsRow as $debt)
+                <form method="POST" action="{{ route('tontines.debts.clear', [$tontine, $debt]) }}" class="d-inline"
+                      onsubmit="return confirm('Solder la dette de {{ number_format($debt->amount, 0, ',', ' ') }} FCFA (cycle #{{ $debt->cycle->cycle_number ?? '?' }}) ?')">
+                    @csrf
+                    <button type="submit" class="btn btn-xs btn-outline-success rounded-pill px-2 py-0" style="font-size:10px;">
+                        <i class="fas fa-check me-1"></i>Solder cycle #{{ $debt->cycle->cycle_number ?? '?' }}
+                    </button>
+                </form>
+                @endforeach
+            </div>
+            @endif
         </div>
         <div class="d-flex align-items-center gap-1">
             <span class="badge badge-success">Actif</span>
