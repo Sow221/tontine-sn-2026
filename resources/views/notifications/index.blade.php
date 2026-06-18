@@ -14,7 +14,7 @@
     <h4 class="fw-bold mb-4">Notifications</h4>
 
     @forelse($notifications as $notification)
-    <div class="card mb-3 py-2 {{ is_null($notification->read_at) ? 'border-start border-primary border-3' : '' }}">
+    <div class="card mb-3 py-2 {{ is_null($notification->read_at) ? 'notif-card--unread' : '' }}">
         <div class="d-flex align-items-center gap-3">
             <div class="icon-box {{ match($notification->channel) {
                 'whatsapp' => 'bg-green-light',
@@ -32,7 +32,7 @@
             <div class="flex-grow-1">
                 <p class="mb-0 small {{ is_null($notification->read_at) ? 'fw-bold' : 'fw-semibold' }}">
                     @if(is_null($notification->read_at))
-                    <span class="badge bg-primary me-1" style="font-size:9px;">Nouveau</span>
+                    <span class="badge-new me-1">Nouveau</span>
                     @endif
                     {{ $notification->message }}
                 </p>

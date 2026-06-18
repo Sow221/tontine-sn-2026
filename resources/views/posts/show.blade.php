@@ -31,8 +31,9 @@
     </div>
 
     <div class="mt-5 pt-4 border-top">
-        <a href="{{ route('posts.index') }}" class="btn btn-outline-secondary rounded-pill">
-            <i class="fas fa-arrow-left me-1"></i>Tous les articles
+        <a href="{{ route('posts.index') }}" class="btn-back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            Tous les articles
         </a>
     </div>
 </div>

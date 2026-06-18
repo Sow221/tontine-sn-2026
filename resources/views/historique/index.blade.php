@@ -43,24 +43,24 @@
 
     {{-- ── POTS REÇUS (décaissements) ────────────────────────────────── --}}
     @if($decaissements->isNotEmpty())
-    <div class="card mb-4" style="border-left:4px solid #009639;">
+    <div class="card mb-4 card--accent-green">
         <h6 class="fw-semibold mb-3"><i class="fas fa-hand-holding-usd me-2 text-green"></i>Pots reçus</h6>
         <div class="d-flex flex-column gap-2">
             @foreach($decaissements as $cycle)
             <div class="d-flex align-items-center gap-3 py-2 border-bottom">
-                <div style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:#f0fdf4;border:1px solid rgba(0,150,57,0.2);display:flex;align-items:center;justify-content:center;">
-                    <i class="fas fa-trophy" style="color:#009639;font-size:16px;"></i>
+                <div class="op-icon" style="background:#f0fdf4;border:1px solid rgba(0,150,57,0.2);">
+                    <i class="fas fa-trophy" style="color:#009639;"></i>
                 </div>
                 <div class="flex-grow-1 min-width-0">
                     <p class="mb-0 fw-semibold small text-truncate">{{ $cycle->tontine->name ?? '—' }}</p>
                     <small class="text-muted">Cycle #{{ $cycle->cycle_number }} · {{ $cycle->drawn_at?->format('d/m/Y') ?? '—' }}</small>
                 </div>
                 <div class="text-end" style="flex-shrink:0;">
-                    <span class="fw-bold" style="color:#009639;font-size:15px;">
+                    <span class="fw-bold text-green" style="font-size:15px;">
                         + {{ number_format($cycle->total_collected, 0, ',', ' ') }} FCFA
                     </span>
                     <br>
-                    <span style="background:#dcfce7;color:#16a34a;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:600;">Pot reçu</span>
+                    <span class="badge-pot-recu">Pot reçu</span>
                 </div>
             </div>
             @endforeach
@@ -182,11 +182,11 @@
             <div class="d-flex align-items-center gap-3">
 
                 {{-- Logo opérateur --}}
-                <div style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:{{ $op['bg'] }};border:1px solid {{ $op['color'] }}30;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <div class="op-icon" style="background:{{ $op['bg'] }};border:1px solid {{ $op['color'] }}30;">
                     @if(!empty($op['img']))
-                        <img src="{{ asset($op['img']) }}" alt="{{ $op['alt'] }}" style="width:28px;height:28px;object-fit:contain;">
+                        <img src="{{ asset($op['img']) }}" alt="{{ $op['alt'] }}">
                     @elseif(!empty($op['fa']))
-                        <i class="fas {{ $op['fa'] }}" style="font-size:18px;color:{{ $op['color'] }};"></i>
+                        <i class="fas {{ $op['fa'] }}" style="color:{{ $op['color'] }};"></i>
                     @else
                         <span style="font-size:10px;font-weight:800;color:{{ $op['color'] }};">{{ $op['label'] }}</span>
                     @endif
@@ -197,9 +197,9 @@
                     <p class="mb-0 fw-semibold small text-truncate">{{ $tx->cycle->tontine->name ?? '—' }}</p>
                     <div class="d-flex align-items-center gap-1 flex-wrap mt-1">
                         @if($tx->type === 'redistribution')
-                        <span style="font-size:9px;background:#f3e8ff;color:#9333ea;border-radius:999px;padding:1px 6px;font-weight:600;">Pot</span>
+                        <span class="badge-tx-type badge-tx-type--pot">Pot</span>
                         @elseif($tx->type === 'cotisation')
-                        <span style="font-size:9px;background:#dbeafe;color:#2563eb;border-radius:999px;padding:1px 6px;font-weight:600;">Cotisation</span>
+                        <span class="badge-tx-type badge-tx-type--cotisation">Cotisation</span>
                         @endif
                         <small class="text-muted">
                             {{ $tx->user->name ?? '—' }}
@@ -222,8 +222,8 @@
                         {{ $amountPrefix }} {{ number_format($tx->amount, 0, ',', ' ') }} FCFA
                     </span>
                     <br>
-                    <span style="display:inline-flex;align-items:center;gap:4px;background:{{ $sc['bg'] }};color:{{ $sc['color'] }};border-radius:999px;padding:2px 8px;font-size:11px;font-weight:600;margin-top:4px;">
-                        <i class="fas {{ $sc['icon'] }}" style="font-size:10px;"></i>{{ $sc['label'] }}
+                    <span class="tx-status tx-status--{{ $tx->status }}">
+                        <i class="fas {{ $sc['icon'] }}" aria-hidden="true"></i>{{ $sc['label'] }}
                     </span>
                     @if($tx->status === 'success')
                     <div class="mt-1">

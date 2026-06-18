@@ -115,7 +115,7 @@
             };
         @endphp
         <div class="col-12 col-md-6 col-lg-4">
-            <div class="card h-100 {{ $gradClass }}" style="border-top: 3px solid #009639;">
+            <div class="card h-100 {{ $gradClass }}">
                 <div class="card-body d-flex flex-column">
                     {{-- En-tête --}}
                     <div class="d-flex align-items-start gap-3 mb-3">

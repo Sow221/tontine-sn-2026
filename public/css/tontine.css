@@ -477,14 +477,14 @@ body.dark-mode .dark-mode-card [style*='background:#eff6ff'] { background: #1e3a
 .dash-tab.active { background: white; color: var(--green); box-shadow: var(--shadow-sm); }
 
 /* -- Gradient tontine cards ------------------------------------ */
-.tontine-gradient-standard { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-color: #bbf7d0; }
-.tontine-gradient-auction { background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-color: #ddd6fe; }
-.tontine-gradient-ceremonial { background: linear-gradient(135deg, #fffbeb, #fef3c7); border-color: #fde68a; }
-.tontine-gradient-saving { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-color: #bfdbfe; }
-body.dark-mode .tontine-gradient-standard { background: linear-gradient(135deg, #064e3b, #065f46); border-color: #065f46; }
-body.dark-mode .tontine-gradient-auction { background: linear-gradient(135deg, #3b0764, #4c1d95); border-color: #4c1d95; }
-body.dark-mode .tontine-gradient-ceremonial { background: linear-gradient(135deg, #451a03, #713f12); border-color: #713f12; }
-body.dark-mode .tontine-gradient-saving { background: linear-gradient(135deg, #1e3a5f, #1e40af); border-color: #1e40af; }
+.tontine-gradient-standard  { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-color: #bbf7d0; border-top: 3px solid #009639 !important; }
+.tontine-gradient-auction   { background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-color: #ddd6fe; border-top: 3px solid #8b5cf6 !important; }
+.tontine-gradient-ceremonial{ background: linear-gradient(135deg, #fffbeb, #fef3c7); border-color: #fde68a; border-top: 3px solid #f59e0b !important; }
+.tontine-gradient-saving    { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-color: #bfdbfe; border-top: 3px solid #3b82f6 !important; }
+body.dark-mode .tontine-gradient-standard  { background: linear-gradient(135deg, #064e3b, #065f46); border-color: #065f46; }
+body.dark-mode .tontine-gradient-auction   { background: linear-gradient(135deg, #3b0764, #4c1d95); border-color: #4c1d95; }
+body.dark-mode .tontine-gradient-ceremonial{ background: linear-gradient(135deg, #451a03, #713f12); border-color: #713f12; }
+body.dark-mode .tontine-gradient-saving    { background: linear-gradient(135deg, #1e3a5f, #1e40af); border-color: #1e40af; }
 
 /* -- Mini circular progress ------------------------------------ */
 .mini-ring { width: 36px; height: 36px; transform: rotate(-90deg); flex-shrink: 0; }
@@ -1860,4 +1860,74 @@ body.dark-mode .type-card__desc  { color: #94a3b8; }
 body.dark-mode .tontine-code {
   background: rgba(255,255,255,0.12);
   color: #cbd5e1;
+}
+
+/* ============================================================
+   Historique — icônes opérateurs et badges statut
+   ============================================================ */
+
+/* Icône opérateur (Wave, OM, Free Money, carte, espèces) */
+.op-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.op-icon img { width: 28px; height: 28px; object-fit: contain; }
+.op-icon .fas { font-size: 18px; }
+
+/* Badge statut transaction */
+.tx-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.tx-status .fas { font-size: 10px; }
+.tx-status--success { background: #dcfce7; color: #16a34a; }
+.tx-status--pending { background: #fef9c3; color: #ca8a04; }
+.tx-status--failed  { background: #fee2e2; color: #dc2626; }
+
+/* Mini badge type transaction */
+.badge-tx-type {
+  font-size: 9px;
+  border-radius: 999px;
+  padding: 1px 6px;
+  font-weight: 600;
+}
+.badge-tx-type--pot        { background: #f3e8ff; color: #9333ea; }
+.badge-tx-type--cotisation { background: #dbeafe; color: #2563eb; }
+
+/* Badge "Pot reçu" — décaissement */
+.badge-pot-recu {
+  background: #dcfce7;
+  color: #16a34a;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Card avec accent gauche vert */
+.card--accent-green { border-left: 4px solid var(--green) !important; }
+
+/* ============================================================
+   Notifications — indicateur non-lu en vert TontineSN
+   ============================================================ */
+.notif-card--unread { border-left: 3px solid var(--green) !important; }
+.badge-new {
+  background: var(--green);
+  color: #fff;
+  font-size: 9px;
+  border-radius: 999px;
+  padding: 1px 6px;
+  font-weight: 700;
 }

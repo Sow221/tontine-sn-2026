@@ -70,7 +70,7 @@
                         ];
                     @endphp
                     @if(isset($opImgs[$transaction->method]))
-                    <img src="{{ public_path($opImgs[$transaction->method]) }}" alt="" style="height:20px;width:auto;">
+                    <img src="{{ asset($opImgs[$transaction->method]) }}" alt="" style="height:20px;width:auto;">
                     @else
                     <i class="fas fa-{{ match($transaction->method) { 'card' => 'credit-card', 'cash' => 'money-bill-wave', default => 'question' } }}" style="font-size:16px;color:{{ match($transaction->method) { 'card' => '#6366f1', 'cash' => '#009639', default => '#64748b' } }};"></i>
                     @endif

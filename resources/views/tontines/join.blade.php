@@ -66,21 +66,20 @@
                 </ol>
             </nav>
 
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="mb-4">
-                        <h4 class="fw-bold">Rejoindre une tontine</h4>
-                        <p class="text-muted mb-0">Entrez le code reçu ou utilisez le lien partagé pour rejoindre la tontine. Vous devrez vous connecter ou vous inscrire pour finaliser l'adhésion.</p>
-                    </div>
+            <div class="card">
+                <div class="mb-4">
+                    <h4 class="fw-bold">Rejoindre une tontine</h4>
+                    <p class="text-muted mb-0">Entrez le code reçu ou utilisez le lien partagé pour rejoindre la tontine. Vous devrez vous connecter ou vous inscrire pour finaliser l'adhésion.</p>
+                </div>
 
                     <form method="POST" action="{{ route('tontines.join') }}">
                         @csrf
                         <div class="mb-3">
                             <label for="code" class="form-label">Code tontine</label>
                             <input type="text" name="code" id="code"
-                                   class="form-control @error('code') is-invalid @enderror"
+                                   class="form-control text-uppercase @error('code') is-invalid @enderror"
                                    value="{{ old('code', $code) }}"
-                                   maxlength="6" style="text-transform:uppercase"
+                                   maxlength="6"
                                    placeholder="SAND01" required>
                             @error('code')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -110,7 +109,6 @@
                             Aucune tontine trouvée avec ce code. Vérifiez le code et réessayez.
                         </div>
                     @endif
-                </div>
             </div>
         </div>
     </div>
