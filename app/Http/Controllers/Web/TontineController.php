@@ -145,9 +145,8 @@ class TontineController extends Controller
 
     public function show(Tontine $tontine)
     {
-        $this->authorize('view', $tontine);
-
         try {
+            $this->authorize('view', $tontine);
             // Chargement unique et complet — évite le double load et les N+1
             $tontine->load([
                 'members.creditScore',
@@ -261,14 +260,18 @@ class TontineController extends Controller
                 }
             }
 
-            return view('tontines.show', compact(
+            $html = view('tontines.show', compact(
                 'tontine', 'currentCycle', 'hasPaid', 'paymentPending', 'paidMemberIds', 'canDraw', 'drawBlockReason',
                 'canVeto', 'hasVetoed', 'vetoCount', 'vetoRequired',
                 'myMemberStatus', 'totalCollecte', 'cyclesPaids', 'myPosition', 'myPastWin', 'turnEstimate',
                 'inviteUrl', 'acceptsNewMembers', 'mySaved', 'myWithdrawal', 'withdrawals', 'pastCycles',
                 'bidDeadlinePassed', 'lastSuccessTransaction', 'myContribution', 'expectedPot',
                 'forceDrawAvailable', 'memberDebts', 'myTotalDebt', 'myPendingDebts'
-            ));
+            ))->render();
+
+            return response($html);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            abort(403);
         } catch (\Throwable $e) {
             Log::error('Erreur affichage tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
 
