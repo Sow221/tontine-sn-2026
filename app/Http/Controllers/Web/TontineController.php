@@ -40,9 +40,10 @@ class TontineController extends Controller
                 ->with('creator');
 
             if ($search = $request->input('search')) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
+                $safe = str_replace(['%', '_'], ['\\%', '\\_'], $search);
+                $query->where(function ($q) use ($safe) {
+                    $q->where('name', 'like', "%{$safe}%")
+                        ->orWhere('description', 'like', "%{$safe}%");
                 });
             }
 
@@ -90,9 +91,10 @@ class TontineController extends Controller
                 ->withCount(['members as active_members_count' => fn ($q) => $q->where('tontine_members.status', 'active')]);
 
             if ($search = $request->input('search')) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('tontines.name', 'like', "%{$search}%")
-                        ->orWhere('tontines.code', 'like', "%{$search}%");
+                $safe = str_replace(['%', '_'], ['\\%', '\\_'], $search);
+                $query->where(function ($q) use ($safe) {
+                    $q->where('tontines.name', 'like', "%{$safe}%")
+                        ->orWhere('tontines.code', 'like', "%{$safe}%");
                 });
             }
 

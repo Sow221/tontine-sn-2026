@@ -12,7 +12,7 @@ class DeployController
     {
         $token = $request->query('token');
 
-        if ($token !== 'tontine221_deploy_2024') {
+        if ($token !== env('DEPLOY_TOKEN')) {
             abort(403, 'Token invalide.');
         }
 

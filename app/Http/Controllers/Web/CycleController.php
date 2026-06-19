@@ -190,12 +190,11 @@ class CycleController extends Controller
 
             $tontine = $cycle->tontine;
             $memberIds = $tontine->activeMembers()->pluck('users.id');
+            $users = User::whereIn('id', $memberIds)->get()->keyBy('id');
             foreach ($withdrawals as $w) {
-                if ($memberIds->contains($w['user_id'])) {
-                    $member = User::find($w['user_id']);
-                    if ($member) {
-                        $this->notifier->notifySavingsWithdrawal($member, $tontine->name, $w['amount']);
-                    }
+                $member = $users->get($w['user_id']);
+                if ($member) {
+                    $this->notifier->notifySavingsWithdrawal($member, $tontine->name, $w['amount']);
                 }
             }
 

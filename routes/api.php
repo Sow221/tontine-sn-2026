@@ -32,16 +32,16 @@ Route::prefix('v1')->group(function () {
 
         // Tontines
         Route::get('/tontines', [TontineApiController::class, 'index']);
-        Route::post('/tontines', [TontineApiController::class, 'store']);
+        Route::post('/tontines', [TontineApiController::class, 'store'])->middleware('throttle:10,1');
         Route::get('/tontines/{tontine}', [TontineApiController::class, 'show']);
-        Route::post('/tontines/join', [TontineApiController::class, 'join']);
-        Route::post('/tontines/{tontine}/activate', [TontineApiController::class, 'activate']);
-        Route::post('/tontines/{tontine}/members/{user}/approve', [TontineApiController::class, 'approveMember']);
+        Route::post('/tontines/join', [TontineApiController::class, 'join'])->middleware('throttle:10,1');
+        Route::post('/tontines/{tontine}/activate', [TontineApiController::class, 'activate'])->middleware('throttle:10,1');
+        Route::post('/tontines/{tontine}/members/{user}/approve', [TontineApiController::class, 'approveMember'])->middleware('throttle:30,1');
 
         // Cycles
-        Route::post('/cycles/{cycle}/pay', [PaymentApiController::class, 'initiate']);
-        Route::post('/cycles/{cycle}/bid', [PaymentApiController::class, 'bid']);
-        Route::post('/cycles/{cycle}/draw', [PaymentApiController::class, 'draw']);
+        Route::post('/cycles/{cycle}/pay', [PaymentApiController::class, 'initiate'])->middleware('throttle:10,1');
+        Route::post('/cycles/{cycle}/bid', [PaymentApiController::class, 'bid'])->middleware('throttle:10,1');
+        Route::post('/cycles/{cycle}/draw', [PaymentApiController::class, 'draw'])->middleware('throttle:10,1');
 
         // Transactions
         Route::get('/transactions/{transaction}', [PaymentApiController::class, 'status']);

@@ -95,7 +95,7 @@ class HistoriqueController extends Controller
                 $query->whereDate('created_at', '<=', $request->date_fin);
             }
             if ($request->filled('search')) {
-                $s = $request->search;
+                $s = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
                 $query->where(fn ($q) => $q
                     ->where('external_reference', 'like', "%{$s}%")
                     ->orWhereHas('user', fn ($u) => $u

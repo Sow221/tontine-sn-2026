@@ -21,9 +21,10 @@ class AdminUserController extends Controller
         try {
             $users = User::query()
                 ->when($request->search, fn ($q) => $q->where(function ($q2) use ($request) {
-                    $q2->where('name', 'like', "%{$request->search}%")
-                        ->orWhere('email', 'like', "%{$request->search}%")
-                        ->orWhere('phone_number', 'like', "%{$request->search}%");
+                    $safe = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
+                    $q2->where('name', 'like', "%{$safe}%")
+                        ->orWhere('email', 'like', "%{$safe}%")
+                        ->orWhere('phone_number', 'like', "%{$safe}%");
                 }))
                 ->when($request->role, fn ($q) => $q->where('role', $request->role))
                 ->when($request->status, fn ($q) => $q->where('is_active', $request->status === 'active'))
@@ -158,6 +159,9 @@ class AdminUserController extends Controller
             }
             if ($request->role === 'super_admin' && auth()->user()->role !== 'super_admin') {
                 return back()->withErrors(['error' => 'Seul un super administrateur peut créer un autre super administrateur.']);
+            }
+            if (in_array($request->role, ['admin', 'super_admin']) && ! $user->hasVerifiedEmail()) {
+                return back()->withErrors(['error' => 'L\'utilisateur doit avoir un email vérifié pour obtenir un rôle administrateur.']);
             }
 
             $user->forceFill(['role' => $request->role])->save();

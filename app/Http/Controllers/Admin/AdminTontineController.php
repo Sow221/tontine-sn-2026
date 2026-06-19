@@ -21,8 +21,9 @@ class AdminTontineController extends Controller
             $tontines = Tontine::with('creator')
                 ->withCount(['members as active_members_count' => fn ($q) => $q->where('tontine_members.status', 'active')])
                 ->when($request->search, fn ($q) => $q->where(function ($q2) use ($request) {
-                    $q2->where('name', 'like', "%{$request->search}%")
-                        ->orWhere('code', 'like', "%{$request->search}%");
+                    $safe = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
+                    $q2->where('name', 'like', "%{$safe}%")
+                        ->orWhere('code', 'like', "%{$safe}%");
                 }))
                 ->when($request->status, fn ($q) => $q->where('status', $request->status))
                 ->when($request->type, fn ($q) => $q->where('type', $request->type))

@@ -97,18 +97,18 @@ Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
     Route::get('/tontines/explorer', [TontineController::class, 'explore'])->name('tontines.explore');
     // Tontines
     Route::resource('tontines', TontineController::class);
-    Route::post('/tontines/join', [TontineController::class, 'join'])->name('tontines.join');
-    Route::post('/tontines/{tontine}/activate', [TontineController::class, 'activate'])->name('tontines.activate');
-    Route::delete('/tontines/{tontine}/leave', [TontineController::class, 'leave'])->name('tontines.leave');
-    Route::post('/tontines/{tontine}/transfer', [TontineController::class, 'transferOwnership'])->name('tontines.transfer');
-    Route::post('/tontines/{tontine}/members/{user}/approve', [TontineController::class, 'approveMember'])->name('tontines.members.approve');
-    Route::delete('/tontines/{tontine}/members/{user}/reject', [TontineController::class, 'rejectMember'])->name('tontines.members.reject');
-    Route::delete('/tontines/{tontine}/members/{user}/exclude', [TontineController::class, 'excludeMember'])->name('tontines.members.exclude');
+    Route::post('/tontines/join', [TontineController::class, 'join'])->name('tontines.join')->middleware('throttle:10,1');
+    Route::post('/tontines/{tontine}/activate', [TontineController::class, 'activate'])->name('tontines.activate')->middleware('throttle:10,1');
+    Route::delete('/tontines/{tontine}/leave', [TontineController::class, 'leave'])->name('tontines.leave')->middleware('throttle:10,1');
+    Route::post('/tontines/{tontine}/transfer', [TontineController::class, 'transferOwnership'])->name('tontines.transfer')->middleware('throttle:10,1');
+    Route::post('/tontines/{tontine}/members/{user}/approve', [TontineController::class, 'approveMember'])->name('tontines.members.approve')->middleware('throttle:30,1');
+    Route::delete('/tontines/{tontine}/members/{user}/reject', [TontineController::class, 'rejectMember'])->name('tontines.members.reject')->middleware('throttle:30,1');
+    Route::delete('/tontines/{tontine}/members/{user}/exclude', [TontineController::class, 'excludeMember'])->name('tontines.members.exclude')->middleware('throttle:30,1');
     Route::post('/tontines/{tontine}/members/{user}/remind', [TontineController::class, 'remindMember'])->name('tontines.members.remind')->middleware('throttle:10,1');
     Route::post('/tontines/{tontine}/remind-all', [TontineController::class, 'remindAll'])->name('tontines.remind-all')->middleware('throttle:3,1');
-    Route::post('/tontines/{tontine}/cash/{transaction}/confirm', [TontineController::class, 'confirmCashPayment'])->name('tontines.cash.confirm');
-    Route::post('/tontines/{tontine}/beneficiary', [TontineController::class, 'setBeneficiary'])->name('tontines.beneficiary');
-    Route::post('/withdrawals/{withdrawal}/confirm', [TontineController::class, 'confirmWithdrawal'])->name('withdrawals.confirm');
+    Route::post('/tontines/{tontine}/cash/{transaction}/confirm', [TontineController::class, 'confirmCashPayment'])->name('tontines.cash.confirm')->middleware('throttle:30,1');
+    Route::post('/tontines/{tontine}/beneficiary', [TontineController::class, 'setBeneficiary'])->name('tontines.beneficiary')->middleware('throttle:10,1');
+    Route::post('/withdrawals/{withdrawal}/confirm', [TontineController::class, 'confirmWithdrawal'])->name('withdrawals.confirm')->middleware('throttle:10,1');
 
     // Paiements
     Route::get('/cycles/{cycle}/pay', [PaymentController::class, 'showForm'])->name('cycles.pay');
@@ -118,9 +118,9 @@ Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
     Route::post('/cycles/{cycle}/draw', [CycleController::class, 'draw'])->name('cycles.draw')->middleware('throttle:3,1');
     Route::post('/cycles/{cycle}/force-draw', [CycleController::class, 'forceDraw'])->name('cycles.force-draw')->middleware('throttle:3,1');
     Route::post('/cycles/{cycle}/bid', [CycleController::class, 'bid'])->name('cycles.bid')->middleware('throttle:10,1');
-    Route::post('/cycles/{cycle}/close-saving', [CycleController::class, 'closeForcedSaving'])->name('cycles.close-saving');
-    Route::post('/cycles/{cycle}/veto', [CycleController::class, 'veto'])->name('cycles.veto');
-    Route::post('/tontines/{tontine}/debts/{debt}/clear', [TontineController::class, 'clearDebt'])->name('tontines.debts.clear');
+    Route::post('/cycles/{cycle}/close-saving', [CycleController::class, 'closeForcedSaving'])->name('cycles.close-saving')->middleware('throttle:10,1');
+    Route::post('/cycles/{cycle}/veto', [CycleController::class, 'veto'])->name('cycles.veto')->middleware('throttle:10,1');
+    Route::post('/tontines/{tontine}/debts/{debt}/clear', [TontineController::class, 'clearDebt'])->name('tontines.debts.clear')->middleware('throttle:30,1');
     Route::get('/transactions/{transaction}/recu', [PaymentController::class, 'receipt'])->name('transactions.receipt');
     Route::post('/transactions/{transaction}/reverse', [PaymentController::class, 'reverse'])->name('transactions.reverse')->middleware('throttle:3,1');
     Route::post('/transactions/{transaction}/dispute', [PaymentController::class, 'dispute'])->name('transactions.dispute')->middleware('throttle:3,1');
@@ -128,18 +128,18 @@ Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
 
     // QR Code Payments (P2P)
     Route::get('/qr-payment', [QrCodePaymentController::class, 'show'])->name('qr-payment.show');
-    Route::post('/qr-payment/generate', [QrCodePaymentController::class, 'generate'])->name('qr-payment.generate');
+    Route::post('/qr-payment/generate', [QrCodePaymentController::class, 'generate'])->name('qr-payment.generate')->middleware('throttle:30,1');
     Route::get('/pay/{token}', [QrCodePaymentController::class, 'scan'])->name('qr-payment.scan');
-    Route::post('/pay/{token}', [QrCodePaymentController::class, 'confirm'])->name('qr-payment.confirm');
+    Route::post('/pay/{token}', [QrCodePaymentController::class, 'confirm'])->name('qr-payment.confirm')->middleware('throttle:10,1');
 
     // Profil
     Route::get('/profil', [ProfileController::class, 'show'])->name('profile.show');
-    Route::put('/profil', [ProfileController::class, 'update'])->name('profile.update');
-    Route::put('/profil/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-    Route::delete('/compte', [ProfileController::class, 'deleteAccount'])->name('account.delete');
+    Route::put('/profil', [ProfileController::class, 'update'])->name('profile.update')->middleware('throttle:30,1');
+    Route::put('/profil/password', [ProfileController::class, 'updatePassword'])->name('profile.password')->middleware('throttle:10,1');
+    Route::delete('/compte', [ProfileController::class, 'deleteAccount'])->name('account.delete')->middleware('throttle:3,1');
     Route::get('/profil/notifications', [ProfileController::class, 'notificationSettings'])->name('profile.notifications');
     Route::put('/profil/notifications', [ProfileController::class, 'updateNotificationSettings'])->name('profile.notifications.update');
-    Route::post('/profil/kyc', [ProfileController::class, 'uploadKyc'])->name('profile.kyc');
+    Route::post('/profil/kyc', [ProfileController::class, 'uploadKyc'])->name('profile.kyc')->middleware('throttle:5,1');
     Route::get('/profil/export', [ProfileController::class, 'exportData'])->name('profile.export');
     Route::get('/members/{user}', [ProfileController::class, 'publicProfile'])->name('members.show');
 
@@ -172,22 +172,22 @@ Route::middleware(['auth', 'verified', 'role:admin,super_admin'])->prefix('admin
     Route::get('/users', [AdminUserController::class, 'index'])->name('users');
     Route::get('/users/export', [AdminUserController::class, 'export'])->name('users.export');
     Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
-    Route::post('/users/{user}/toggle', [AdminUserController::class, 'toggle'])->name('users.toggle');
-    Route::post('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role');
-    Route::post('/users/{user}/kyc/approve', [AdminUserController::class, 'approveKyc'])->name('users.kyc.approve');
-    Route::post('/users/{user}/kyc/reject', [AdminUserController::class, 'rejectKyc'])->name('users.kyc.reject');
+    Route::post('/users/{user}/toggle', [AdminUserController::class, 'toggle'])->name('users.toggle')->middleware('throttle:30,1');
+    Route::post('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role')->middleware('throttle:10,1');
+    Route::post('/users/{user}/kyc/approve', [AdminUserController::class, 'approveKyc'])->name('users.kyc.approve')->middleware('throttle:30,1');
+    Route::post('/users/{user}/kyc/reject', [AdminUserController::class, 'rejectKyc'])->name('users.kyc.reject')->middleware('throttle:30,1');
     Route::get('/users/{user}/kyc/review', [AdminUserController::class, 'kycReview'])->name('users.kyc.review');
     Route::get('/users/{user}/kyc/document', [AdminUserController::class, 'kycDocument'])->name('users.kyc.document');
     // Tontines
     Route::get('/tontines', [AdminTontineController::class, 'index'])->name('tontines');
     Route::get('/tontines/{tontine}', [AdminTontineController::class, 'show'])->name('tontines.show');
-    Route::post('/tontines/{tontine}/suspend', [AdminTontineController::class, 'suspend'])->name('tontines.suspend');
-    Route::post('/tontines/{tontine}/reactivate', [AdminTontineController::class, 'reactivate'])->name('tontines.reactivate');
-    Route::post('/tontines/{tontine}/cycles/{cycle}/force-close', [AdminTontineController::class, 'forceCloseCycle'])->name('tontines.cycle.force-close');
+    Route::post('/tontines/{tontine}/suspend', [AdminTontineController::class, 'suspend'])->name('tontines.suspend')->middleware('throttle:10,1');
+    Route::post('/tontines/{tontine}/reactivate', [AdminTontineController::class, 'reactivate'])->name('tontines.reactivate')->middleware('throttle:10,1');
+    Route::post('/tontines/{tontine}/cycles/{cycle}/force-close', [AdminTontineController::class, 'forceCloseCycle'])->name('tontines.cycle.force-close')->middleware('throttle:10,1');
     // Transactions
     Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions');
     Route::get('/transactions/export', [AdminTransactionController::class, 'export'])->name('transactions.export');
-    Route::post('/transactions/{transaction}/force-confirm', [AdminTransactionController::class, 'forceConfirm'])->name('transactions.force-confirm');
+    Route::post('/transactions/{transaction}/force-confirm', [AdminTransactionController::class, 'forceConfirm'])->name('transactions.force-confirm')->middleware('throttle:10,1');
     // Logs & Notifications
     Route::get('/logs', [AdminLogController::class, 'index'])->name('logs');
     Route::get('/logs/export', [AdminLogController::class, 'export'])->name('logs.export');
@@ -195,5 +195,7 @@ Route::middleware(['auth', 'verified', 'role:admin,super_admin'])->prefix('admin
     Route::get('/stats', [AdminDashboardController::class, 'stats'])->name('stats');
     Route::get('/referrals', [AdminDashboardController::class, 'referrals'])->name('referrals');
     Route::get('/api-docs', [ApiDocsController::class, 'index'])->name('api-docs');
+    // Déploiement (protégé par auth admin + token dans l'env)
+    Route::get('/deploy', [\App\Http\Controllers\Deploy\DeployController::class, 'migrate'])->name('deploy');
 });
 

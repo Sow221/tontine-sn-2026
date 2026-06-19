@@ -18,8 +18,9 @@ class AdminLogController extends Controller
                 ->join('users', 'users.id', '=', 'activity_logs.user_id')
                 ->select('activity_logs.*', 'users.name', 'users.email')
                 ->when($request->search, fn ($q) => $q->where(function ($q2) use ($request) {
-                    $q2->where('users.name', 'like', "%{$request->search}%")
-                        ->orWhere('activity_logs.action', 'like', "%{$request->search}%");
+                    $safe = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
+                    $q2->where('users.name', 'like', "%{$safe}%")
+                        ->orWhere('activity_logs.action', 'like', "%{$safe}%");
                 }))
                 ->when($request->date_from, fn ($q) => $q->whereDate('activity_logs.created_at', '>=', $request->date_from))
                 ->when($request->date_to, fn ($q) => $q->whereDate('activity_logs.created_at', '<=', $request->date_to))

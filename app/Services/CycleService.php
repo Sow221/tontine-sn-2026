@@ -153,11 +153,16 @@ class CycleService
         DB::transaction(function () use ($tontine, &$withdrawals) {
             $members = $tontine->activeMembers()->lockForUpdate()->get();
 
+            $savedAmounts = Transaction::success()
+                ->forTontine($tontine->id)
+                ->excludeRedistribution()
+                ->whereIn('user_id', $members->pluck('id'))
+                ->groupBy('user_id')
+                ->selectRaw('user_id, SUM(amount) as total')
+                ->pluck('total', 'user_id');
+
             foreach ($members as $member) {
-                $saved = Transaction::success()->forTontine($tontine->id)
-                    ->forUser($member->id)
-                    ->excludeRedistribution()
-                    ->sum('amount');
+                $saved = $savedAmounts->get($member->id, 0);
 
                 if ($saved > 0) {
                     SavingsWithdrawal::updateOrCreate(
