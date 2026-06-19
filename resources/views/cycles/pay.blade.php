@@ -201,27 +201,12 @@
 @push('scripts')
 <script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
-    const modal = document.getElementById('paymentConfirmModal');
-    if (modal) {
-        modal.addEventListener('shown.bs.modal', function () {
-            const btn = this.querySelector('button[type="submit"]');
-            if (btn) btn.disabled = false;
-        });
-    }
-
     // Show loading overlay when payment form submits
-    const form = document.querySelector('form[action*="cycles/pay"]');
+    const form = document.getElementById('paymentForm');
     if (form) {
-        form.addEventListener('submit', function (e) {
-            const submitBtn = form.querySelector('button[type="submit"]');
-            if (submitBtn && !submitBtn.disabled) {
-                const overlay = document.getElementById('payment-loading-overlay');
-                if (overlay) {
-                    overlay.style.display = 'flex';
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Traitement...';
-                }
-            }
+        form.addEventListener('submit', function () {
+            const overlay = document.getElementById('payment-loading-overlay');
+            if (overlay) overlay.style.display = 'flex';
         });
     }
 });
