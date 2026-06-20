@@ -419,23 +419,31 @@
         </button>
         <div x-show="open" x-collapse class="mt-3">
             <p class="text-muted small mb-3">Désignez un autre membre actif comme nouveau gestionnaire. Vous deviendrez membre ordinaire.</p>
-            <form method="POST" action="{{ route('tontines.transfer', $tontine) }}">
+            <form method="POST" action="{{ route('tontines.transfer', $tontine) }}" x-data="{ confirming: false }">
                 @csrf
                 @error('new_owner_id')
                     <div class="alert alert-danger py-2 mb-2 small">{{ $message }}</div>
                 @enderror
-                <div class="d-flex gap-2">
-                    <select name="new_owner_id" class="form-select" required>
+                <div class="d-flex gap-2 flex-wrap">
+                    <select name="new_owner_id" class="form-select flex-grow-1" required>
                         <option value="">Choisir un membre...</option>
                         @foreach($tontine->members->where('pivot.status', 'active')->where('id', '!=', auth()->id()) as $m)
                         <option value="{{ $m->id }}">{{ $m->name }}</option>
                         @endforeach
                     </select>
-                    <button type="button" class="btn btn-warning flex-shrink-0"
-                            @click="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'transfer-modal', action: '{{ route('tontines.transfer', $tontine) }}', method: 'POST', message: 'Confirmer le transfert de propriété ? Vous perdrez les droits de gestion.', confirmText: 'Transférer', type: 'warning' } }))">
+                    <button type="button" class="btn btn-warning flex-shrink-0" x-show="!confirming" @click="confirming = true">
                         Transférer
                     </button>
+                    <button type="submit" class="btn btn-danger flex-shrink-0" x-show="confirming" style="display:none">
+                        Confirmer
+                    </button>
+                    <button type="button" class="btn btn-light flex-shrink-0" x-show="confirming" @click="confirming = false" style="display:none">
+                        Annuler
+                    </button>
                 </div>
+                <p x-show="confirming" class="text-warning small mt-2 mb-0" style="display:none">
+                    <i class="fas fa-exclamation-triangle me-1"></i>Vous perdrez les droits de gestion de cette tontine.
+                </p>
             </form>
         </div>
     </div>
@@ -462,12 +470,6 @@
         :action="route('tontines.leave', $tontine)"
         message="Annuler votre demande d'adhésion ?"
         confirm-text="Annuler ma demande" />
-
-    <x-confirm-modal id="transfer-modal" method="POST"
-        icon="exchange-alt"
-        :action="route('tontines.transfer', $tontine)"
-        message="Confirmer le transfert de propriété ? Vous perdrez les droits de gestion."
-        confirm-text="Transférer" />
 
     @if($currentCycle)
     <x-confirm-modal id="draw-modal" method="POST" type="primary"

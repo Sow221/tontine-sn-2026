@@ -45,6 +45,12 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Tontine::class, TontinePolicy::class);
 
+        // Share CSP nonce with ALL views (including child view push blocks,
+        // which execute before the layouts.app composer fires).
+        View::composer('*', function ($view) {
+            $view->with('cspNonce', request()->attributes->get('csp_nonce', ''));
+        });
+
         View::composer('layouts.app', function ($view) {
             $unreadCount = 0;
             $latestNotifications = collect();
@@ -60,7 +66,6 @@ class AppServiceProvider extends ServiceProvider
             }
             $view->with('unreadNotificationsCount', $unreadCount);
             $view->with('latestNotifications', $latestNotifications);
-            $view->with('cspNonce', request()->attributes->get('csp_nonce', ''));
         });
     }
 }
