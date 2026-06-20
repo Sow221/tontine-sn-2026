@@ -37,7 +37,7 @@
     <div class="your-turn-banner" role="status" aria-live="polite">
         <div class="your-turn-banner__icon">🎉</div>
         <div>
-            <div class="your-turn-banner__amount">{{ number_format($tontine->pot_total ?? ($tontine->amount * $tontine->active_members_count), 0, ',', ' ') }} FCFA</div>
+            <div class="your-turn-banner__amount">{{ number_format($tontine->amount * ($tontine->active_members_count ?? $tontine->members->where('pivot.status', 'active')->count()), 0, ',', ' ') }} FCFA</div>
             <div class="your-turn-banner__label">C'est votre tour de recevoir le pot !</div>
         </div>
     </div>

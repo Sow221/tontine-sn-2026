@@ -428,7 +428,8 @@ body.dark-mode .bg-white { background: #1e293b !important; }
 
 body.dark-mode .app-bottom-nav { background: #0f172a; border-color: #1e293b; }
 body.dark-mode .bottom-nav-link { color: #64748b; }
-body.dark-mode .bottom-nav-link.active { color: #818cf8; }
+body.dark-mode .bottom-nav-link.active { color: var(--green); }
+body.dark-mode .app-footer { background: #0f172a; border-color: #1e293b; }
 
 .back-link {
   display: inline-flex; align-items: center; gap: 0.4rem;

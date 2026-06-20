@@ -218,7 +218,7 @@
                         @forelse($latestNotifications ?? [] as $notif)
                         <a href="{{ route('notifications.index') }}" class="topbar-dropdown-item {{ $notif->read_at ? '' : 'fw-semibold' }}">
                             <i class="fas fa-circle" style="font-size:6px;color:{{ $notif->read_at ? 'var(--gray-border)' : 'var(--green)' }};"></i>
-                            <span class="text-truncate" style="max-width:220px;">{{ Str::limit($notif->data['message'] ?? $notif->data['title'] ?? 'Notification', 50) }}</span>
+                            <span class="text-truncate" style="max-width:220px;">{{ Str::limit($notif->message ?? 'Notification', 50) }}</span>
                         </a>
                         @empty
                         <p class="text-muted small text-center py-3 mb-0">Aucune notification</p>
@@ -307,7 +307,7 @@
         <x-toast />
 
         {{-- Footer --}}
-        <footer class="text-center text-muted small py-3 border-top" style="background: white;">
+        <footer class="text-center text-muted small py-3 border-top app-footer">
             <div class="d-flex justify-content-center gap-3 mb-2">
                 <a href="{{ route('cgu') }}" class="text-muted text-decoration-none">CGU</a>
                 <a href="{{ route('mentions') }}" class="text-muted text-decoration-none">Mentions légales</a>
@@ -337,8 +337,8 @@
             <a href="{{ route('admin.transactions') }}" class="bottom-nav-link {{ request()->routeIs('admin.transactions*') ? 'active' : '' }}">
                 <i class="fas fa-exchange-alt"></i><span>Transactions</span>
             </a>
-            <a href="{{ route('admin.stats') }}" class="bottom-nav-link {{ request()->routeIs('admin.stats') ? 'active' : '' }}">
-                <i class="fas fa-chart-line"></i><span>Stats</span>
+            <a href="{{ route('admin.logs') }}" class="bottom-nav-link {{ request()->routeIs('admin.logs') ? 'active' : '' }}">
+                <i class="fas fa-list-alt"></i><span>Journaux</span>
             </a>
         @else
             <a href="{{ route('dashboard') }}" class="bottom-nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
