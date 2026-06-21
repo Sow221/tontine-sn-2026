@@ -111,20 +111,31 @@
             $freqLabel = match($tontine->frequency) {
                 'weekly'  => 'Hebdo',
                 'daily'   => 'Quotidien',
-                default   => 'Mensuelle',
+                default   => 'Mensuel',
             };
+            // Montant abrégé pour éviter le retour à la ligne dans les petites boîtes
+            $amountFmt = $tontine->amount >= 1000000
+                ? number_format($tontine->amount / 1000000, 1, ',', '').'M'
+                : ($tontine->amount >= 1000
+                    ? number_format($tontine->amount / 1000, 0, ',', '').'K'
+                    : number_format($tontine->amount, 0, ',', ' '));
+            $spotsLeft = $tontine->max_members - $tontine->active_members_count;
         @endphp
         <div class="col-12 col-md-6 col-lg-4">
-            <a href="{{ route('tontines.show', $tontine) }}"
-               class="card h-100 d-flex flex-column text-decoration-none {{ $gradClass }}">
+            {{-- Div card avec stretched-link — évite form/button à l'intérieur d'un <a> (HTML invalide) --}}
+            <div class="card h-100 d-flex flex-column {{ $gradClass }} position-relative">
                 <div class="card-body d-flex flex-column">
+
                     {{-- En-tête --}}
                     <div class="d-flex align-items-start gap-3 mb-3">
                         <div class="tontine-avatar flex-shrink-0">
                             {{ strtoupper(substr($tontine->name, 0, 2)) }}
                         </div>
                         <div class="flex-grow-1 min-width-0">
-                            <h6 class="fw-bold mb-0 text-truncate">{{ $tontine->name }}</h6>
+                            <a href="{{ route('tontines.show', $tontine) }}"
+                               class="stretched-link text-decoration-none text-reset">
+                                <h6 class="fw-bold mb-0 text-truncate">{{ $tontine->name }}</h6>
+                            </a>
                             <div class="d-flex gap-1 flex-wrap mt-1">
                                 <span class="badge badge-{{ $tontine->status === 'active' ? 'success' : 'warning' }}" style="font-size:10px;">
                                     {{ $tontine->status === 'active' ? 'Active' : 'En attente' }}
@@ -137,81 +148,82 @@
 
                     {{-- Description --}}
                     @if($tontine->description)
-                    <p class="text-muted small mb-3" style="line-height:1.4;">
-                        {{ Str::limit($tontine->description, 80) }}
+                    <p class="text-muted small mb-3" style="line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                        {{ $tontine->description }}
                     </p>
                     @endif
 
                     {{-- Métriques --}}
                     <div class="row g-2 text-center mb-3">
                         <div class="col-4">
-                            <div class="bg-white bg-opacity-75 rounded-3 py-2">
-                                <div class="fw-bold small">{{ number_format($tontine->amount, 0, ',', ' ') }}</div>
-                                <div class="text-muted" style="font-size:10px;">FCFA</div>
+                            <div class="bg-white bg-opacity-75 rounded-3 py-2 px-1" style="overflow:hidden;">
+                                <div class="fw-bold small text-truncate" title="{{ number_format($tontine->amount, 0, ',', ' ') }} FCFA">{{ $amountFmt }}</div>
+                                <div class="text-muted" style="font-size:10px;">FCFA/cycle</div>
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="bg-white bg-opacity-75 rounded-3 py-2">
-                                <div class="fw-bold small">{{ $tontine->active_members_count }}/{{ $tontine->max_members }}</div>
+                            <div class="bg-white bg-opacity-75 rounded-3 py-2 px-1" style="overflow:hidden;">
+                                <div class="fw-bold small text-truncate">{{ $tontine->active_members_count }}/{{ $tontine->max_members }}</div>
                                 <div class="text-muted" style="font-size:10px;">Membres</div>
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="bg-white bg-opacity-75 rounded-3 py-2">
+                            <div class="bg-white bg-opacity-75 rounded-3 py-2 px-1" style="overflow:hidden;">
                                 @if($isFull)
-                                    <div class="fw-bold small text-danger">Complet</div>
+                                    <div class="fw-bold small text-danger text-truncate">Complet</div>
                                 @else
-                                    <div class="fw-bold small text-success">{{ $tontine->max_members - $tontine->active_members_count }} place(s)</div>
+                                    <div class="fw-bold small text-success text-truncate">{{ $spotsLeft }}</div>
                                 @endif
-                                <div class="text-muted" style="font-size:10px;">Dispo.</div>
+                                <div class="text-muted" style="font-size:10px;">{{ $isFull ? 'Aucune place' : 'place(s) libre' }}</div>
                             </div>
                         </div>
                     </div>
 
                     {{-- Créateur --}}
-                    <div class="d-flex align-items-center gap-2 mb-3">
-                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
-                             style="width:24px;height:24px;font-size:10px;flex-shrink:0;">
+                    <div class="d-flex align-items-center gap-2 mb-3" style="min-width:0;">
+                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white flex-shrink-0"
+                             style="width:22px;height:22px;font-size:9px;">
                             {{ strtoupper(substr($tontine->creator->name ?? '?', 0, 1)) }}
                         </div>
-                        <small class="text-muted">par <strong>{{ $tontine->creator->name ?? '—' }}</strong></small>
+                        <small class="text-muted text-truncate flex-shrink-1 min-width-0">
+                            par <strong>{{ $tontine->creator->name ?? '—' }}</strong>
+                        </small>
                         @if($tontine->start_date)
-                        <small class="text-muted ms-auto">Début {{ $tontine->start_date->format('d/m/Y') }}</small>
+                        <small class="text-muted flex-shrink-0 ms-auto" style="white-space:nowrap;font-size:11px;">
+                            {{ $tontine->start_date->format('d/m/Y') }}
+                        </small>
                         @endif
                     </div>
 
-                    {{-- Actions --}}
-                    <div class="mt-auto d-flex gap-2">
+                    {{-- Actions — position relative + z-index pour passer au-dessus du stretched-link --}}
+                    <div class="mt-auto d-flex gap-2" style="position:relative;z-index:2;">
                         @if($isMember)
                             <a href="{{ route('tontines.show', $tontine) }}"
-                               class="btn btn-sm btn-outline-success rounded-pill flex-grow-1"
-                               onclick="event.stopPropagation()">
-                                <i class="fas fa-eye me-1"></i>Voir ma tontine
+                               class="btn btn-sm btn-outline-success rounded-pill flex-grow-1">
+                                <i class="fas fa-eye me-1"></i>Ma tontine
                             </a>
                         @elseif($canJoin)
-                            <form method="POST" action="{{ route('tontines.join') }}" class="flex-grow-1"
-                                  onclick="event.stopPropagation()">
+                            <form method="POST" action="{{ route('tontines.join') }}" class="flex-grow-1">
                                 @csrf
                                 <input type="hidden" name="code" value="{{ $tontine->code }}">
                                 <button type="submit" class="btn btn-sm btn-primary rounded-pill w-100">
-                                    <i class="fas fa-user-plus me-1"></i>Demander à rejoindre
+                                    <i class="fas fa-user-plus me-1"></i>Rejoindre
                                 </button>
                             </form>
                         @else
-                            <button class="btn btn-sm btn-outline-secondary rounded-pill flex-grow-1" disabled
-                                    onclick="event.stopPropagation()">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill flex-grow-1" disabled>
                                 <i class="fas fa-lock me-1"></i>{{ $isFull ? 'Complet' : 'Indisponible' }}
                             </button>
                         @endif
                         <button type="button"
-                                class="btn btn-sm btn-outline-secondary rounded-pill"
-                                onclick="event.stopPropagation();copyToClipboard('{{ route('tontines.join.form', ['code' => $tontine->code]) }}')"
-                                title="Partager ce lien">
+                                class="btn btn-sm btn-outline-secondary rounded-pill flex-shrink-0"
+                                onclick="copyToClipboard('{{ route('tontines.join.form', ['code' => $tontine->code]) }}')"
+                                title="Partager">
                             <i class="fas fa-share-alt"></i>
                         </button>
                     </div>
                 </div>
-            </a>
+            </div>
         </div>
         @endforeach
     </div>
