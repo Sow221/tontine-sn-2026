@@ -160,7 +160,15 @@
                 </div>
                 <div class="sidebar-user-info">
                     <div class="sidebar-user-name text-truncate">{{ auth()->user()->name ?? auth()->user()->email }}</div>
-                    <div class="sidebar-user-role">{{ match(auth()->user()->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => __('member.member') } }} · SN-{{ str_pad(auth()->id(), 4, '0', STR_PAD_LEFT) }}</div>
+                    <div class="sidebar-user-role">
+                        @php
+                            $rc = auth()->user()->role;
+                            $roleColor = $rc === 'super_admin' ? '#8b5cf6' : ($rc === 'admin' ? '#3b82f6' : '#6b7280');
+                        @endphp
+                        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ $roleColor }};margin-right:4px;"></span>
+                        {{ match(auth()->user()->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => 'Membre' } }}
+                        · SN-{{ str_pad(auth()->id(), 4, '0', STR_PAD_LEFT) }}
+                    </div>
                 </div>
                 <i class="fas fa-chevron-right sidebar-user-chevron" aria-hidden="true"></i>
             </a>
@@ -245,7 +253,14 @@
                          class="topbar-dropdown-menu">
                         <div class="topbar-dropdown-header">
                             <span class="topbar-dropdown-name">{{ auth()->user()->name ?? auth()->user()->email }}</span>
-                            <span class="topbar-dropdown-role">{{ match(auth()->user()->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => 'Membre' } }}</span>
+                            <span class="topbar-dropdown-role">
+                                @php
+                                    $rc = auth()->user()->role;
+                                    $roleColor = $rc === 'super_admin' ? '#8b5cf6' : ($rc === 'admin' ? '#3b82f6' : '#6b7280');
+                                @endphp
+                                <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:{{ $roleColor }};margin-right:4px;vertical-align:middle;"></span>
+                                {{ match(auth()->user()->role) { 'super_admin' => 'Super Admin', 'admin' => 'Admin', default => 'Membre' } }}
+                            </span>
                         </div>
                         <div class="topbar-dropdown-divider"></div>
                         <a href="{{ route('profile.show') }}" class="topbar-dropdown-item">

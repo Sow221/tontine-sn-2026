@@ -665,7 +665,7 @@ SVG;
             }
 
             $cycle = $tontine->cycles()->first();
-            if ($cycle && ! $cycle->beneficiary_id) {
+            if ($cycle) {
                 $cycle->update(['beneficiary_id' => $request->beneficiary_id]);
             }
 

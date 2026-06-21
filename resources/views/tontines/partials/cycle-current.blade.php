@@ -79,7 +79,7 @@
         @if(!$bidDeadlinePassed)
         @php
             $myBid = $currentCycle->myBid(auth()->id());
-            $potTotal = $tontine->amount * $tontine->active_members_count;
+            $potTotal = $tontine->amount * ($tontine->active_members_count ?? $tontine->members->where('pivot.status', 'active')->count());
         @endphp
         @if($myBid)
         <div class="alert alert-success py-2 mb-2">

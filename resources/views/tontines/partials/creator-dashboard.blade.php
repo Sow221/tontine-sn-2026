@@ -116,9 +116,11 @@
     {{-- Transactions disputées --}}
     @php
         $disputedTx = \App\Models\Transaction::whereHas('cycle', fn($q) => $q->where('tontine_id', $tontine->id))
-            ->where('status', 'disputed')
-            ->with('user')
-            ->get();
+            ->where('status', 'success')
+            ->whereNotNull('metadata')
+            ->with('user', 'cycle')
+            ->get()
+            ->filter(fn($tx) => ($tx->metadata['disputed'] ?? false) === true);
     @endphp
     @if($disputedTx->isNotEmpty())
     <div class="mb-3 p-3 rounded" style="background:#fef2f2;border:1px solid #fecaca;">

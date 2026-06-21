@@ -23,8 +23,9 @@ class RoleMiddleware
 
         // Un admin qui tente d'accéder à l'espace membre est redirigé vers son dashboard
         if ($memberOnly && $user->isAdmin()) {
+            $intended = $request->fullUrl();
             return redirect()->route('admin.dashboard')
-                ->with('status', "Accès réservé aux membres. Utilisez votre espace d'administration.");
+                ->with('status', "Cette page est réservée aux membres. En tant qu'administrateur, utilisez votre tableau de bord.");
         }
 
         // L'utilisateur doit avoir l'un des rôles autorisés
