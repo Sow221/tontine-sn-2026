@@ -165,7 +165,7 @@
                 <span><i class="fas fa-sliders-h me-2"></i>Options avancées (quorum, véto, tirage pondéré…)</span>
                 <i class="fas fa-chevron-down" :style="open ? 'transform:rotate(180deg)' : ''" style="transition:transform 0.2s;"></i>
             </button>
-            <div x-show="open" x-collapse class="card mt-2">
+            <div x-show="open" x-transition class="card mt-2">
 
                 <div class="row g-3 mb-3" x-show="!['forced_saving','ceremonial'].includes(type)">
                     <div class="col-6">
