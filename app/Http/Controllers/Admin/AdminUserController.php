@@ -7,10 +7,9 @@ use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use thiagoalessio\TesseractOCR\TesseractOCR;
 
 class AdminUserController extends Controller
 {
@@ -207,25 +206,38 @@ class AdminUserController extends Controller
 
         $ocrText = null;
         $ocrMatched = null;
-        $filePath = storage_path('app/'.$user->kyc_document);
 
-        if (file_exists($filePath) && class_exists('\thiagoalessio\TesseractOCR\TesseractOCR')) {
+        if ($user->kyc_document && Storage::disk('local')->exists($user->kyc_document)) {
             try {
-                $ocr = new TesseractOCR($filePath);
-                $ocrText = $ocr->lang('fra')->run();
+                $filePath = Storage::disk('local')->path($user->kyc_document);
+                $response = Http::timeout(15)
+                    ->attach('image', file_get_contents($filePath), 'document.'.pathinfo($filePath, PATHINFO_EXTENSION))
+                    ->post('https://api.ocr.space/parse/image', [
+                        'language' => 'fre',
+                        'isOverlayRequired' => 'false',
+                        'apikey' => config('services.ocr_space.key', 'helloworld'),
+                        'OCREngine' => '2',
+                    ]);
 
-                $userName = strtolower(preg_replace('/\s+/', ' ', trim($user->name ?? '')));
-                $ocrLower = strtolower($ocrText);
-                $nameParts = explode(' ', $userName);
-                $matchCount = 0;
-                foreach ($nameParts as $part) {
-                    if (strlen($part) > 2 && str_contains($ocrLower, $part)) {
-                        $matchCount++;
+                if ($response->successful()) {
+                    $data = $response->json();
+                    if (($data['OCRExitCode'] ?? 0) === 1 && ! empty($data['ParsedResults'])) {
+                        $ocrText = $data['ParsedResults'][0]['ParsedText'] ?? '';
+
+                        $userName = strtolower(preg_replace('/\s+/', ' ', trim($user->name ?? '')));
+                        $ocrLower = strtolower($ocrText);
+                        $nameParts = explode(' ', $userName);
+                        $matchCount = 0;
+                        foreach ($nameParts as $part) {
+                            if (strlen($part) > 2 && str_contains($ocrLower, $part)) {
+                                $matchCount++;
+                            }
+                        }
+                        $ocrMatched = $matchCount > 0 && ($matchCount / max(count($nameParts), 1)) >= 0.5;
                     }
                 }
-                $ocrMatched = $matchCount > 0 && ($matchCount / max(count($nameParts), 1)) >= 0.5;
             } catch (\Throwable $e) {
-                Log::warning('Tesseract OCR indisponible', ['error' => $e->getMessage()]);
+                Log::warning('OCR.space indisponible', ['error' => $e->getMessage()]);
             }
         }
 
