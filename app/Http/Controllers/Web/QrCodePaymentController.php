@@ -73,7 +73,7 @@ class QrCodePaymentController extends Controller
 
         abort_unless($paymentData, 404, 'Requête de paiement invalide ou expirée');
 
-        $recipient = User::find($paymentData['to_id']);
+        $recipient = User::find($paymentData['from_id']);
 
         return view('qr-payment.confirm', compact('token', 'paymentData', 'recipient'));
     }
@@ -91,8 +91,8 @@ class QrCodePaymentController extends Controller
             return back()->withErrors(['error' => 'Ce QR code est invalide ou a expiré.']);
         }
 
-        if ((int) $paymentData['from_id'] !== $payer->id) {
-            return back()->withErrors(['error' => 'Ce QR code ne vous appartient pas.']);
+        if ((int) $paymentData['to_id'] !== $payer->id) {
+            return back()->withErrors(['error' => 'Ce QR code ne vous est pas destiné.']);
         }
 
         $transaction = $this->qrService->processQrPayment($token, $payer);

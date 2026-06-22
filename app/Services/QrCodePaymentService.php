@@ -55,12 +55,12 @@ class QrCodePaymentService
             return null;
         }
 
-        // Sécurité : seul le générateur du QR peut payer via ce token
-        if ((int) $paymentData['from_id'] !== $payer->id) {
+        // Sécurité : seul le destinataire du QR (to_id) peut payer via ce token
+        if ((int) $paymentData['to_id'] !== $payer->id) {
             return null;
         }
 
-        $recipient = User::find($paymentData['to_id']);
+        $recipient = User::find($paymentData['from_id']);
         if (! $recipient || ! $recipient->is_active) {
             return null;
         }

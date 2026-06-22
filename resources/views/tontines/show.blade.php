@@ -493,6 +493,11 @@
         message="Voter le véto sur ce tirage ?"
         confirm-text="Voter le véto" />
     @endif
+
+    <x-confirm-modal id="cash-confirm-modal" method="POST" type="primary"
+        icon="money-bill-wave"
+        message="Confirmer la remise en espèces ?"
+        confirm-text="Confirmer" />
     @endif
 
 </div>

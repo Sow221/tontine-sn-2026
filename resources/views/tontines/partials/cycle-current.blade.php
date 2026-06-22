@@ -219,13 +219,10 @@
             <div class="member-avatar avatar-sm">{{ strtoupper(substr($cashTx->user->name ?? '?', 0, 2)) }}</div>
             <span class="flex-grow-1 small fw-semibold">{{ $cashTx->user->name ?? '—' }}</span>
             <span class="fw-bold text-warning">{{ number_format($cashTx->amount, 0, ',', ' ') }} FCFA</span>
-            <form method="POST" action="{{ route('tontines.cash.confirm', [$tontine, $cashTx]) }}">
-                @csrf
-                <button type="submit" class="btn btn-sm btn-success rounded-pill"
-                        onclick="return confirm('Confirmer la remise en espèces de {{ $cashTx->user->name ?? 'ce membre' }} ?')">
-                    <i class="fas fa-check"></i> Valider
-                </button>
-            </form>
+            <button type="button" class="btn btn-sm btn-success rounded-pill"
+                    @click="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'cash-confirm-modal', action: '{{ route('tontines.cash.confirm', [$tontine, $cashTx]) }}', method: 'POST', message: 'Confirmer la remise en espèces de {{ $cashTx->user->name ?? "ce membre" }} ?', confirmText: 'Confirmer', type: 'primary' } }))">
+                <i class="fas fa-check"></i> Valider
+            </button>
         </div>
         @endforeach
     </div>

@@ -57,6 +57,10 @@ return [
         'secret' => env('WEBHOOK_OUTBOUND_SECRET'),
     ],
 
+    'ocr_space' => [
+        'key' => env('OCR_SPACE_API_KEY', 'helloworld'),
+    ],
+
     'vapid' => [
         'subject' => env('VAPID_SUBJECT', 'mailto:'.env('MAIL_FROM_ADDRESS', 'noreply@tontinesn.com')),
         'public_key' => env('VAPID_PUBLIC_KEY'),
