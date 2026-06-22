@@ -64,8 +64,8 @@ class AdminDashboardController extends Controller
             $pendingKycUsers = User::kycPending()->latest()->take(5)->get();
 
             $todayTransactions = Transaction::whereDate('created_at', today())->count();
-            $todayUsers        = User::whereDate('created_at', today())->count();
-            $todayKyc          = User::whereNotNull('kyc_document')->whereDate('updated_at', today())->count();
+            $todayUsers = User::whereDate('created_at', today())->count();
+            $todayKyc = User::whereNotNull('kyc_document')->whereDate('updated_at', today())->count();
 
             return view('admin.dashboard', compact(
                 'stats', 'recentTontines', 'suspiciousTx', 'pendingKycUsers',
@@ -162,5 +162,4 @@ class AdminDashboardController extends Controller
             return back()->withErrors(['error' => 'Erreur lors du chargement des statistiques.']);
         }
     }
-
 }

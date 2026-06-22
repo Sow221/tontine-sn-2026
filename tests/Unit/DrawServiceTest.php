@@ -37,8 +37,8 @@ class DrawServiceTest extends TestCase
     private function activeTontine(array $attrs = []): Tontine
     {
         return Tontine::factory()->active()->create(array_merge([
-            'type'       => 'fixed',
-            'amount'     => 10000,
+            'type' => 'fixed',
+            'amount' => 10000,
             'draw_method' => 'sequential',
         ], $attrs));
     }
@@ -46,7 +46,7 @@ class DrawServiceTest extends TestCase
     private function attachMember(Tontine $tontine, User $user, int $position = 1): void
     {
         $tontine->members()->attach($user->id, [
-            'status'   => 'active',
+            'status' => 'active',
             'position' => $position,
             'joined_at' => now(),
         ]);
@@ -55,11 +55,11 @@ class DrawServiceTest extends TestCase
     private function pendingCycle(Tontine $tontine, int $num = 1): Cycle
     {
         return Cycle::factory()->create([
-            'tontine_id'       => $tontine->id,
-            'cycle_number'     => $num,
-            'status'           => 'paid',
-            'total_collected'  => $tontine->amount * 2,
-            'due_date'         => now()->subDay(),
+            'tontine_id' => $tontine->id,
+            'cycle_number' => $num,
+            'status' => 'paid',
+            'total_collected' => $tontine->amount * 2,
+            'due_date' => now()->subDay(),
         ]);
     }
 
@@ -68,12 +68,12 @@ class DrawServiceTest extends TestCase
         foreach ($users as $user) {
             Transaction::factory()->create([
                 'cycle_id' => $cycle->id,
-                'user_id'  => $user->id,
-                'amount'   => $amount,
-                'status'   => 'success',
-                'method'   => 'wave',
-                'type'     => 'cotisation',
-                'paid_at'  => now(),
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'status' => 'success',
+                'method' => 'wave',
+                'type' => 'cotisation',
+                'paid_at' => now(),
             ]);
         }
     }
@@ -82,7 +82,7 @@ class DrawServiceTest extends TestCase
 
     public function test_can_draw_returns_null_when_cycle_is_fully_paid(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id]);
         $this->attachMember($tontine, $owner, 1);
@@ -96,7 +96,7 @@ class DrawServiceTest extends TestCase
 
     public function test_can_draw_returns_message_when_already_drawn(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id]);
         $this->attachMember($tontine, $owner, 1);
 
@@ -108,7 +108,7 @@ class DrawServiceTest extends TestCase
 
     public function test_can_draw_returns_message_when_not_fully_paid(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id]);
         $this->attachMember($tontine, $owner, 1);
@@ -116,11 +116,11 @@ class DrawServiceTest extends TestCase
 
         // total_collected = 1 membre seulement sur 2 → completionRate = 50%
         $cycle = Cycle::factory()->create([
-            'tontine_id'      => $tontine->id,
-            'cycle_number'    => 1,
-            'status'          => 'pending',
+            'tontine_id' => $tontine->id,
+            'cycle_number' => 1,
+            'status' => 'pending',
             'total_collected' => $tontine->amount,
-            'due_date'        => now()->subDay(),
+            'due_date' => now()->subDay(),
         ]);
 
         $this->assertNotNull($this->service->canDraw($cycle->fresh()));
@@ -130,7 +130,7 @@ class DrawServiceTest extends TestCase
 
     public function test_sequential_draw_picks_member_by_position(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id, 'draw_method' => 'sequential']);
         $this->attachMember($tontine, $owner, 2);
@@ -146,7 +146,7 @@ class DrawServiceTest extends TestCase
 
     public function test_draw_skips_members_who_already_won(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id, 'draw_method' => 'sequential']);
         $this->attachMember($tontine, $owner, 1);
@@ -185,7 +185,7 @@ class DrawServiceTest extends TestCase
 
     public function test_can_veto_returns_true_for_active_member(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id, 'veto_threshold' => 50]);
         $this->attachMember($tontine, $owner, 1);
@@ -199,7 +199,7 @@ class DrawServiceTest extends TestCase
 
     public function test_beneficiary_cannot_veto_own_draw(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id, 'veto_threshold' => 50]);
         $this->attachMember($tontine, $owner, 1);
@@ -213,7 +213,7 @@ class DrawServiceTest extends TestCase
 
     public function test_veto_threshold_not_reached_returns_false(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $m1 = User::factory()->create();
         $m2 = User::factory()->create();
         // 4 members, threshold 50% → 2 required
@@ -233,7 +233,7 @@ class DrawServiceTest extends TestCase
 
     public function test_veto_threshold_reached_returns_true(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $m1 = User::factory()->create();
         $m2 = User::factory()->create();
         // 3 members, threshold 50% → ceil(3*50/100) = 2 required
@@ -253,7 +253,7 @@ class DrawServiceTest extends TestCase
 
     public function test_apply_veto_resets_beneficiary_and_redraws(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $m1 = User::factory()->create();
         $m2 = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id, 'veto_threshold' => 50]);
@@ -280,13 +280,13 @@ class DrawServiceTest extends TestCase
 
     public function test_auction_winner_is_highest_bidder(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $m1 = User::factory()->create();
         $m2 = User::factory()->create();
         $tontine = $this->activeTontine([
             'created_by' => $owner->id,
-            'type'       => 'auction',
-            'amount'     => 10000,
+            'type' => 'auction',
+            'amount' => 10000,
         ]);
         $this->attachMember($tontine, $owner, 1);
         $this->attachMember($tontine, $m1, 2);
@@ -306,12 +306,12 @@ class DrawServiceTest extends TestCase
 
     public function test_auction_redistribution_is_created_for_losers(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $m1 = User::factory()->create();
         $tontine = $this->activeTontine([
             'created_by' => $owner->id,
-            'type'       => 'auction',
-            'amount'     => 10000,
+            'type' => 'auction',
+            'amount' => 10000,
         ]);
         $this->attachMember($tontine, $owner, 1);
         $this->attachMember($tontine, $m1, 2);
@@ -326,15 +326,15 @@ class DrawServiceTest extends TestCase
 
         $this->assertDatabaseHas('transactions', [
             'cycle_id' => $cycle->id,
-            'user_id'  => $m1->id,
-            'type'     => 'redistribution',
-            'status'   => 'success',
+            'user_id' => $m1->id,
+            'type' => 'redistribution',
+            'status' => 'success',
         ]);
     }
 
     public function test_can_draw_auction_requires_at_least_one_bid(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id, 'type' => 'auction']);
         $this->attachMember($tontine, $owner, 1);
 
@@ -347,10 +347,10 @@ class DrawServiceTest extends TestCase
 
     public function test_weighted_draw_assigns_a_beneficiary(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $m1 = User::factory()->create();
         $tontine = $this->activeTontine([
-            'created_by'   => $owner->id,
+            'created_by' => $owner->id,
             'weighted_draw' => true,
         ]);
         $this->attachMember($tontine, $owner, 1);
@@ -400,7 +400,7 @@ class DrawServiceTest extends TestCase
 
     public function test_force_draw_creates_debt_for_non_payer(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id]);
         $this->attachMember($tontine, $owner, 1);
@@ -414,15 +414,15 @@ class DrawServiceTest extends TestCase
 
         $this->assertDatabaseHas('tontine_debts', [
             'tontine_id' => $tontine->id,
-            'user_id'    => $member->id,
-            'cycle_id'   => $cycle->id,
-            'status'     => 'pending',
+            'user_id' => $member->id,
+            'cycle_id' => $cycle->id,
+            'status' => 'pending',
         ]);
     }
 
     public function test_force_draw_eligible_only_includes_payers(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id, 'draw_method' => 'sequential']);
         $this->attachMember($tontine, $owner, 1);
@@ -439,7 +439,7 @@ class DrawServiceTest extends TestCase
 
     public function test_normal_draw_excludes_members_with_pending_debt(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id, 'draw_method' => 'sequential']);
         $this->attachMember($tontine, $owner, 2);
@@ -449,10 +449,10 @@ class DrawServiceTest extends TestCase
         $pastCycle = $this->pendingCycle($tontine, 0);
         TontineDebt::create([
             'tontine_id' => $tontine->id,
-            'user_id'    => $member->id,
-            'cycle_id'   => $pastCycle->id,
-            'amount'     => $tontine->amount,
-            'status'     => 'pending',
+            'user_id' => $member->id,
+            'cycle_id' => $pastCycle->id,
+            'amount' => $tontine->amount,
+            'status' => 'pending',
         ]);
 
         $cycle = $this->pendingCycle($tontine, 1);
@@ -464,20 +464,20 @@ class DrawServiceTest extends TestCase
         $this->assertEquals($owner->id, $cycle->fresh()->beneficiary_id);
     }
 
-    public function test_canDraw_force_allows_partial_payment_after_due_date(): void
+    public function test_can_draw_force_allows_partial_payment_after_due_date(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $tontine = $this->activeTontine(['created_by' => $owner->id]);
         $this->attachMember($tontine, $owner, 1);
         $this->attachMember($tontine, $member, 2);
 
         $cycle = Cycle::factory()->create([
-            'tontine_id'      => $tontine->id,
-            'cycle_number'    => 1,
-            'status'          => 'overdue',
+            'tontine_id' => $tontine->id,
+            'cycle_number' => 1,
+            'status' => 'overdue',
             'total_collected' => $tontine->amount,
-            'due_date'        => now()->subDay(),
+            'due_date' => now()->subDay(),
         ]);
         $this->payForAll($cycle, [$owner], $tontine->amount);
 

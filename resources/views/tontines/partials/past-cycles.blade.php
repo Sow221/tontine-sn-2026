@@ -12,7 +12,7 @@
             <small class="text-muted">{{ $cycle->drawn_at?->format('d/m/Y') ?? $cycle->due_date->format('d/m/Y') }}</small>
         </div>
         <div class="text-end">
-            <span class="fw-bold text-green small">{{ number_format($cycle->total_collected, 0, ',', ' ') }} F</span>
+            <span class="fw-bold text-green small">{{ number_format($tontine->amount, 0, ',', ' ') }} F</span>
             @if($cycle->draw_hash)
             <br><small class="text-muted" title="Preuve cryptographique : {{ $cycle->draw_hash }}">
                 <i class="fas fa-shield-alt me-1"></i>Vérifié

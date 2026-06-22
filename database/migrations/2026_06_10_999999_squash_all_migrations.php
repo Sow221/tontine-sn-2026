@@ -54,7 +54,9 @@ return new class extends Migration
 
     private function createCacheTables(): void
     {
-        if (Schema::hasTable('cache')) return;
+        if (Schema::hasTable('cache')) {
+            return;
+        }
         $this->created[] = 'cache';
         Schema::create('cache', function (Blueprint $table) {
             $table->string('key')->primary();
@@ -70,7 +72,9 @@ return new class extends Migration
 
     private function createJobsTables(): void
     {
-        if (Schema::hasTable('jobs')) return;
+        if (Schema::hasTable('jobs')) {
+            return;
+        }
         $this->created[] = 'jobs';
         Schema::create('jobs', function (Blueprint $table) {
             $table->id();
@@ -106,7 +110,9 @@ return new class extends Migration
 
     private function createUsersTable(): void
     {
-        if (Schema::hasTable('users')) return;
+        if (Schema::hasTable('users')) {
+            return;
+        }
         $this->created[] = 'users';
         Schema::create('users', function (Blueprint $table) {
             $table->id();
@@ -140,7 +146,9 @@ return new class extends Migration
 
     private function createMagicLinksTable(): void
     {
-        if (Schema::hasTable('magic_links')) return;
+        if (Schema::hasTable('magic_links')) {
+            return;
+        }
         $this->created[] = 'magic_links';
         Schema::create('magic_links', function (Blueprint $table) {
             $table->id();
@@ -154,7 +162,9 @@ return new class extends Migration
 
     private function createPasswordResetTokensTable(): void
     {
-        if (Schema::hasTable('password_reset_tokens')) return;
+        if (Schema::hasTable('password_reset_tokens')) {
+            return;
+        }
         $this->created[] = 'password_reset_tokens';
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
@@ -165,7 +175,9 @@ return new class extends Migration
 
     private function createTontinesTable(): void
     {
-        if (Schema::hasTable('tontines')) return;
+        if (Schema::hasTable('tontines')) {
+            return;
+        }
         $this->created[] = 'tontines';
         Schema::create('tontines', function (Blueprint $table) {
             $table->id();
@@ -193,7 +205,9 @@ return new class extends Migration
 
     private function createTontineMembersTable(): void
     {
-        if (Schema::hasTable('tontine_members')) return;
+        if (Schema::hasTable('tontine_members')) {
+            return;
+        }
         $this->created[] = 'tontine_members';
         Schema::create('tontine_members', function (Blueprint $table) {
             $table->id();
@@ -213,7 +227,9 @@ return new class extends Migration
 
     private function createCyclesTable(): void
     {
-        if (Schema::hasTable('cycles')) return;
+        if (Schema::hasTable('cycles')) {
+            return;
+        }
         $this->created[] = 'cycles';
         Schema::create('cycles', function (Blueprint $table) {
             $table->id();
@@ -235,7 +251,9 @@ return new class extends Migration
 
     private function createTransactionsTable(): void
     {
-        if (Schema::hasTable('transactions')) return;
+        if (Schema::hasTable('transactions')) {
+            return;
+        }
         $this->created[] = 'transactions';
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
@@ -260,7 +278,9 @@ return new class extends Migration
 
     private function createCreditScoresTable(): void
     {
-        if (Schema::hasTable('credit_scores')) return;
+        if (Schema::hasTable('credit_scores')) {
+            return;
+        }
         $this->created[] = 'credit_scores';
         Schema::create('credit_scores', function (Blueprint $table) {
             $table->id();
@@ -279,7 +299,9 @@ return new class extends Migration
 
     private function createNotificationsLogTable(): void
     {
-        if (Schema::hasTable('notifications_log')) return;
+        if (Schema::hasTable('notifications_log')) {
+            return;
+        }
         $this->created[] = 'notifications_log';
         Schema::create('notifications_log', function (Blueprint $table) {
             $table->id();
@@ -298,7 +320,9 @@ return new class extends Migration
 
     private function createActivityLogsTable(): void
     {
-        if (Schema::hasTable('activity_logs')) return;
+        if (Schema::hasTable('activity_logs')) {
+            return;
+        }
         $this->created[] = 'activity_logs';
         Schema::create('activity_logs', function (Blueprint $table) {
             $table->id();
@@ -316,7 +340,9 @@ return new class extends Migration
 
     private function createAuctionBidsTable(): void
     {
-        if (Schema::hasTable('auction_bids')) return;
+        if (Schema::hasTable('auction_bids')) {
+            return;
+        }
         $this->created[] = 'auction_bids';
         Schema::create('auction_bids', function (Blueprint $table) {
             $table->id();
@@ -330,7 +356,9 @@ return new class extends Migration
 
     private function createSavingsWithdrawalsTable(): void
     {
-        if (Schema::hasTable('savings_withdrawals')) return;
+        if (Schema::hasTable('savings_withdrawals')) {
+            return;
+        }
         $this->created[] = 'savings_withdrawals';
         Schema::create('savings_withdrawals', function (Blueprint $table) {
             $table->id();
@@ -346,7 +374,9 @@ return new class extends Migration
 
     private function createPostsTable(): void
     {
-        if (Schema::hasTable('posts')) return;
+        if (Schema::hasTable('posts')) {
+            return;
+        }
         $this->created[] = 'posts';
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
@@ -362,7 +392,9 @@ return new class extends Migration
 
     private function createSessionsTable(): void
     {
-        if (Schema::hasTable('sessions')) return;
+        if (Schema::hasTable('sessions')) {
+            return;
+        }
         $this->created[] = 'sessions';
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
@@ -376,7 +408,9 @@ return new class extends Migration
 
     private function createPersonalAccessTokensTable(): void
     {
-        if (Schema::hasTable('personal_access_tokens')) return;
+        if (Schema::hasTable('personal_access_tokens')) {
+            return;
+        }
         $this->created[] = 'personal_access_tokens';
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
@@ -392,7 +426,9 @@ return new class extends Migration
 
     private function createBadgesTables(): void
     {
-        if (Schema::hasTable('badges')) return;
+        if (Schema::hasTable('badges')) {
+            return;
+        }
         $this->created[] = 'badges';
         Schema::create('badges', function (Blueprint $table) {
             $table->id();
@@ -417,7 +453,9 @@ return new class extends Migration
 
     private function createChatMessagesTable(): void
     {
-        if (Schema::hasTable('chat_messages')) return;
+        if (Schema::hasTable('chat_messages')) {
+            return;
+        }
         $this->created[] = 'chat_messages';
         Schema::create('chat_messages', function (Blueprint $table) {
             $table->id();
@@ -431,7 +469,9 @@ return new class extends Migration
 
     private function createCycleVetosTable(): void
     {
-        if (Schema::hasTable('cycle_vetos')) return;
+        if (Schema::hasTable('cycle_vetos')) {
+            return;
+        }
         $this->created[] = 'cycle_vetos';
         Schema::create('cycle_vetos', function (Blueprint $table) {
             $table->id();
@@ -444,7 +484,9 @@ return new class extends Migration
 
     private function createWebhookLogsTable(): void
     {
-        if (Schema::hasTable('webhook_logs')) return;
+        if (Schema::hasTable('webhook_logs')) {
+            return;
+        }
         $this->created[] = 'webhook_logs';
         Schema::create('webhook_logs', function (Blueprint $table) {
             $table->id();
@@ -459,7 +501,9 @@ return new class extends Migration
 
     private function createFcmTokensTable(): void
     {
-        if (Schema::hasTable('fcm_tokens')) return;
+        if (Schema::hasTable('fcm_tokens')) {
+            return;
+        }
         $this->created[] = 'fcm_tokens';
         Schema::create('fcm_tokens', function (Blueprint $table) {
             $table->id();
@@ -475,7 +519,9 @@ return new class extends Migration
 
     private function createTwoFactorSecretsTable(): void
     {
-        if (Schema::hasTable('two_factor_secrets')) return;
+        if (Schema::hasTable('two_factor_secrets')) {
+            return;
+        }
         $this->created[] = 'two_factor_secrets';
         Schema::create('two_factor_secrets', function (Blueprint $table) {
             $table->id();
@@ -489,7 +535,9 @@ return new class extends Migration
 
     private function createWebhookSignaturesTable(): void
     {
-        if (Schema::hasTable('webhook_signatures')) return;
+        if (Schema::hasTable('webhook_signatures')) {
+            return;
+        }
         $this->created[] = 'webhook_signatures';
         Schema::create('webhook_signatures', function (Blueprint $table) {
             $table->id();

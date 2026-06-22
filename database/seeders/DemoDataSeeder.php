@@ -253,8 +253,8 @@ class DemoDataSeeder extends Seeder
             $this->now->copy()->subMonths(2), $this->user('fatou@tontinesn.test'),
             $this->now->copy()->subMonths(2)->addDays(3));
         $this->payAll($c1, $members, 15000, $this->now->copy()->subMonths(2)->subDay(), 'free_money');
-    
-    // Cycle 2 : en cours
+
+        // Cycle 2 : en cours
         $c2 = $this->makeCycle($t, 2, 'partial',
             $this->now->copy()->subMonth(), $this->user('juliette@tontinesn.test'),
             $this->now->copy()->subMonth()->addDays(2));
@@ -646,6 +646,7 @@ class DemoDataSeeder extends Seeder
         );
         if (! $t->wasRecentlyCreated) {
             $this->command?->info('  ✓ existe déjà');
+
             return;
         }
 

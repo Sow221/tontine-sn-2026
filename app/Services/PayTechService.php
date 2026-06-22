@@ -165,17 +165,17 @@ class PayTechService
             );
 
             $response = Http::withHeaders([
-                'API_KEY'    => $this->apiKey,
+                'API_KEY' => $this->apiKey,
                 'API_SECRET' => $this->apiSecret,
             ])
                 ->timeout(config('mobilemoney.paytech.timeout'))
                 ->post("{$this->baseUrl}/api/payment/payout", [
-                    'amount'      => $amount,
-                    'currency'    => config('mobilemoney.paytech.currency'),
+                    'amount' => $amount,
+                    'currency' => config('mobilemoney.paytech.currency'),
                     'ref_command' => $reference,
-                    'method'      => $method,          // wave | orange_money | free_money
-                    'phone'       => $phone,
-                    'env'         => 'test',
+                    'method' => $method,          // wave | orange_money | free_money
+                    'phone' => $phone,
+                    'env' => 'test',
                 ]);
 
             if ($response->successful()) {
@@ -185,14 +185,17 @@ class PayTechService
                 }
                 $err = $data['errors'][0] ?? 'Erreur payout PayTech';
                 Log::error('PayTech payout failed', ['response' => $data]);
+
                 return ['success' => false, 'error' => $err];
             }
 
             Log::error('PayTech payout HTTP error', ['status' => $response->status()]);
+
             return ['success' => false, 'error' => 'Erreur de connexion PayTech payout'];
 
         } catch (\Throwable $e) {
             Log::error('PayTech payout exception', ['message' => $e->getMessage()]);
+
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }

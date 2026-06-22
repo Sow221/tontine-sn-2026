@@ -42,7 +42,7 @@ class NotificationService
 
     public function sendWebPush(User $user, string $title, string $body, string $url = '/dashboard'): bool
     {
-        $publicKey  = config('services.vapid.public_key');
+        $publicKey = config('services.vapid.public_key');
         $privateKey = config('services.vapid.private_key');
 
         if (! $publicKey || ! $privateKey) {
@@ -58,17 +58,17 @@ class NotificationService
 
         $webPush = new WebPush([
             'VAPID' => [
-                'subject'    => config('services.vapid.subject'),
-                'publicKey'  => $publicKey,
+                'subject' => config('services.vapid.subject'),
+                'publicKey' => $publicKey,
                 'privateKey' => $privateKey,
             ],
         ]);
 
         $payload = json_encode([
             'title' => $title,
-            'body'  => $body,
-            'icon'  => '/images/icon-192.png',
-            'url'   => $url,
+            'body' => $body,
+            'icon' => '/images/icon-192.png',
+            'url' => $url,
         ]);
 
         $success = false;
@@ -77,9 +77,9 @@ class NotificationService
             try {
                 $subscription = Subscription::create([
                     'endpoint' => $token->endpoint,
-                    'keys'     => [
+                    'keys' => [
                         'p256dh' => $token->p256dh ?? '',
-                        'auth'   => $token->auth ?? '',
+                        'auth' => $token->auth ?? '',
                     ],
                 ]);
 
@@ -92,16 +92,16 @@ class NotificationService
                     $token->delete();
                 } else {
                     Log::warning('Web Push échoué', [
-                        'user_id'  => $user->id,
+                        'user_id' => $user->id,
                         'endpoint' => $token->endpoint,
-                        'reason'   => $report->getReason(),
+                        'reason' => $report->getReason(),
                     ]);
                 }
             } catch (\Throwable $e) {
                 Log::warning('Web Push exception', [
-                    'user_id'  => $user->id,
+                    'user_id' => $user->id,
                     'endpoint' => $token->endpoint,
-                    'error'    => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }

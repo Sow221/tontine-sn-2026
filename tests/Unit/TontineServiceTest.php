@@ -648,8 +648,8 @@ class TontineServiceTest extends TestCase
 
         $cycle = Cycle::factory()->create([
             'tontine_id' => $tontine->id,
-            'due_date'   => now()->subDays(2),
-            'status'     => 'pending',
+            'due_date' => now()->subDays(2),
+            'status' => 'pending',
             'total_collected' => 0,
         ]);
 
@@ -668,17 +668,17 @@ class TontineServiceTest extends TestCase
         $tontine->members()->attach([$member1->id, $member2->id], ['status' => 'active']);
 
         $cycle = Cycle::factory()->create([
-            'tontine_id'      => $tontine->id,
-            'due_date'        => now()->subDays(1),
-            'status'          => 'pending',
+            'tontine_id' => $tontine->id,
+            'due_date' => now()->subDays(1),
+            'status' => 'pending',
             'total_collected' => 0,
         ]);
 
         Transaction::factory()->create([
             'cycle_id' => $cycle->id,
-            'user_id'  => $member1->id,
-            'amount'   => 50000,
-            'status'   => 'success',
+            'user_id' => $member1->id,
+            'amount' => 50000,
+            'status' => 'success',
         ]);
 
         $this->cycleService->updateCycleTotal($cycle);
@@ -692,7 +692,7 @@ class TontineServiceTest extends TestCase
     {
         $cycle = Cycle::factory()->create([
             'due_date' => now()->subDays(3),
-            'status'   => 'pending',
+            'status' => 'pending',
         ]);
 
         $this->assertTrue($cycle->isOverdue());
@@ -702,7 +702,7 @@ class TontineServiceTest extends TestCase
     {
         $cycle = Cycle::factory()->create([
             'due_date' => now()->addDays(3),
-            'status'   => 'pending',
+            'status' => 'pending',
         ]);
 
         $this->assertFalse($cycle->isOverdue());
@@ -712,7 +712,7 @@ class TontineServiceTest extends TestCase
     {
         $cycle = Cycle::factory()->create([
             'due_date' => now()->subDays(3),
-            'status'   => 'paid',
+            'status' => 'paid',
         ]);
 
         $this->assertFalse($cycle->isOverdue());

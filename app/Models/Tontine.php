@@ -75,11 +75,11 @@ class Tontine extends Model
 
     public function getTypeLabelAttribute(): string
     {
-        return match($this->type) {
-            'auction'       => 'Tontine enchères',
+        return match ($this->type) {
+            'auction' => 'Tontine enchères',
             'forced_saving' => 'Épargne forcée',
-            'ceremonial'    => 'Tontine cérémoniale',
-            default         => 'Tontine classique',
+            'ceremonial' => 'Tontine cérémoniale',
+            default => 'Tontine classique',
         };
     }
 

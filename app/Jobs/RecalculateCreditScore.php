@@ -27,7 +27,7 @@ class RecalculateCreditScore implements ShouldQueue
         $scorer->calculate($user);
 
         // Invalider le cache leaderboard de cet utilisateur après recalcul du score
-        Cache::forget('leaderboard.user.' . $this->userId);
+        Cache::forget('leaderboard.user.'.$this->userId);
 
         CheckAndNotifyBadges::dispatch($this->userId)->afterResponse();
     }

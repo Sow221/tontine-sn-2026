@@ -86,7 +86,7 @@ class DrawService
                             ['tontine_id' => $tontine->id, 'amount' => $tontine->amount, 'status' => 'pending']
                         );
                         // Pénaliser le score crédit du débiteur
-                        $score = \App\Models\CreditScore::firstOrCreate(
+                        $score = CreditScore::firstOrCreate(
                             ['user_id' => $member->id],
                             ['score' => 5.0, 'badge' => 'silver']
                         );
@@ -138,8 +138,8 @@ class DrawService
 
             $locked->update([
                 'beneficiary_id' => $winner->id,
-                'draw_hash'      => $hash,
-                'drawn_at'       => now(),
+                'draw_hash' => $hash,
+                'drawn_at' => now(),
             ]);
         });
 

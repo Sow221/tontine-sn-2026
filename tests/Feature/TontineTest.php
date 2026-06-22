@@ -138,5 +138,4 @@ class TontineTest extends TestCase
             ->delete("/tontines/{$tontine->id}")
             ->assertForbidden();
     }
-
 }
