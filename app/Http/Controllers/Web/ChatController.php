@@ -174,6 +174,8 @@ class ChatController extends Controller
             ->where('user_id', $user->id)
             ->update(['chat_last_seen_at' => now()]);
 
+        Cache::forget('unread_messages_'.$user->id);
+
         $messages = ChatMessage::where('tontine_id', $tontine->id)
             ->with('user')
             ->orderBy('created_at')

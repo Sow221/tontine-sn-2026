@@ -17,6 +17,7 @@ use App\Services\WebhookOutboundService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
@@ -66,6 +67,24 @@ class AppServiceProvider extends ServiceProvider
             }
             $view->with('unreadNotificationsCount', $unreadCount);
             $view->with('latestNotifications', $latestNotifications);
+
+            $unreadMessages = 0;
+            if (Auth::check()) {
+                $msgCacheKey = 'unread_messages_'.Auth::id();
+                $unreadMessages = Cache::remember($msgCacheKey, 60, function () {
+                    return DB::table('tontine_members as tm')
+                        ->join('chat_messages as cm', 'cm.tontine_id', '=', 'tm.tontine_id')
+                        ->where('tm.user_id', Auth::id())
+                        ->where('tm.status', 'active')
+                        ->where('cm.user_id', '!=', Auth::id())
+                        ->where(function ($q) {
+                            $q->whereNull('tm.chat_last_seen_at')
+                                ->orWhereRaw('cm.created_at > tm.chat_last_seen_at');
+                        })
+                        ->count();
+                });
+            }
+            $view->with('unreadMessagesCount', $unreadMessages);
         });
     }
 }

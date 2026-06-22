@@ -136,6 +136,9 @@
                 </a>
                 <a href="{{ route('chat.index') }}" class="sidebar-link {{ request()->routeIs('chat.*') ? 'active' : '' }}">
                     <i class="fas fa-comments"></i><span class="sidebar-link-text">Messages</span>
+                    @if(($unreadMessagesCount ?? 0) > 0)
+                    <span class="badge bg-danger ms-auto">{{ ($unreadMessagesCount ?? 0) > 9 ? '9+' : $unreadMessagesCount }}</span>
+                    @endif
                 </a>
                 <a href="{{ route('notifications.index') }}" class="sidebar-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
                     <i class="fas fa-bell"></i><span class="sidebar-link-text">Notifications</span>
@@ -371,8 +374,12 @@
             <a href="{{ route('tontines.explore') }}" class="bottom-nav-link {{ request()->routeIs('tontines.explore') ? 'active' : '' }}">
                 <i class="fas fa-compass"></i><span>Explorer</span>
             </a>
-            <a href="{{ route('chat.index') }}" class="bottom-nav-link {{ request()->routeIs('chat.*') ? 'active' : '' }}">
-                <i class="fas fa-comments"></i><span>Messages</span>
+            <a href="{{ route('chat.index') }}" class="bottom-nav-link {{ request()->routeIs('chat.*') ? 'active' : '' }}" style="position:relative;">
+                <i class="fas fa-comments"></i>
+                @if(($unreadMessagesCount ?? 0) > 0)
+                <span class="position-absolute badge rounded-pill bg-danger" style="top:2px;right:2px;font-size:9px;min-width:15px;height:15px;line-height:9px;padding:3px;">{{ ($unreadMessagesCount ?? 0) > 9 ? '9+' : $unreadMessagesCount }}</span>
+                @endif
+                <span>Messages</span>
             </a>
             <a href="{{ route('historique.index') }}" class="bottom-nav-link {{ request()->routeIs('historique.*') ? 'active' : '' }}">
                 <i class="fas fa-history"></i><span>Historique</span>
