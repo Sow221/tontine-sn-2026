@@ -15,6 +15,7 @@ use App\Services\CreditScoringService;
 use App\Services\GamificationService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 class DemoDataSeeder extends Seeder
 {
@@ -41,6 +42,7 @@ class DemoDataSeeder extends Seeder
         $this->createCastorsTirage();
         $this->createTontineSuspendue();
 
+        $this->createKycDocuments();
         $this->createP2PTransactions();
         $this->createChatMessages();
         $this->awardBadgesAndScores();
@@ -655,6 +657,62 @@ class DemoDataSeeder extends Seeder
     // ──────────────────────────────────────────────
     //  Transactions P2P (QR)
     // ──────────────────────────────────────────────
+    private function createKycDocuments(): void
+    {
+        $this->command?->info("\n--- Documents KYC démo ---");
+        $path = 'kyc/demo-kyc.png';
+
+        if (! Storage::disk('local')->exists($path)) {
+            Storage::disk('local')->makeDirectory('kyc');
+            $img = imagecreate(600, 400);
+            $bg = imagecolorallocate($img, 255, 255, 255);
+            $black = imagecolorallocate($img, 0, 0, 0);
+            $red = imagecolorallocate($img, 239, 51, 64);
+            $gray = imagecolorallocate($img, 100, 100, 100);
+            imagerectangle($img, 10, 10, 589, 389, $black);
+            imagestring($img, 5, 40, 30, 'PIECE D\'IDENTITE', $red);
+            imagestring($img, 4, 40, 70, 'Carte nationale d\'identite', $black);
+            imagestring($img, 3, 40, 110, 'N: SN-'.date('Y').'-'.rand(100000, 999999), $black);
+            imagestring($img, 3, 40, 140, 'Delivree le: '.now()->subYears(2)->format('d/m/Y'), $black);
+            imageline($img, 40, 180, 560, 180, $gray);
+            imagestring($img, 5, 40, 210, 'NOM DU TITULAIRE', $black);
+            imagestring($img, 3, 40, 250, 'Ne(e) le: 01/01/1990', $black);
+            imagestring($img, 3, 40, 280, 'Nationalite: SenegalaiSe', $black);
+            imagepng($img, Storage::disk('local')->path($path));
+            imagedestroy($img);
+            $this->command?->info('  ✓ Image KYC generee');
+        }
+
+        $now = now();
+        $nouveaux = [
+            ['aminata.fall@tontinesn.test', 'Aminata Fall', '+221 77 777 77 01'],
+            ['ousmane.diop@tontinesn.test', 'Ousmane Diop', '+221 76 666 66 02'],
+        ];
+        $hash = hash_file('sha256', Storage::disk('local')->path($path));
+        $count = 0;
+        foreach ($nouveaux as [$email, $name, $phone]) {
+            User::updateOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $name,
+                    'phone_number' => $phone,
+                    'password' => bcrypt('Membre2024!'),
+                    'role' => 'member',
+                    'is_active' => true,
+                    'kyc_document' => $path,
+                    'kyc_verified' => false,
+                    'kyc_status' => 'pending',
+                    'kyc_document_hash' => $hash,
+                    'email_verified_at' => $now,
+                    'onboarding_completed' => true,
+                    'created_at' => $now->copy()->subMonth(),
+                ]
+            );
+            $count++;
+        }
+        $this->command?->info("  ✓ $count utilisateurs avec KYC en attente");
+    }
+
     private function createP2PTransactions(): void
     {
         $this->command?->info("\n--- Transactions QR P2P ---");

@@ -196,6 +196,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/referrals', [AdminDashboardController::class, 'referrals'])->name('referrals');
     Route::get('/api-docs', [ApiDocsController::class, 'index'])->name('api-docs');
     // Déploiement (protégé par auth admin + token dans l'env)
-    Route::get('/deploy', [\App\Http\Controllers\Deploy\DeployController::class, 'migrate'])->name('deploy');
+    Route::match(['get', 'post'], '/deploy', [\App\Http\Controllers\Deploy\DeployController::class, 'migrate'])->name('deploy');
 });
 

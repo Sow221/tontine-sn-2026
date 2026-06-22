@@ -108,12 +108,22 @@
                     @csrf
                     <div class="mb-2">
                         <label class="form-label fw-semibold small">Motif du refus</label>
-                        <input type="text" name="reason" class="form-control form-control-sm"
+                        <input type="text" name="reason" id="reject-reason" class="form-control form-control-sm"
                                placeholder="Ex: Document illisible, identité non conforme..."
                                value="Document non valide ou illisible.">
                     </div>
-                    <button type="submit" class="btn btn-outline-danger w-100 rounded-pill"
-                            onclick="return confirm('Rejeter le KYC de {{ $user->name }} ?')">
+                    <button type="button" class="btn btn-outline-danger w-100 rounded-pill"
+                            x-data
+                            @click.prevent="
+                                let reason = document.getElementById('reject-reason').value;
+                                window.dispatchEvent(new CustomEvent('open-modal', { detail: {
+                                    id: 'admin-confirm',
+                                    action: '{{ route('admin.users.kyc.reject', $user) }}',
+                                    message: 'Rejeter le KYC de {{ $user->name }} ?',
+                                    confirmText: 'Oui, rejeter',
+                                    type: 'danger',
+                                    extraFields: { reason: reason }
+                                }}))">
                         <i class="fas fa-times me-1"></i>Rejeter
                     </button>
                 </form>

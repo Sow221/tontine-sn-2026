@@ -18,7 +18,7 @@ class StoreTontineRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'amount' => ['required', 'integer', 'min:'.config('tontine.transaction.min_amount'), 'max:'.config('tontine.transaction.max_amount')],
+            'amount' => ['required', 'integer', 'min:'.config('tontine.transaction.min_amount', 500), 'max:'.config('tontine.transaction.max_amount', 500000)],
             'frequency' => ['required', 'in:daily,weekly,monthly'],
             'type' => ['required', 'in:fixed,auction,forced_saving,ceremonial'],
             'start_date' => ['required', 'date', 'after_or_equal:today'],

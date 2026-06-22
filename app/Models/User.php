@@ -114,7 +114,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function scopeKycPending(Builder $query): Builder
     {
-        return $query->where('kyc_status', 'pending');
+        return $query->where('kyc_status', 'pending')->whereNotNull('kyc_document');
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────

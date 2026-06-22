@@ -10,7 +10,7 @@ class DeployController
 {
     public function migrate(Request $request)
     {
-        $token = $request->query('token');
+        $token = $request->header('X-Deploy-Token', $request->query('token'));
 
         if ($token !== env('DEPLOY_TOKEN')) {
             abort(403, 'Token invalide.');

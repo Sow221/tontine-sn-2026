@@ -254,9 +254,12 @@ class AdminUserController extends Controller
 
             $next = \App\Models\User::kycPending()->where('id', '!=', $user->id)->oldest()->first();
 
+            $endRedirect = redirect()->route('admin.users', ['kyc' => 'pending'])
+                ->with('success', 'KYC approuvé. Aucun autre dossier en attente.');
+
             return $next
                 ? redirect()->route('admin.users.kyc.review', $next)->with('success', 'KYC approuvé. Prochain dossier chargé.')
-                : redirect()->route('admin.dashboard')->with('success', 'KYC approuvé. Aucun autre dossier en attente.');
+                : $endRedirect;
         } catch (\Throwable $e) {
             Log::error('Erreur approbation KYC', ['user' => $user->id, 'error' => $e->getMessage()]);
 
@@ -289,9 +292,12 @@ class AdminUserController extends Controller
 
             $next = \App\Models\User::kycPending()->where('id', '!=', $user->id)->oldest()->first();
 
+            $endRedirect = redirect()->route('admin.users', ['kyc' => 'pending'])
+                ->with('success', 'KYC refusé. Aucun autre dossier en attente.');
+
             return $next
                 ? redirect()->route('admin.users.kyc.review', $next)->with('success', 'KYC refusé. Prochain dossier chargé.')
-                : redirect()->route('admin.dashboard')->with('success', 'KYC refusé. Aucun autre dossier en attente.');
+                : $endRedirect;
         } catch (\Throwable $e) {
             Log::error('Erreur refus KYC', ['user' => $user->id, 'error' => $e->getMessage()]);
 

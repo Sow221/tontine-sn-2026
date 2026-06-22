@@ -44,7 +44,7 @@
                 @if($stats['pending_kyc'] > 0)
                 <small class="text-warning d-block mb-2">{{ $stats['pending_kyc'] }} document(s) à vérifier</small>
                 @if($pendingKycUsers->isNotEmpty())
-                <a href="{{ route('admin.users.kyc.review', $pendingKycUsers->first()) }}" class="btn btn-outline-warning rounded-pill" style="font-size:11px;padding:3px 10px;min-height:auto;">
+                <a href="{{ route('admin.users', ['kyc' => 'pending']) }}" class="btn btn-outline-warning rounded-pill" style="font-size:11px;padding:3px 10px;min-height:auto;">
                     Traiter maintenant →
                 </a>
                 @endif
