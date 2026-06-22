@@ -112,8 +112,8 @@
                 <a href="{{ route('members.show', $member) }}" class="text-decoration-none text-reset">
                     {{ $member->name ?? $member->phone_number }}
                 </a>
-                @if($member->id === $tontine->created_by)
-                    <span class="badge badge-info ms-1">Créateur</span>
+                @if(($member->pivot->role ?? 'member') === 'manager')
+                    <span class="badge badge-info ms-1">Gérant</span>
                 @endif
                 @if($hasBenefited)
                     <span class="badge bg-warning text-dark ms-1" title="A déjà reçu le pot">🏆 Reçu</span>
@@ -186,8 +186,8 @@
                 <a href="{{ route('members.show', $member) }}" class="text-decoration-none text-reset">
                     {{ $member->name ?? $member->phone_number }}
                 </a>
-                @if($member->id === $tontine->created_by)
-                    <span class="badge badge-info ms-1">Créateur</span>
+                @if(($member->pivot->role ?? 'member') === 'manager')
+                    <span class="badge badge-info ms-1">Gérant</span>
                 @endif
                 @if($hasBenefited)
                     <span class="badge bg-warning text-dark ms-1">🏆 Reçu</span>

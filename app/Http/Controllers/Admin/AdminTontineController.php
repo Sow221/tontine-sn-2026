@@ -30,6 +30,8 @@ class AdminTontineController extends Controller
                 ->latest()
                 ->paginate(20);
 
+            $tontines->each(fn ($t) => $t->pot_total = $t->amount * $t->active_members_count);
+
             return view('admin.tontines', compact('tontines'));
         } catch (\Throwable $e) {
             Log::error('Erreur liste tontines admin', ['error' => $e->getMessage()]);
@@ -77,6 +79,10 @@ class AdminTontineController extends Controller
 
     public function forceCloseCycle(Tontine $tontine, Cycle $cycle)
     {
+        if (! auth()->user()->isAdmin()) {
+            return back()->withErrors(['error' => 'Seul un super administrateur peut forcer la clôture d\'un cycle.']);
+        }
+
         try {
             if (! in_array($cycle->status, ['active', 'partial', 'overdue'])) {
                 return back()->withErrors(['error' => 'Ce cycle ne peut pas être forcé (statut incompatible).']);
@@ -102,6 +108,10 @@ class AdminTontineController extends Controller
 
     public function suspend(Tontine $tontine)
     {
+        if (! auth()->user()->isAdmin()) {
+            return back()->withErrors(['error' => 'Seul un super administrateur peut suspendre une tontine.']);
+        }
+
         try {
             if ($tontine->status === 'suspended') {
                 return back()->withErrors(['error' => 'Cette tontine est déjà suspendue.']);
@@ -123,6 +133,10 @@ class AdminTontineController extends Controller
 
     public function reactivate(Tontine $tontine)
     {
+        if (! auth()->user()->isAdmin()) {
+            return back()->withErrors(['error' => 'Seul un super administrateur peut réactiver une tontine.']);
+        }
+
         try {
             if ($tontine->status !== 'suspended') {
                 return back()->withErrors(['error' => 'Seule une tontine suspendue peut être réactivée.']);

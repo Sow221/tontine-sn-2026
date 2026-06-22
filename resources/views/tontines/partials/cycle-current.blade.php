@@ -115,13 +115,13 @@
     @if($tontine->type === 'forced_saving')
         @if(auth()->id() === $tontine->created_by)
             @if($withdrawals->isEmpty())
-            <form method="POST" action="{{ route('cycles.close-saving', $currentCycle) }}" class="mb-3">
-                @csrf
-                <button type="submit" class="btn btn-outline-success w-100"
-                        onclick="return confirm('Clôturer l\'épargne ? Chaque membre recevra son épargne personnelle.')">
+            <div class="mb-3">
+                <button type="button" class="btn btn-outline-success w-100"
+                        x-data
+                        @click="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'close-saving-modal', action: '{{ route('cycles.close-saving', $currentCycle) }}', message: 'Clôturer l\'épargne ? Chaque membre recevra son épargne personnelle accumulée. Cette action est irréversible.', confirmText: 'Clôturer l\'épargne', type: 'primary' } }))">
                     <i class="fas fa-lock-open me-2"></i>Clôturer — {{ number_format($currentCycle->total_collected, 0, ',', ' ') }} FCFA
                 </button>
-            </form>
+            </div>
             @else
             <div class="alert alert-success py-2 mb-3">
                 <i class="fas fa-check-circle me-1"></i>Épargne clôturée — retraits à effectuer
@@ -169,13 +169,11 @@
                 </p>
             </div>
             @if(!$hasVetoed)
-            <form method="POST" action="{{ route('cycles.veto', $currentCycle) }}">
-                @csrf
-                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill"
-                        onclick="return confirm('Voter le véto ? Si le seuil est atteint, le tirage sera annulé.')">
-                    <i class="fas fa-ban me-1"></i>Voter le véto
-                </button>
-            </form>
+            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill"
+                    x-data
+                    @click="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'veto-modal', action: '{{ route('cycles.veto', $currentCycle) }}', message: 'Voter le véto sur ce tirage ? Si {{ $vetoRequired }} votes sont atteints, le bénéficiaire sera re-tiré.', confirmText: 'Voter le véto', type: 'danger' } }))">
+                <i class="fas fa-ban me-1"></i>Voter le véto
+            </button>
             @else
             <span class="badge bg-danger">Véto voté</span>
             @endif

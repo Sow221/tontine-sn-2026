@@ -123,12 +123,16 @@ class AdminUserController extends Controller
 
     public function toggle(User $user)
     {
+        if (! auth()->user()->isAdmin()) {
+            return back()->withErrors(['error' => 'Seul un administrateur peut désactiver un utilisateur.']);
+        }
+
         try {
             if ($user->id === auth()->id()) {
                 return back()->withErrors(['error' => 'Vous ne pouvez pas désactiver votre propre compte.']);
             }
-            if ($user->isSuperAdmin()) {
-                return back()->withErrors(['error' => 'Impossible de désactiver un super administrateur.']);
+            if ($user->isAdmin()) {
+                return back()->withErrors(['error' => 'Impossible de désactiver un administrateur.']);
             }
 
             $user->update(['is_active' => ! $user->is_active]);
@@ -151,16 +155,17 @@ class AdminUserController extends Controller
 
     public function updateRole(Request $request, User $user)
     {
-        $request->validate(['role' => ['required', 'in:member,admin,super_admin']]);
+        if (! auth()->user()->isAdmin()) {
+            return back()->withErrors(['error' => 'Seul un administrateur peut modifier les rôles.']);
+        }
+
+        $request->validate(['role' => ['required', 'in:member,admin']]);
 
         try {
             if ($user->id === auth()->id()) {
                 return back()->withErrors(['error' => 'Vous ne pouvez pas modifier votre propre rôle.']);
             }
-            if ($request->role === 'super_admin' && auth()->user()->role !== 'super_admin') {
-                return back()->withErrors(['error' => 'Seul un super administrateur peut créer un autre super administrateur.']);
-            }
-            if (in_array($request->role, ['admin', 'super_admin']) && ! $user->hasVerifiedEmail()) {
+            if ($request->role === 'admin' && ! $user->hasVerifiedEmail()) {
                 return back()->withErrors(['error' => 'L\'utilisateur doit avoir un email vérifié pour obtenir un rôle administrateur.']);
             }
 
@@ -178,14 +183,19 @@ class AdminUserController extends Controller
     public function kycDocument(User $user)
     {
         abort_unless($user->kyc_document, 404);
-        $path = storage_path('app/'.$user->kyc_document);
-        abort_unless(file_exists($path), 404);
+        abort_if(str_contains($user->kyc_document, '..'), 404);
 
-        return response()->file($path);
+        if (! Storage::disk('local')->exists($user->kyc_document)) {
+            abort(404);
+        }
+
+        return response()->file(Storage::disk('local')->path($user->kyc_document));
     }
 
     public function kycReview(User $user)
     {
+        abort_unless(auth()->user()->isAdmin(), 403);
+
         if (! $user->kyc_document) {
             return redirect()->route('admin.users.show', $user)
                 ->withErrors(['error' => 'Aucun document KYC en attente pour cet utilisateur.']);
@@ -224,6 +234,10 @@ class AdminUserController extends Controller
 
     public function approveKyc(User $user)
     {
+        if (! auth()->user()->isAdmin()) {
+            return back()->withErrors(['error' => 'Action non autorisée.']);
+        }
+
         try {
             if ($user->kyc_document) {
                 Storage::disk('local')->delete($user->kyc_document);
@@ -238,7 +252,11 @@ class AdminUserController extends Controller
             $this->notifications->send($user, 'kyc_approved', 'Votre identité a été vérifiée avec succès.');
             Cache::forget('admin.stats');
 
-            return back()->with('success', 'KYC approuvé.');
+            $next = \App\Models\User::kycPending()->where('id', '!=', $user->id)->oldest()->first();
+
+            return $next
+                ? redirect()->route('admin.users.kyc.review', $next)->with('success', 'KYC approuvé. Prochain dossier chargé.')
+                : redirect()->route('admin.dashboard')->with('success', 'KYC approuvé. Aucun autre dossier en attente.');
         } catch (\Throwable $e) {
             Log::error('Erreur approbation KYC', ['user' => $user->id, 'error' => $e->getMessage()]);
 
@@ -248,6 +266,10 @@ class AdminUserController extends Controller
 
     public function rejectKyc(Request $request, User $user)
     {
+        if (! auth()->user()->isAdmin()) {
+            return back()->withErrors(['error' => 'Action non autorisée.']);
+        }
+
         $request->validate(['reason' => ['nullable', 'string', 'max:255']]);
 
         try {
@@ -265,7 +287,11 @@ class AdminUserController extends Controller
             $this->notifications->send($user, 'kyc_rejected', "Votre document KYC a été refusé. Motif : {$reason}");
             Cache::forget('admin.stats');
 
-            return back()->with('success', 'KYC refusé.');
+            $next = \App\Models\User::kycPending()->where('id', '!=', $user->id)->oldest()->first();
+
+            return $next
+                ? redirect()->route('admin.users.kyc.review', $next)->with('success', 'KYC refusé. Prochain dossier chargé.')
+                : redirect()->route('admin.dashboard')->with('success', 'KYC refusé. Aucun autre dossier en attente.');
         } catch (\Throwable $e) {
             Log::error('Erreur refus KYC', ['user' => $user->id, 'error' => $e->getMessage()]);
 

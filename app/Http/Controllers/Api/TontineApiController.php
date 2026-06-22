@@ -57,6 +57,7 @@ class TontineApiController extends Controller
             'status' => 'active',
             'position' => 1,
             'joined_at' => now(),
+            'role' => 'manager',
         ]);
 
         return response()->json($this->tontineResource($tontine), 201);

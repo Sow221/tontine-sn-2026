@@ -107,7 +107,7 @@
                 <span class="fw-bold {{ $tx->status === 'success' ? 'text-green' : ($tx->status === 'failed' ? 'text-danger' : 'text-warning') }}">
                     {{ $tx->status === 'success' ? '+' : ($tx->status === 'failed' ? '' : '') }}{{ number_format($tx->amount, 0, ',', ' ') }} F
                 </span>
-                @if($tx->status === 'pending')
+                @if(auth()->user()->isAdmin() && $tx->status === 'pending')
                 <div class="mt-1">
                     <button type="button" class="btn btn-sm btn-success rounded-pill"
                             x-data

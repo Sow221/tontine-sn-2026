@@ -277,25 +277,6 @@ class RoleByRoleTest extends TestCase
             ->assertSessionHasErrors();
     }
 
-    public function test_super_admin_can_access_admin_pages(): void
-    {
-        $super = User::factory()->create(['role' => 'super_admin']);
-
-        $this->actingAs($super)->get(route('admin.dashboard'))->assertOk();
-        $this->actingAs($super)->get(route('admin.users'))->assertOk();
-        $this->actingAs($super)->get(route('admin.tontines'))->assertOk();
-    }
-
-    public function test_admin_cannot_assign_super_admin(): void
-    {
-        $admin = User::factory()->admin()->create();
-        $user = User::factory()->create(['role' => 'member']);
-
-        $this->actingAs($admin)
-            ->post(route('admin.users.role', $user), ['role' => 'super_admin'])
-            ->assertSessionHasErrors(['error']);
-    }
-
     // ── EDGE CASES ─────────────────────────────────────────────────────────
 
     public function test_explorer_handles_missing_description(): void

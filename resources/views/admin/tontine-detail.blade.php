@@ -87,6 +87,7 @@
     <div class="card mb-4">
         <h6 class="fw-semibold mb-3">Actions</h6>
         <div class="d-flex gap-2 flex-wrap">
+            @if(auth()->user()->isAdmin())
             @if($tontine->status === 'active')
             <button type="button" class="btn btn-outline-danger rounded-pill"
                     x-data
@@ -109,6 +110,7 @@
                     <i class="fas fa-lock me-1"></i>Clôturer cycle {{ $currentCycle->cycle_number }}
                 </button>
             </form>
+            @endif
             @endif
         </div>
     </div>

@@ -4,8 +4,10 @@
     type: 'success'
 }"
      x-init="
-     @if(session('success'))
-         message = '{{ str_replace("'", "\\'", session('success')) }}'; type = 'success'; show = true; setTimeout(() => show = false, 6000);
+     @if(session('info'))
+         message = '{{ str_replace("'", "\\'", session('info')) }}'; type = 'info'; show = true; setTimeout(() => show = false, 7000);
+     @elseif(session('warning'))
+         message = '{{ str_replace("'", "\\'", session('warning')) }}'; type = 'warning'; show = true; setTimeout(() => show = false, 7000);
      @elseif(session('error'))
          message = '{{ str_replace("'", "\\'", session('error')) }}'; type = 'error'; show = true; setTimeout(() => show = false, 8000);
      @elseif($errors->any())

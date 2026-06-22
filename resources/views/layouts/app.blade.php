@@ -283,14 +283,20 @@
         {{-- Alerts --}}
         <div class="px-4 pt-3">
             @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <div class="alert alert-success alert-dismissible fade show" role="alert" aria-live="polite">
                     <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
                 </div>
             @endif
             @if(session('status'))
-                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <div class="alert alert-info alert-dismissible fade show" role="alert" aria-live="polite">
                     <i class="fas fa-info-circle me-2"></i>{{ session('status') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+                </div>
+            @endif
+            @if(session('warning'))
+                <div class="alert alert-warning alert-dismissible fade show" role="alert" aria-live="polite">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{{ session('warning') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
                 </div>
             @endif

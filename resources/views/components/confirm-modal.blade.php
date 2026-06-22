@@ -1,5 +1,5 @@
-<div x-data="{ open: false, action: '', message: '', method: 'POST', confirmText: 'Confirmer', type: 'danger' }"
-     x-on:open-modal.window="if ($event.detail.id === '{{ $id }}') { open = true; action = $event.detail.action; method = $event.detail.method || 'POST'; message = $event.detail.message; confirmText = $event.detail.confirmText || 'Confirmer'; type = $event.detail.type || 'danger'; }"
+<div x-data="{ open: false, action: '', message: '', method: 'POST', confirmText: 'Confirmer', type: 'danger', extraFields: {} }"
+     x-on:open-modal.window="if ($event.detail.id === '{{ $id }}') { open = true; action = $event.detail.action; method = $event.detail.method || 'POST'; message = $event.detail.message; confirmText = $event.detail.confirmText || 'Confirmer'; type = $event.detail.type || 'danger'; extraFields = $event.detail.extraFields || {}; }"
      x-show="open"
      x-cloak
      x-trap.noscroll="open"
@@ -21,6 +21,9 @@
             <form :action="action" method="POST" class="flex-grow-1" @submit="open = false">
                 @csrf
                 <input type="hidden" name="_method" :value="method || 'POST'">
+                <template x-for="field in Object.keys(extraFields)">
+                    <input type="hidden" :name="field" :value="extraFields[field]">
+                </template>
                 <button type="submit" class="btn w-100" :class="type === 'danger' ? 'btn-danger' : 'btn-primary'" x-text="confirmText"></button>
             </form>
         </div>

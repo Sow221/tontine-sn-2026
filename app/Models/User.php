@@ -124,11 +124,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return in_array($this->role, ['admin', 'super_admin']);
     }
 
-    public function isSuperAdmin(): bool
-    {
-        return $this->role === 'super_admin';
-    }
-
     public function hasTwoFactorEnabled(): bool
     {
         return $this->twoFactorSecret?->isEnabled() ?? false;

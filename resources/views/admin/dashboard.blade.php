@@ -43,9 +43,11 @@
                 <div class="stat-label">KYC en attente</div>
                 @if($stats['pending_kyc'] > 0)
                 <small class="text-warning d-block mb-2">{{ $stats['pending_kyc'] }} document(s) à vérifier</small>
-                <a href="{{ route('admin.users', ['kyc' => 'pending']) }}" class="btn btn-outline-warning rounded-pill" style="font-size:11px;padding:3px 10px;min-height:auto;">
+                @if($pendingKycUsers->isNotEmpty())
+                <a href="{{ route('admin.users.kyc.review', $pendingKycUsers->first()) }}" class="btn btn-outline-warning rounded-pill" style="font-size:11px;padding:3px 10px;min-height:auto;">
                     Traiter maintenant →
                 </a>
+                @endif
                 @endif
             </div>
         </div>
@@ -137,7 +139,7 @@
     <div class="card mb-4 border-warning">
         <div class="d-flex align-items-center justify-content-between mb-3">
             <h6 class="fw-semibold mb-0 text-warning"><i class="fas fa-id-card me-2"></i>KYC en attente ({{ $pendingKycUsers->count() }})</h6>
-            <a href="{{ route('admin.users', ['kyc' => 'pending']) }}" class="text-muted small">Voir tout</a>
+            <a href="{{ route('admin.users', ['kyc' => 'pending']) }}" class="text-muted small">Liste des KYC en attente →</a>
         </div>
         @foreach($pendingKycUsers as $u)
         <div class="d-flex align-items-center gap-3 mb-2 pb-2 {{ !$loop->last ? 'border-bottom' : '' }}">
@@ -172,13 +174,13 @@
             <span class="badge badge-{{ $t->status === 'active' ? 'success' : ($t->status === 'suspended' ? 'danger' : 'warning') }}">
                 {{ match($t->status) { 'active' => 'Active', 'suspended' => 'Suspendue', 'completed' => 'Terminée', default => 'En attente' } }}
             </span>
-            @if($t->status === 'active')
+            @if(auth()->user()->isAdmin() && $t->status === 'active')
             <button type="button" class="btn btn-sm btn-outline-danger rounded-pill"
                     x-data
                     @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.tontines.suspend', $t) }}', message: 'Suspendre « {{ $t->name }} » ?', confirmText: 'Oui, suspendre', type: 'danger' } }))">
                 <i class="fas fa-pause"></i>
             </button>
-            @elseif($t->status === 'suspended')
+            @elseif(auth()->user()->isAdmin() && $t->status === 'suspended')
             <form method="POST" action="{{ route('admin.tontines.reactivate', $t) }}">
                 @csrf
                 <button type="submit" class="btn btn-sm btn-outline-success rounded-pill">
@@ -216,7 +218,7 @@
             <span class="badge badge-{{ $tx->status === 'success' ? 'success' : ($tx->status === 'pending' ? 'warning' : 'secondary') }}">
                 {{ ucfirst($tx->status) }}
             </span>
-            @if($tx->status === 'pending')
+            @if(auth()->user()->isAdmin() && $tx->status === 'pending')
             <button type="button" class="btn btn-sm btn-success rounded-pill"
                     x-data
                     @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.transactions.force-confirm', $tx) }}', message: 'Confirmer manuellement cette transaction ?', confirmText: 'Oui, confirmer', type: 'danger' } }))">

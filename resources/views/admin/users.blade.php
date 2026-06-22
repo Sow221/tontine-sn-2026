@@ -100,18 +100,29 @@
                 @endif
 
                 {{-- Actions --}}
-                @if($user->id !== auth()->id())
+                @if($user->id !== auth()->id() && auth()->user()->isAdmin())
                 <div class="d-flex gap-1 mt-1">
                     {{-- Changer rôle --}}
-                    <form method="POST" action="{{ route('admin.users.role', $user) }}" class="d-inline">
-                        @csrf
+                    <div class="d-inline" x-data="{ currentRole: '{{ $user->role }}' }">
                         <select name="role" class="form-select form-select-sm" style="width:auto;font-size:11px;"
-                                onchange="if(confirm('Changer le rôle de {{ addslashes($user->name ?? $user->email) }} vers ' + this.options[this.selectedIndex].text + ' ?')) { this.form.submit(); } else { this.value = '{{ $user->role }}'; }">
-                            @foreach(['member' => 'Membre', 'admin' => 'Admin', 'super_admin' => 'Super Admin'] as $val => $label)
+                                @change="
+                                    let newRole = $event.target.value;
+                                    let newLabel = $event.target.options[$event.target.selectedIndex].text;
+                                    $event.target.value = currentRole;
+                                    window.dispatchEvent(new CustomEvent('open-modal', { detail: {
+                                        id: 'admin-confirm',
+                                        action: '{{ route('admin.users.role', $user) }}',
+                                        message: 'Changer le rôle de {{ addslashes($user->name ?? $user->email) }} vers ' + newLabel + ' ?',
+                                        confirmText: 'Changer le rôle',
+                                        type: 'warning',
+                                        extraFields: { role: newRole }
+                                    }}))
+                                ">
+                            @foreach(['member' => 'Membre', 'admin' => 'Admin'] as $val => $label)
                             <option value="{{ $val }}" {{ $user->role === $val ? 'selected' : '' }}>{{ $label }}</option>
                             @endforeach
                         </select>
-                    </form>
+                    </div>
                     {{-- Activer/Désactiver --}}
                     <button type="button"
                             class="btn btn-sm btn-{{ $user->is_active ? 'outline-danger' : 'outline-success' }} rounded-pill"
@@ -125,7 +136,13 @@
         </div>
     </div>
     @empty
-    <div class="text-center py-4 text-muted">Aucun utilisateur trouvé.</div>
+    <div class="text-center py-5">
+        <div style="font-size:2.5rem;">👥</div>
+        <p class="fw-semibold text-muted mb-1">Aucun utilisateur trouvé</p>
+        @if(request()->hasAny(['search','role','status','kyc']))
+        <small class="text-muted">Essayez d'autres filtres ou <a href="{{ route('admin.users') }}">voir tous les utilisateurs</a>.</small>
+        @endif
+    </div>
     @endforelse
 
     <div class="mt-3">{{ $users->withQueryString()->links() }}</div>

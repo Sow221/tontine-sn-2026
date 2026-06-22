@@ -68,6 +68,7 @@ class TontineController extends Controller
             };
 
             $tontines = $query->paginate(12)->withQueryString();
+            $tontines->getCollection()->each(fn ($t) => $t->pot_total = $t->amount * $t->active_members_count);
 
             $myTontineIds = Auth::user()
                 ->memberships()
@@ -103,6 +104,7 @@ class TontineController extends Controller
             }
 
             $tontines = $query->paginate(10)->withQueryString();
+            $tontines->getCollection()->each(fn ($t) => $t->pot_total = $t->amount * $t->active_members_count);
 
             return view('tontines.index', compact('tontines'));
         } catch (\Throwable $e) {
@@ -129,6 +131,7 @@ class TontineController extends Controller
                 'status' => 'active',
                 'position' => 1,
                 'joined_at' => now(),
+                'role' => 'manager',
             ]);
 
             return redirect()->route('tontines.show', $tontine)
@@ -161,6 +164,8 @@ class TontineController extends Controller
             $user = Auth::user();
             $userId = $user->id;
             $memberCount = $tontine->members->filter(fn ($m) => $m->pivot->status === 'active')->count();
+            $tontine->active_members_count = $memberCount;
+            $tontine->pot_total = $tontine->amount * $memberCount;
 
             $hasPaid = $currentCycle
                 && Transaction::success()->forCycle($currentCycle->id)->forUser($userId)->exists();
