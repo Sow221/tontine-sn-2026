@@ -19,9 +19,9 @@ class ProcessOverdueCycles extends Command
 
     public function handle(): int
     {
-        $notifier     = app(NotificationService::class);
+        $notifier = app(NotificationService::class);
         $cycleService = app(CycleService::class);
-        $drawService  = app(DrawService::class);
+        $drawService = app(DrawService::class);
 
         // ── 1. Cycles en retard ─────────────────────────────────────────────────────
         $overdue = Cycle::with('tontine.activeMembers')
@@ -90,6 +90,7 @@ class ProcessOverdueCycles extends Command
                 $error = $drawService->canDraw($cycle);
                 if ($error) {
                     $this->warn("Cycle enchère #{$cycle->cycle_number} — {$cycle->tontine->name} : {$error}");
+
                     continue;
                 }
 

@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Services\CycleService;
 use App\Services\DrawService;
 use App\Services\NotificationService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -84,9 +83,9 @@ class CycleController extends Controller
                 $this->notifier->send(
                     $debt->user,
                     'general',
-                    "⚠️ Dette enregistrée : vous devez ".number_format($debt->amount, 0, ',', ' ')." FCFA"
+                    '⚠️ Dette enregistrée : vous devez '.number_format($debt->amount, 0, ',', ' ').' FCFA'
                         ." à la tontine « {$cycle->tontine->name} » (cycle #{$cycle->cycle_number})."
-                        ." Réglez cette dette pour pouvoir recevoir le pot lors de votre tour."
+                        .' Réglez cette dette pour pouvoir recevoir le pot lors de votre tour.'
                 );
             }
 

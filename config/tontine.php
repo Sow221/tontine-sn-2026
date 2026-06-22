@@ -69,7 +69,7 @@ return [
         // Mettre à true quand PayTech confirme que votre compte a le payout activé
         'enabled' => env('PAYTECH_PAYOUT_ENABLED', false),
         // Méthode de payout par défaut : wave | orange_money | free_money
-        'method'  => env('PAYTECH_PAYOUT_METHOD', 'wave'),
+        'method' => env('PAYTECH_PAYOUT_METHOD', 'wave'),
     ],
 
 ];

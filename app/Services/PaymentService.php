@@ -141,9 +141,9 @@ class PaymentService
                 // Payout automatique si le bénéficiaire a un numéro de téléphone
                 // et que PayTech payout est activé (configurable)
                 if (config('tontine.payout.enabled', false) && $cycle->beneficiary->phone_number) {
-                    $phone  = preg_replace('/[^0-9]/', '', $cycle->beneficiary->phone_number);
+                    $phone = preg_replace('/[^0-9]/', '', $cycle->beneficiary->phone_number);
                     $method = config('tontine.payout.method', 'wave');
-                    $ref    = 'PAYOUT-' . $cycle->id . '-' . $beneficiaryId;
+                    $ref = 'PAYOUT-'.$cycle->id.'-'.$beneficiaryId;
 
                     $result = $this->paytech->sendPayout(
                         $beneficiaryId,
@@ -153,25 +153,25 @@ class PaymentService
                         $ref
                     );
 
-                    if (!$result['success']) {
+                    if (! $result['success']) {
                         Log::error('Payout bénéficiaire échoué', [
-                            'cycle_id'      => $cycle->id,
-                            'beneficiary'   => $beneficiaryId,
-                            'amount'        => $beneficiaryAmount,
-                            'error'         => $result['error'] ?? 'inconnu',
+                            'cycle_id' => $cycle->id,
+                            'beneficiary' => $beneficiaryId,
+                            'amount' => $beneficiaryAmount,
+                            'error' => $result['error'] ?? 'inconnu',
                         ]);
                     } else {
                         // Enregistrer la transaction de redistribution
                         Transaction::create([
-                            'cycle_id'           => $cycle->id,
-                            'user_id'            => $beneficiaryId,
-                            'amount'             => $beneficiaryAmount,
-                            'method'             => $method,
-                            'type'               => 'redistribution',
-                            'external_reference' => 'redistribution-' . $ref,
-                            'status'             => 'success',
-                            'paid_at'            => now(),
-                            'description'        => 'Pot distribué — Cycle ' . $cycle->cycle_number,
+                            'cycle_id' => $cycle->id,
+                            'user_id' => $beneficiaryId,
+                            'amount' => $beneficiaryAmount,
+                            'method' => $method,
+                            'type' => 'redistribution',
+                            'external_reference' => 'redistribution-'.$ref,
+                            'status' => 'success',
+                            'paid_at' => now(),
+                            'description' => 'Pot distribué — Cycle '.$cycle->cycle_number,
                         ]);
                     }
                 }

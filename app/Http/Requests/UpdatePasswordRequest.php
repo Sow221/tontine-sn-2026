@@ -15,7 +15,7 @@ class UpdatePasswordRequest extends FormRequest
     {
         return [
             'current_password' => ['required'],
-            'password'         => ['required', 'min:8', 'confirmed'],
+            'password' => ['required', 'min:8', 'confirmed'],
         ];
     }
 
@@ -23,8 +23,8 @@ class UpdatePasswordRequest extends FormRequest
     {
         return [
             'current_password.required' => 'Le mot de passe actuel est obligatoire.',
-            'password.min'              => 'Le nouveau mot de passe doit contenir au moins 8 caractères.',
-            'password.confirmed'        => 'Les mots de passe ne correspondent pas.',
+            'password.min' => 'Le nouveau mot de passe doit contenir au moins 8 caractères.',
+            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
         ];
     }
 }

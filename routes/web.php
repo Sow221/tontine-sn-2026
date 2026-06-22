@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminLogController;
 use App\Http\Controllers\Admin\AdminTontineController;
 use App\Http\Controllers\Admin\AdminTransactionController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Deploy\DeployController;
 use App\Http\Controllers\Web\ApiDocsController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\ChatController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\Web\TontineController;
 use App\Http\Controllers\Web\TwoFactorController;
 use App\Http\Controllers\Web\WebhookController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
 
 Route::get('/api/docs', [ApiDocsController::class, 'index'])->name('api.docs');
 Route::get('/api/spec', [ApiDocsController::class, 'spec'])->name('api.spec');
@@ -68,10 +70,12 @@ Route::middleware('auth')->group(function () {
         ->name('verification.notice');
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
         $request->fulfill();
+
         return redirect()->route('dashboard')->with('success', 'Email vérifié avec succès ! Bienvenue sur TontineSN.');
     })->middleware('signed')->name('verification.verify');
-    Route::post('/email/verification-notification', function (\Illuminate\Http\Request $request) {
+    Route::post('/email/verification-notification', function (Request $request) {
         $request->user()->sendEmailVerificationNotification();
+
         return back()->with('status', 'Un nouvel email de vérification a été envoyé.');
     })->middleware('throttle:6,1')->name('verification.send');
 });
@@ -196,6 +200,5 @@ Route::middleware(['auth', 'verified', 'role:admin,super_admin'])->prefix('admin
     Route::get('/referrals', [AdminDashboardController::class, 'referrals'])->name('referrals');
     Route::get('/api-docs', [ApiDocsController::class, 'index'])->name('api-docs');
     // Déploiement (protégé par auth admin + token dans l'env)
-    Route::get('/deploy', [\App\Http\Controllers\Deploy\DeployController::class, 'migrate'])->name('deploy');
+    Route::get('/deploy', [DeployController::class, 'migrate'])->name('deploy');
 });
-

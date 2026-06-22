@@ -42,11 +42,11 @@ return [
     ],
 
     'greenapi' => [
-        'id_instance'    => env('GREENAPI_ID_INSTANCE'),
-        'api_token'      => env('GREENAPI_API_TOKEN'),
-        'api_url'        => env('GREENAPI_API_URL', 'https://api.greenapi.com'),
-        'media_url'      => env('GREENAPI_MEDIA_URL', 'https://api.greenapi.com'),
-        'webhook_url'    => env('GREENAPI_WEBHOOK_URL'),
+        'id_instance' => env('GREENAPI_ID_INSTANCE'),
+        'api_token' => env('GREENAPI_API_TOKEN'),
+        'api_url' => env('GREENAPI_API_URL', 'https://api.greenapi.com'),
+        'media_url' => env('GREENAPI_MEDIA_URL', 'https://api.greenapi.com'),
+        'webhook_url' => env('GREENAPI_WEBHOOK_URL'),
         // Secret intégré dans l'URL du webhook : /webhooks/greenapi/{GREENAPI_WEBHOOK_SECRET}
         // Configurez cette URL dans le panel GreenAPI > Paramètres de l'instance > Webhook
         'webhook_secret' => env('GREENAPI_WEBHOOK_SECRET'),
@@ -58,8 +58,8 @@ return [
     ],
 
     'vapid' => [
-        'subject'     => env('VAPID_SUBJECT', 'mailto:'.env('MAIL_FROM_ADDRESS', 'noreply@tontinesn.com')),
-        'public_key'  => env('VAPID_PUBLIC_KEY'),
+        'subject' => env('VAPID_SUBJECT', 'mailto:'.env('MAIL_FROM_ADDRESS', 'noreply@tontinesn.com')),
+        'public_key' => env('VAPID_PUBLIC_KEY'),
         'private_key' => env('VAPID_PRIVATE_KEY'),
     ],
 

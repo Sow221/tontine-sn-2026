@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\InitiatePaymentRequest;
 use App\Models\Cycle;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\CycleService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
@@ -134,7 +135,7 @@ class PaymentController extends Controller
 
                 // Notifier le créateur si c'est un paiement espèces confirmé qu'un membre annule
                 if ($method === 'cash') {
-                    $creator = \App\Models\User::find($tontine->created_by);
+                    $creator = User::find($tontine->created_by);
                     if ($creator && $creator->id !== Auth::id()) {
                         $this->notifier->send(
                             $creator,

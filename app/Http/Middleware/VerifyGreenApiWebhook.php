@@ -27,7 +27,7 @@ class VerifyGreenApiWebhook
 
         if (! hash_equals($secret, $provided)) {
             Log::warning('Webhook GreenAPI : token invalide', [
-                'ip'    => $request->ip(),
+                'ip' => $request->ip(),
                 'token' => substr($provided, 0, 6).'…',
             ]);
 
@@ -37,7 +37,7 @@ class VerifyGreenApiWebhook
         // Validation minimale du format GreenAPI (tous les webhooks ont typeWebhook)
         if (! $request->has('typeWebhook')) {
             Log::warning('Webhook GreenAPI : payload non conforme', [
-                'ip'   => $request->ip(),
+                'ip' => $request->ip(),
                 'body' => array_keys($request->all()),
             ]);
 

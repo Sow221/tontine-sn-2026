@@ -16,6 +16,7 @@ use App\Services\DrawService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\TontineService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -61,10 +62,10 @@ class TontineController extends Controller
 
             $sort = $request->input('sort', 'latest');
             match ($sort) {
-                'amount_asc'  => $query->orderBy('amount', 'asc'),
+                'amount_asc' => $query->orderBy('amount', 'asc'),
                 'amount_desc' => $query->orderBy('amount', 'desc'),
-                'spots'       => $query->orderByDesc(DB::raw('(tontines.max_members - active_members_count)')),
-                default       => $query->latest(),
+                'spots' => $query->orderByDesc(DB::raw('(tontines.max_members - active_members_count)')),
+                default => $query->latest(),
             };
 
             $tontines = $query->paginate(12)->withQueryString();
@@ -141,6 +142,7 @@ class TontineController extends Controller
                 str_contains($e->getMessage(), 'SQLSTATE[23000]') => 'Cette tontine existe déjà avec le même code.',
                 default => 'Erreur lors de la création de la tontine. Vérifiez les champs et réessayez.',
             };
+
             return back()->withErrors(['error' => $msg])->withInput();
         }
     }
@@ -200,7 +202,7 @@ class TontineController extends Controller
                     ->with('cycle')
                     ->get();
             } catch (\Throwable) {
-                $memberDebts  = collect();
+                $memberDebts = collect();
                 $myPendingDebts = collect();
             }
             $myTotalDebt = $myPendingDebts->sum('amount');
@@ -272,7 +274,7 @@ class TontineController extends Controller
             ))->render();
 
             return response($html);
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             abort(403);
         } catch (\Throwable $e) {
             Log::error('Erreur affichage tontine', [
@@ -347,6 +349,7 @@ class TontineController extends Controller
             Log::error('Erreur activation tontine', ['tontine' => $tontine->id, 'error' => $e->getMessage(), 'class' => get_class($e)]);
 
             $actMsg = str_contains($e->getMessage(), 'cycles') ? 'Erreur lors de la génération des cycles.' : 'Erreur lors de l\'activation. Vérifiez que la tontine a au moins 2 membres actifs.';
+
             return back()->withErrors(['activate' => $actMsg]);
         }
     }
@@ -402,8 +405,8 @@ class TontineController extends Controller
                 'active' => 'Active', 'completed' => 'Terminée', default => 'En attente'
             };
 
-            $safeName   = htmlspecialchars($tontine->name, ENT_XML1 | ENT_QUOTES, 'UTF-8');
-            $safeCode   = htmlspecialchars($tontine->code, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+            $safeName = htmlspecialchars($tontine->name, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+            $safeCode = htmlspecialchars($tontine->code, ENT_XML1 | ENT_QUOTES, 'UTF-8');
             $safeAmount = htmlspecialchars($amount, ENT_XML1, 'UTF-8');
             $safeStatus = htmlspecialchars($status, ENT_XML1, 'UTF-8');
 
@@ -515,7 +518,7 @@ SVG;
                 );
             }
 
-            return back()->with('success', 'Rappel envoyé à ' . $unpaid->count() . ' membre(s).');
+            return back()->with('success', 'Rappel envoyé à '.$unpaid->count().' membre(s).');
         } catch (\Throwable $e) {
             Log::error('Erreur relance groupee', ['tontine' => $tontine->id, 'error' => $e->getMessage()]);
 
@@ -603,9 +606,9 @@ SVG;
             $this->notifier->send(
                 $user,
                 'general',
-                "✅ Votre dette de ".number_format($debt->amount, 0, ',', ' ')." FCFA"
+                '✅ Votre dette de '.number_format($debt->amount, 0, ',', ' ').' FCFA'
                     ." envers la tontine « {$tontine->name} » a été soldée par le créateur."
-                    ." Vous êtes à nouveau éligible au tirage."
+                    .' Vous êtes à nouveau éligible au tirage.'
             );
 
             return back()->with('success', ($user->name ?? 'Ce membre').' — dette soldée. Il est à nouveau éligible au tirage.');
@@ -781,7 +784,7 @@ SVG;
             // Notifier le créateur qu'un membre a quitté
             if ($tontine->status === 'active') {
                 try {
-                    $creator = \App\Models\User::find($tontine->created_by);
+                    $creator = User::find($tontine->created_by);
                     if ($creator && $creator->id !== $user->id) {
                         $this->notifier->send(
                             $creator,
@@ -789,7 +792,8 @@ SVG;
                             "{$user->name} a quitté la tontine « {$tontine->name} »."
                         );
                     }
-                } catch (\Throwable) {}
+                } catch (\Throwable) {
+                }
             }
 
             return redirect()->route('tontines.index')->with('success', 'Vous avez quitté la tontine « '.$tontine->name.' ».');

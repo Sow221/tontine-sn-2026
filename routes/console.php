@@ -33,7 +33,7 @@ Schedule::call(function () {
         ->where('created_at', '<', now()->subHours(2))
         ->get();
 
-    $paytech = app(\App\Services\PayTechService::class);
+    $paytech = app(PayTechService::class);
 
     foreach ($stale as $tx) {
         $confirmed = false;
@@ -42,16 +42,16 @@ Schedule::call(function () {
         if ($tx->external_reference) {
             try {
                 $confirmed = $paytech->verifyWebhook(['token' => $tx->external_reference]);
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 $confirmed = false;
             }
         }
 
         if ($confirmed) {
-            app(\App\Services\PaymentService::class)->confirmPayment($tx);
+            app(PaymentService::class)->confirmPayment($tx);
         } else {
             $tx->update([
-                'status'         => 'failed',
+                'status' => 'failed',
                 'failure_reason' => 'Délai dépassé — aucune confirmation PayTech reçue',
             ]);
         }

@@ -27,7 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ActivityLogger::class,
         ]);
         $middleware->alias([
-            'role'            => RoleMiddleware::class,
+            'role' => RoleMiddleware::class,
             'check.user.active' => CheckUserActive::class,
             'verify.greenapi' => VerifyGreenApiWebhook::class,
         ]);
