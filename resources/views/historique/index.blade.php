@@ -200,8 +200,8 @@
                         @endif
                         <small class="text-muted">
                             {{ $tx->user->name ?? '—' }}
-                            @if($tx->user?->phone)
-                            <span class="text-muted opacity-75">· {{ $tx->user->phone }}</span>
+                            @if($tx->user?->phone_number)
+                            <span class="text-muted opacity-75">· {{ $tx->user->phone_number }}</span>
                             @endif
                         </small>
                     </div>

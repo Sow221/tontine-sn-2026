@@ -61,27 +61,32 @@
             </div>
             <div class="receipt-row">
                 <span class="key">Mode de paiement</span>
-                <span class="val d-flex align-items-center gap-2">
+                <span class="val" style="display:flex;align-items:center;gap:8px;">
                     @php
                         $opImgs = [
                             'wave'         => 'images/logo wave.webp',
                             'orange_money' => 'images/logo orange money.webp',
                             'free_money'   => 'images/logo free money.svg',
                         ];
+                        $opEmojis = [
+                            'cash' => '💵',
+                            'card' => '💳',
+                        ];
+                        $opLabel = match($transaction->method) {
+                            'wave'         => 'Wave',
+                            'orange_money' => 'Orange Money',
+                            'free_money'   => 'Free Money',
+                            'card'         => 'Carte bancaire',
+                            'cash'         => 'Espèces',
+                            default        => ucfirst($transaction->method),
+                        };
                     @endphp
                     @if(isset($opImgs[$transaction->method]))
-                    <img src="{{ asset($opImgs[$transaction->method]) }}" alt="" style="height:20px;width:auto;">
-                    @else
-                    <i class="fas fa-{{ match($transaction->method) { 'card' => 'credit-card', 'cash' => 'money-bill-wave', default => 'question' } }}" style="font-size:16px;color:{{ match($transaction->method) { 'card' => '#6366f1', 'cash' => '#009639', default => '#64748b' } }};"></i>
+                    <img src="{{ asset($opImgs[$transaction->method]) }}" alt="{{ $opLabel }}" style="height:20px;width:auto;vertical-align:middle;">
+                    @elseif(isset($opEmojis[$transaction->method]))
+                    <span style="font-size:16px;">{{ $opEmojis[$transaction->method] }}</span>
                     @endif
-                    {{ match($transaction->method) {
-                        'wave'         => 'Wave',
-                        'orange_money' => 'Orange Money',
-                        'free_money'   => 'Free Money',
-                        'card'         => 'Carte bancaire',
-                        'cash'         => 'Espèces',
-                        default        => ucfirst($transaction->method),
-                    } }}
+                    {{ $opLabel }}
                 </span>
             </div>
             <div class="receipt-row">
