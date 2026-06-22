@@ -263,9 +263,9 @@
 <section class="ls-live" id="types" aria-labelledby="types-title">
   <div class="ls-container">
     <div class="ls-live__header">
-      <div class="ls-section-badge">5 formules</div>
+      <div class="ls-section-badge">4 formules</div>
       <h2 id="types-title" class="ls-section-title">
-        5 types de tontines.<br>
+        4 types de tontines.<br>
         <span class="ls-text-green">Choisissez la v&ocirc;tre.</span>
       </h2>
       <p class="ls-section-desc" style="margin:0 auto;">
@@ -275,26 +275,14 @@
     <div class="ls-live__grid">
       <div class="ls-live__card ls-reveal">
         <div class="ls-live__card-top">
-          <span class="ls-live__card-name">Tontine Rotatoire</span>
-          <span class="ls-live__card-badge">Classique</span>
+          <span class="ls-live__card-name">Tontine Classique</span>
+          <span class="ls-live__card-badge">Rotation &amp; Tirage</span>
         </div>
         <div class="ls-live__card-meta">
-          Chacun cotise &agrave; tour de r&ocirc;le. L&rsquo;ordre est d&eacute;fini par le cr&eacute;ateur ou tir&eacute; au sort. Chaque membre re&ccedil;oit la cagnotte une fois.
+          Deux modes de tirage au choix : <strong>rotation</strong> (ordre d&eacute;fini) ou <strong>tirage al&eacute;atoire</strong> (score de cr&eacute;dit booste vos chances). Chaque membre re&ccedil;oit la cagnotte une fois.
         </div>
         <div class="ls-live__card-footer" style="border:none;padding-top:8px;">
-          <span style="font-size:0.75rem;color:var(--gray-400);">&#x1F4C5; Mensuel &middot; Hebdomadaire &middot; Quotidien</span>
-        </div>
-      </div>
-      <div class="ls-live__card ls-reveal ls-reveal--delay-1">
-        <div class="ls-live__card-top">
-          <span class="ls-live__card-name">Tontine par Tirage</span>
-          <span class="ls-live__card-badge ls-live__card-badge--random">Al&eacute;atoire</span>
-        </div>
-        <div class="ls-live__card-meta">
-          Le b&eacute;n&eacute;ficiaire est d&eacute;sign&eacute; par tirage au sort. Votre score de cr&eacute;dit augmente vos chances. Les membres peuvent exercer un droit de v&eacute;to.
-        </div>
-        <div class="ls-live__card-footer" style="border:none;padding-top:8px;">
-          <span style="font-size:0.75rem;color:var(--gray-400);">&#x1F3B2; Tirage pond&eacute;r&eacute; &middot; V&eacute;to d&eacute;mocratique</span>
+          <span style="font-size:0.75rem;color:var(--gray-400);">&#x1F4C5; Mensuel &middot; Hebdomadaire &middot; Quotidien &middot; V&eacute;to d&eacute;mocratique</span>
         </div>
       </div>
       <div class="ls-live__card ls-reveal ls-reveal--delay-2" style="border:2px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,#fef3c7);position:relative;overflow:hidden;">

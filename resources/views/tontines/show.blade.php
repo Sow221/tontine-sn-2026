@@ -477,6 +477,22 @@
         :action="route('cycles.draw', $currentCycle)"
         message="Effectuer le tirage ? Le bénéficiaire sera désigné selon les règles de la tontine."
         confirm-text="Confirmer" />
+
+    @if($tontine->type === 'forced_saving')
+    <x-confirm-modal id="close-saving-modal" method="POST" type="primary"
+        icon="lock-open"
+        :action="route('cycles.close-saving', $currentCycle)"
+        message="Clôturer l'épargne ? Chaque membre recevra son épargne personnelle accumulée. Cette action est irréversible."
+        confirm-text="Clôturer l'épargne" />
+    @endif
+
+    @if($tontine->veto_threshold)
+    <x-confirm-modal id="veto-modal" method="POST" type="danger"
+        icon="ban"
+        :action="route('cycles.veto', $currentCycle)"
+        message="Voter le véto sur ce tirage ?"
+        confirm-text="Voter le véto" />
+    @endif
     @endif
 
 </div>

@@ -70,13 +70,13 @@
                     {{ match($tontine->status) { 'active' => 'Active', 'suspended' => 'Suspendue', 'completed' => 'Terminée', default => 'En attente' } }}
                 </span>
                 <div class="d-flex gap-1 mt-1">
-                    @if($tontine->status === 'active')
+                    @if(auth()->user()->isAdmin() && $tontine->status === 'active')
                     <button type="button" class="btn btn-sm btn-outline-danger rounded-pill"
                             x-data
                             @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.tontines.suspend', $tontine) }}', message: 'Suspendre « {{ addslashes($tontine->name) }} » ?', confirmText: 'Oui, suspendre', type: 'danger' } }))">
                         <i class="fas fa-pause me-1"></i>Suspendre
                     </button>
-                    @elseif($tontine->status === 'suspended')
+                    @elseif(auth()->user()->isAdmin() && $tontine->status === 'suspended')
                     <form method="POST" action="{{ route('admin.tontines.reactivate', $tontine) }}">
                         @csrf
                         <button type="submit" class="btn btn-sm btn-outline-success rounded-pill">
@@ -89,7 +89,13 @@
         </div>
     </div>
     @empty
-    <div class="text-center py-4 text-muted">Aucune tontine trouvée.</div>
+    <div class="text-center py-5">
+        <div style="font-size:2.5rem;">🤝</div>
+        <p class="fw-semibold text-muted mb-1">Aucune tontine trouvée</p>
+        @if(request()->hasAny(['search','status','type']))
+        <small class="text-muted">Essayez d'autres filtres ou <a href="{{ route('admin.tontines') }}">voir toutes les tontines</a>.</small>
+        @endif
+    </div>
     @endforelse
 
     <div class="mt-3">{{ $tontines->withQueryString()->links() }}</div>

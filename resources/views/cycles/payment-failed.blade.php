@@ -6,11 +6,9 @@
 <div class="container py-5">
     <div class="text-center" style="max-width:400px; margin:0 auto;">
 
-        @if($cycle)
-        <a href="{{ route('tontines.show', $cycle->tontine) }}" class="back-link">
-            <i class="fas fa-arrow-left"></i>{{ $cycle->tontine->name }}
+        <a href="{{ $cycle ? route('tontines.show', $cycle->tontine) : route('dashboard') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i>{{ $cycle ? $cycle->tontine->name : 'Tableau de bord' }}
         </a>
-        @endif
 
         <div class="mb-4" style="font-size:64px;">❌</div>
         <h4 class="fw-bold mb-2">Paiement annulé</h4>

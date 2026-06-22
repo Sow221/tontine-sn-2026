@@ -170,7 +170,7 @@ Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
 });
 
 // ── Admin ──────────────────────────────────────────────────────────────────
-Route::middleware(['auth', 'verified', 'role:admin,super_admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     // Users
     Route::get('/users', [AdminUserController::class, 'index'])->name('users');

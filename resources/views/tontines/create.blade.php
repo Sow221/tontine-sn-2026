@@ -170,7 +170,8 @@
                 <div class="row g-3 mb-3" x-show="!['forced_saving','ceremonial'].includes(type)">
                     <div class="col-6">
                         <label class="form-label fw-semibold">Méthode tirage</label>
-                        <select name="draw_method" class="form-select">
+                        <select name="draw_method" class="form-select"
+                                :disabled="['forced_saving','ceremonial'].includes(type)">
                             <option value="sequential" {{ old('draw_method', 'sequential') === 'sequential' ? 'selected' : '' }}>Séquentiel</option>
                             <option value="random"     {{ old('draw_method') === 'random'                   ? 'selected' : '' }}>Aléatoire</option>
                         </select>
@@ -219,10 +220,10 @@
                     </div>
                 </div>
 
-                {{-- champs cachés pour forced_saving/ceremonial --}}
-                <div x-show="['forced_saving','ceremonial'].includes(type)">
+                {{-- injecté dans le DOM uniquement pour forced_saving/ceremonial --}}
+                <template x-if="['forced_saving','ceremonial'].includes(type)">
                     <input type="hidden" name="draw_method" value="sequential">
-                </div>
+                </template>
 
             </div>
         </div>

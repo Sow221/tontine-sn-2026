@@ -40,13 +40,18 @@ class Tontine extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'tontine_members')
-            ->withPivot('status', 'position', 'joined_at')
+            ->withPivot('status', 'position', 'joined_at', 'role')
             ->withTimestamps();
     }
 
     public function activeMembers(): BelongsToMany
     {
         return $this->members()->wherePivot('status', 'active');
+    }
+
+    public function managers(): BelongsToMany
+    {
+        return $this->members()->wherePivot('role', 'manager');
     }
 
     public function cycles(): HasMany
@@ -81,6 +86,14 @@ class Tontine extends Model
     public function isPublic(): bool
     {
         return $this->visibility === 'public';
+    }
+
+    public function isManager(User $user): bool
+    {
+        return $this->members()
+            ->where('users.id', $user->id)
+            ->wherePivot('role', 'manager')
+            ->exists();
     }
 
     public function scopePubliclyVisible($query)

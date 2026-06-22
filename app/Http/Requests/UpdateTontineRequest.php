@@ -26,7 +26,7 @@ class UpdateTontineRequest extends FormRequest
             'draw_method' => $isActive ? ['prohibited'] : ['required', 'in:random,sequential'],
             'weighted_draw' => ['nullable', 'boolean'],
             'veto_threshold' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'amount' => $isActive ? ['prohibited'] : ['required', 'integer', 'min:'.config('tontine.transaction.min_amount'), 'max:'.config('tontine.transaction.max_amount')],
+            'amount' => $isActive ? ['prohibited'] : ['required', 'integer', 'min:'.config('tontine.transaction.min_amount', 500), 'max:'.config('tontine.transaction.max_amount', 500000)],
             'frequency' => $isActive ? ['prohibited'] : ['required', 'in:daily,weekly,monthly'],
             'start_date' => $isActive ? ['prohibited'] : ['required', 'date'],
             'visibility' => ['nullable', 'in:private,public'],

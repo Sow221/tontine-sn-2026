@@ -43,6 +43,10 @@ class AdminTransactionController extends Controller
 
     public function forceConfirm(Transaction $transaction)
     {
+        if (! auth()->user()->isAdmin()) {
+            return back()->withErrors(['error' => 'Seul un super administrateur peut forcer la confirmation d\'une transaction.']);
+        }
+
         try {
             if ($transaction->status === 'success') {
                 return back()->withErrors(['error' => 'Transaction déjà confirmée.']);

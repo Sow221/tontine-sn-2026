@@ -114,7 +114,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function scopeKycPending(Builder $query): Builder
     {
-        return $query->where('kyc_status', 'pending');
+        return $query->where('kyc_status', 'pending')->whereNotNull('kyc_document');
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
@@ -122,11 +122,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isAdmin(): bool
     {
         return in_array($this->role, ['admin', 'super_admin']);
-    }
-
-    public function isSuperAdmin(): bool
-    {
-        return $this->role === 'super_admin';
     }
 
     public function hasTwoFactorEnabled(): bool

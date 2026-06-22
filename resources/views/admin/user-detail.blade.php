@@ -121,12 +121,12 @@
             <div class="card h-100">
                 <h6 class="fw-semibold mb-3">Actions</h6>
                 <div class="d-flex flex-column gap-2">
-                    @if($user->id !== auth()->id())
+                    @if($user->id !== auth()->id() && auth()->user()->isAdmin())
                     {{-- Changer le rôle --}}
                     <form method="POST" action="{{ route('admin.users.role', $user) }}" class="d-flex gap-2">
                         @csrf
                         <select name="role" class="form-select form-select-sm">
-                            @foreach(['member' => 'Membre', 'admin' => 'Admin', 'super_admin' => 'Super Admin'] as $val => $label)
+                            @foreach(['member' => 'Membre', 'admin' => 'Admin'] as $val => $label)
                             <option value="{{ $val }}" {{ $user->role === $val ? 'selected' : '' }}>{{ $label }}</option>
                             @endforeach
                         </select>
@@ -140,13 +140,13 @@
                         <i class="fas fa-{{ $user->is_active ? 'ban' : 'check-circle' }} me-1"></i>
                         {{ $user->is_active ? 'Désactiver le compte' : 'Activer le compte' }}
                     </button>
+                    @endif
                     {{-- KYC --}}
-                    @if($user->kyc_document && !$user->kyc_verified)
+                    @if($user->id !== auth()->id() && $user->kyc_document && !$user->kyc_verified)
                     <a href="{{ route('admin.users.kyc.review', $user) }}"
                        class="btn btn-sm btn-warning w-100 rounded-pill">
                         <i class="fas fa-search me-1"></i>Vérifier le KYC
                     </a>
-                    @endif
                     @endif
                 </div>
             </div>
@@ -214,7 +214,7 @@
             <span class="fw-bold {{ $tx->status === 'success' ? 'text-green' : ($tx->status === 'failed' ? 'text-danger' : 'text-warning') }}">
                 {{ number_format($tx->amount, 0, ',', ' ') }} F
             </span>
-            @if($tx->status === 'pending')
+            @if(auth()->user()->isAdmin() && $tx->status === 'pending')
             <button type="button" class="btn btn-sm btn-success rounded-pill"
                     x-data
                     @click.prevent="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'admin-confirm', action: '{{ route('admin.transactions.force-confirm', $tx) }}', message: 'Confirmer manuellement cette transaction ?', confirmText: 'Oui, confirmer', type: 'danger' } }))">

@@ -6,6 +6,7 @@ use App\Models\Cycle;
 use App\Models\Tontine;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class RoleByRoleTest extends TestCase
@@ -277,25 +278,6 @@ class RoleByRoleTest extends TestCase
             ->assertSessionHasErrors();
     }
 
-    public function test_super_admin_can_access_admin_pages(): void
-    {
-        $super = User::factory()->create(['role' => 'super_admin']);
-
-        $this->actingAs($super)->get(route('admin.dashboard'))->assertOk();
-        $this->actingAs($super)->get(route('admin.users'))->assertOk();
-        $this->actingAs($super)->get(route('admin.tontines'))->assertOk();
-    }
-
-    public function test_admin_cannot_assign_super_admin(): void
-    {
-        $admin = User::factory()->admin()->create();
-        $user = User::factory()->create(['role' => 'member']);
-
-        $this->actingAs($admin)
-            ->post(route('admin.users.role', $user), ['role' => 'super_admin'])
-            ->assertSessionHasErrors(['error']);
-    }
-
     // ── EDGE CASES ─────────────────────────────────────────────────────────
 
     public function test_explorer_handles_missing_description(): void
@@ -428,5 +410,70 @@ class RoleByRoleTest extends TestCase
         $this->actingAs($stranger)
             ->get(route('chat.show', $tontine))
             ->assertForbidden();
+    }
+
+    // ── KYC ──────────────────────────────────────────────────────────────
+
+    public function test_admin_can_review_kyc_document(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create();
+        $file = UploadedFile::fake()->image('cni.jpg', 100, 100);
+        $path = $file->store('kyc', 'local');
+        $member->update([
+            'kyc_document' => $path,
+            'kyc_status' => 'pending',
+            'kyc_document_hash' => hash_file('sha256', $file->getRealPath()),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.kyc.review', $member))
+            ->assertOk();
+    }
+
+    public function test_admin_can_approve_kyc(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create();
+        $file = UploadedFile::fake()->image('cni.jpg', 100, 100);
+        $path = $file->store('kyc', 'local');
+        $member->update([
+            'kyc_document' => $path,
+            'kyc_status' => 'pending',
+            'kyc_document_hash' => hash_file('sha256', $file->getRealPath()),
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.kyc.approve', $member))
+            ->assertSessionHasNoErrors();
+
+        $member->refresh();
+        $this->assertTrue($member->kyc_verified);
+        $this->assertEquals('approved', $member->kyc_status);
+        $this->assertNull($member->kyc_document);
+    }
+
+    public function test_admin_can_reject_kyc(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create();
+        $file = UploadedFile::fake()->image('cni.jpg', 100, 100);
+        $path = $file->store('kyc', 'local');
+        $member->update([
+            'kyc_document' => $path,
+            'kyc_status' => 'pending',
+            'kyc_document_hash' => hash_file('sha256', $file->getRealPath()),
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.kyc.reject', $member), [
+                'reason' => 'Document illisible',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $member->refresh();
+        $this->assertFalse($member->kyc_verified);
+        $this->assertEquals('rejected', $member->kyc_status);
+        $this->assertEquals('Document illisible', $member->kyc_rejected_reason);
     }
 }

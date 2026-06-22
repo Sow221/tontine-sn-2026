@@ -228,24 +228,18 @@
                             <i class="fas fa-file-pdf me-1"></i>{{ __('member.download_receipt') }}
                         </a>
                         @if($tx->isReversible())
-                        <form method="POST" action="{{ route('transactions.reverse', $tx) }}" class="d-inline">
-                            @csrf
-                            <button type="submit" class="small text-danger border-0 bg-transparent p-0 ms-2"
-                                    onclick="return confirm('Annuler ce paiement ?');">
-                                <i class="fas fa-undo me-1"></i>Annuler
-                            </button>
-                        </form>
+                        <button type="button" class="small text-danger border-0 bg-transparent p-0 ms-2"
+                                x-data
+                                @click="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'confirm-modal', action: '{{ route('transactions.reverse', $tx) }}', message: 'Annuler ce paiement de {{ number_format($tx->amount, 0, ',', ' ') }} FCFA ? Cette action est irréversible.', confirmText: 'Annuler le paiement', type: 'danger' } }))">
+                            <i class="fas fa-undo me-1"></i>Annuler
+                        </button>
                         @endif
                         @if($tx->method === 'cash' && empty($tx->metadata['disputed']))
-                        <form method="POST" action="{{ route('transactions.dispute', $tx) }}" class="d-inline"
-                              x-data x-ref="disputeForm{{ $tx->id }}">
-                            @csrf
-                            <input type="hidden" name="reason" value="Paiement espèces non effectué">
-                            <button type="button" class="small text-warning border-0 bg-transparent p-0 ms-2"
-                                    @click="if(confirm('Contester ce paiement espèces ? Le créateur de la tontine sera notifié.')) { $refs.disputeForm{{ $tx->id }}.submit(); }">
-                                <i class="fas fa-flag me-1"></i>Contester
-                            </button>
-                        </form>
+                        <button type="button" class="small text-warning border-0 bg-transparent p-0 ms-2"
+                                x-data
+                                @click="window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'dispute-modal', action: '{{ route('transactions.dispute', $tx) }}', message: 'Contester ce paiement espèces ? Le créateur de la tontine sera notifié.', confirmText: 'Contester', type: 'danger' } }))">
+                            <i class="fas fa-flag me-1"></i>Contester
+                        </button>
                         @elseif(!empty($tx->metadata['disputed']))
                         <span class="small ms-2" style="color:#f59e0b;"><i class="fas fa-flag me-1"></i>Contesté</span>
                         @endif
@@ -266,4 +260,8 @@
     @endif
 
 </div>
+
+<x-confirm-modal id="confirm-modal" method="POST" />
+<x-confirm-modal id="dispute-modal" method="POST" />
+
 @endsection
