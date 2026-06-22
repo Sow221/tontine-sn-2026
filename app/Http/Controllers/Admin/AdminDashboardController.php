@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Tontine;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\WhatsApp\GreenApiService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -67,10 +69,18 @@ class AdminDashboardController extends Controller
             $todayUsers = User::whereDate('created_at', today())->count();
             $todayKyc = User::whereNotNull('kyc_document')->whereDate('updated_at', today())->count();
 
+            $whatsappState = Cache::remember('whatsapp.state', 60, function () {
+                try {
+                    return app(GreenApiService::class)->getState();
+                } catch (\Throwable) {
+                    return null;
+                }
+            });
+
             return view('admin.dashboard', compact(
                 'stats', 'recentTontines', 'suspiciousTx', 'pendingKycUsers',
                 'chartMonths', 'chartAmounts', 'blockedTontines',
-                'todayTransactions', 'todayUsers', 'todayKyc'
+                'todayTransactions', 'todayUsers', 'todayKyc', 'whatsappState'
             ));
         } catch (\Throwable $e) {
             Log::error('Erreur admin dashboard', ['error' => $e->getMessage(), 'class' => get_class($e)]);
@@ -104,6 +114,30 @@ class AdminDashboardController extends Controller
             Log::error('Erreur stats parrainage', ['error' => $e->getMessage()]);
 
             return back()->withErrors(['error' => 'Erreur lors du chargement.']);
+        }
+    }
+
+    public function whatsappTest(Request $request)
+    {
+        $admin = $request->user();
+
+        if (empty($admin->phone_number)) {
+            return back()->withErrors(['whatsapp' => 'Ajoutez un numéro de téléphone à votre profil pour recevoir le test.']);
+        }
+
+        try {
+            $greenApi = app(GreenApiService::class);
+            $sent = $greenApi->sendText($admin->phone_number, "🔔 *Test TontineSN* ✅\n\nBonjour {$admin->name}, ce message confirme que les notifications WhatsApp fonctionnent correctement.\n\n_TontineSN - Gestion tontines Sénégal_");
+
+            if ($sent) {
+                return back()->with('status', "WhatsApp ✅ — Message test envoyé à {$admin->phone_number}");
+            }
+
+            return back()->withErrors(['whatsapp' => 'Échec de l\'envoi. Vérifiez l\'instance GreenAPI.']);
+        } catch (\Throwable $e) {
+            Log::error('WhatsApp test failed', ['error' => $e->getMessage()]);
+
+            return back()->withErrors(['whatsapp' => 'Erreur : '.$e->getMessage()]);
         }
     }
 

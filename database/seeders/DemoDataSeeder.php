@@ -788,7 +788,7 @@ class DemoDataSeeder extends Seeder
                     ['Yo les gars, on fait la collecte chez le même point ?', 0],
                     ['Oui, chez Moussa à côté du marché 🏪', 1],
                     ['Je passe à 17h après le boulot 🕐', 2],
-                    ['Semaine prochaine c\'est le tour de Tessier 👏', 0],
+                    ['Semaine prochaine c\'est le tour de Amadou 👏', 0],
                     ['Excellente nouvelle ! Je prépare le thé 🍵', 3],
                     ['Je ramène le pain 🥖', 4],
                 ],

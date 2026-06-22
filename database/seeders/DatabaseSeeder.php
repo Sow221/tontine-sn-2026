@@ -35,16 +35,16 @@ class DatabaseSeeder extends Seeder
 
         // ── 10 filleuls du manager ──
         $filleuls = [
-            ['tessier@tontinesn.test', 'Étienne Tessier', '+221 76 111 11 11', 'approved', true, 5],
-            ['rbousquet@tontinesn.test', 'Renaud Bousquet', '+221 77 222 22 22', 'approved', true, 4],
-            ['nbonnin@tontinesn.test', 'Nathalie Bonnin', '+221 76 333 33 33', 'approved', true, 4],
-            ['jlemonnier@tontinesn.test', 'Julie Lemonnier', '+221 77 444 44 44', 'approved', true, 3],
-            ['hugues@tontinesn.test', 'Hugues Martin', '+221 76 555 55 55', 'approved', true, 3],
-            ['pierre@tontinesn.test', 'Pierre Dupont', '+221 77 666 66 66', 'approved', true, 2],
-            ['maryse@tontinesn.test', 'Maryse Laporte', '+221 76 777 77 77', 'none', true, 2],
-            ['ilaurent@tontinesn.test', 'Isabelle Laurent', '+221 77 888 88 88', 'approved', true, 3],
-            ['hcarre@tontinesn.test', 'Henri Carré', '+221 76 999 99 99', 'rejected', true, 2],
-            ['roland@tontinesn.test', 'Roland Martinez', '+221 77 101 01 01', 'none', true, 1],
+            ['tessier@tontinesn.test', 'Amadou Touré', '+221 76 111 11 11', 'approved', true, 5],
+            ['rbousquet@tontinesn.test', 'Mamadou Lamine Ba', '+221 77 222 22 22', 'approved', true, 4],
+            ['nbonnin@tontinesn.test', 'Aïssatou Sall', '+221 76 333 33 33', 'approved', true, 4],
+            ['jlemonnier@tontinesn.test', 'Khadidiatou Diallo', '+221 77 444 44 44', 'approved', true, 3],
+            ['hugues@tontinesn.test', 'Oumar Sy', '+221 76 555 55 55', 'approved', true, 3],
+            ['pierre@tontinesn.test', 'Babacar Ndiaye', '+221 77 666 66 66', 'approved', true, 2],
+            ['maryse@tontinesn.test', 'Seynabou Niang', '+221 76 777 77 77', 'none', true, 2],
+            ['ilaurent@tontinesn.test', 'Maimouna Gueye', '+221 77 888 88 88', 'approved', true, 3],
+            ['hcarre@tontinesn.test', 'El Hadj Diop', '+221 76 999 99 99', 'rejected', true, 2],
+            ['roland@tontinesn.test', 'Pape Sène', '+221 77 101 01 01', 'none', true, 1],
         ];
         foreach ($filleuls as $i => [$email, $name, $phone, $kyc, $active, $months]) {
             $u = $this->create($email, $name, $phone, $pw, 'member', $kyc, $active, $months);
@@ -54,38 +54,38 @@ class DatabaseSeeder extends Seeder
         $membre->update(['referred_by' => $manager->id]);
 
         // ── Membre parraine un filleul ──
-        $this->create('parent.francoise@tontinesn.test', 'Françoise Parent', '+221 77 202 02 02',
+        $this->create('parent.francoise@tontinesn.test', 'Fatou Bintou Ba', '+221 77 202 02 02',
             $pw, 'member', 'none', true, 2)->update(['referred_by' => $membre->id]);
 
         // ── Tessier parraine 2 personnes ──
         $tessier = User::where('email', 'tessier@tontinesn.test')->first();
-        $this->create('lacombe.franck@tontinesn.test', 'Franck Lacombe', '+221 76 303 03 03',
+        $this->create('lacombe.franck@tontinesn.test', 'Youssoupha Mbaye', '+221 76 303 03 03',
             $pw, 'member', 'approved', true, 4)->update(['referred_by' => $tessier?->id]);
-        $this->create('blanchet.amedee@tontinesn.test', 'Amédée Blanchet', '+221 77 404 04 04',
+        $this->create('blanchet.amedee@tontinesn.test', 'Thierno Seydi', '+221 77 404 04 04',
             $pw, 'member', 'none', true, 1)->update(['referred_by' => $tessier?->id]);
 
         // ── 20 autres membres avec variété de profils ──
         $autres = [
-            ['npaul@tontinesn.test', 'Nicole Paul', '+221 76 505 05 05', 'approved', true, 4],
-            ['bleroy@tontinesn.test', 'Bertrand Leroy', '+221 77 606 06 06', 'approved', true, 3],
-            ['juliette@tontinesn.test', 'Juliette Carlier', '+221 76 707 07 07', 'approved', true, 2],
-            ['maurice@tontinesn.test', 'Maurice Arnaud', '+221 77 808 08 08', 'none', true, 2],
-            ['lejeune.eugene@tontinesn.test', 'Eugène Lejeune', '+221 76 909 09 09', 'rejected', true, 1],
-            ['chretien.joseph@tontinesn.test', 'Joseph Chrétien', '+221 77 010 10 10', 'none', true, 1],
-            ['diaz.salome@tontinesn.test', 'Salomé Diaz', '+221 76 111 12 12', 'approved', true, 3],
-            ['renaud.nicolas@tontinesn.test', 'Nicolas Renaud', '+221 77 222 23 23', 'none', true, 1],
-            ['leclerc.sabine@tontinesn.test', 'Sabine Leclerc', '+221 76 333 34 34', 'none', true, 2],
-            ['gilles.guillaume@tontinesn.test', 'Guillaume Gilles', '+221 77 444 45 45', 'approved', true, 3],
-            ['royer.jean@tontinesn.test', 'Jean Royer', '+221 76 555 56 56', 'none', true, 1],
-            ['menard.chantal@tontinesn.test', 'Chantal Ménard', '+221 77 666 67 67', 'rejected', true, 2],
-            ['leroux.alexandre@tontinesn.test', 'Alexandre Leroux', '+221 76 777 78 78', 'approved', true, 3],
-            ['morin.sylvie@tontinesn.test', 'Sylvie Morin', '+221 77 888 89 89', 'none', true, 1],
-            ['fournier.amedee@tontinesn.test', 'Amédée Fournier', '+221 76 999 90 90', 'none', true, 2],
-            ['garnier.alphonse@tontinesn.test', 'Alphonse Garnier', '+221 77 101 11 11', 'approved', true, 3],
-            ['chevalier.lucie@tontinesn.test', 'Lucie Chevalier', '+221 76 212 12 12', 'none', true, 1],
-            ['guerin.marc@tontinesn.test', 'Marc Guérin', '+221 77 313 13 13', 'approved', true, 2],
-            ['lemaitre.denis@tontinesn.test', 'Denis Lemaitre', '+221 76 414 14 14', 'none', true, 1],
-            ['roux.sylvain@tontinesn.test', 'Sylvain Roux', '+221 77 515 15 15', 'rejected', true, 1],
+            ['npaul@tontinesn.test', 'Ndèye Sow', '+221 76 505 05 05', 'approved', true, 4],
+            ['bleroy@tontinesn.test', 'Abdoulaye Thiam', '+221 77 606 06 06', 'approved', true, 3],
+            ['juliette@tontinesn.test', 'Coumba Faye', '+221 76 707 07 07', 'approved', true, 2],
+            ['maurice@tontinesn.test', 'Idrissa Dieng', '+221 77 808 08 08', 'none', true, 2],
+            ['lejeune.eugene@tontinesn.test', 'Eugène Ndiaye', '+221 76 909 09 09', 'rejected', true, 1],
+            ['chretien.joseph@tontinesn.test', 'Joseph Mendy', '+221 77 010 10 10', 'none', true, 1],
+            ['diaz.salome@tontinesn.test', 'Arame Sall', '+221 76 111 12 12', 'approved', true, 3],
+            ['renaud.nicolas@tontinesn.test', 'Souleymane Kane', '+221 77 222 23 23', 'none', true, 1],
+            ['leclerc.sabine@tontinesn.test', 'Diarra Ba', '+221 76 333 34 34', 'none', true, 2],
+            ['gilles.guillaume@tontinesn.test', 'Modou Fall', '+221 77 444 45 45', 'approved', true, 3],
+            ['royer.jean@tontinesn.test', 'Daouda Sall', '+221 76 555 56 56', 'none', true, 1],
+            ['menard.chantal@tontinesn.test', 'Rokhaya Fall', '+221 77 666 67 67', 'rejected', true, 2],
+            ['leroux.alexandre@tontinesn.test', 'Cheikh Ndiaye', '+221 76 777 78 78', 'approved', true, 3],
+            ['morin.sylvie@tontinesn.test', 'Khady Ndiaye', '+221 77 888 89 89', 'none', true, 1],
+            ['fournier.amedee@tontinesn.test', 'Mamour Diagne', '+221 76 999 90 90', 'none', true, 2],
+            ['garnier.alphonse@tontinesn.test', 'Aly Cissé', '+221 77 101 11 11', 'approved', true, 3],
+            ['chevalier.lucie@tontinesn.test', 'Absa Ndao', '+221 76 212 12 12', 'none', true, 1],
+            ['guerin.marc@tontinesn.test', 'Yoro Diallo', '+221 77 313 13 13', 'approved', true, 2],
+            ['lemaitre.denis@tontinesn.test', 'Mactar Seye', '+221 76 414 14 14', 'none', true, 1],
+            ['roux.sylvain@tontinesn.test', 'Serigne Sall', '+221 77 515 15 15', 'rejected', true, 1],
         ];
         foreach ($autres as [$email, $name, $phone, $kyc, $active, $months]) {
             $u = $this->create($email, $name, $phone, $pw, 'member', $kyc, $active, $months);

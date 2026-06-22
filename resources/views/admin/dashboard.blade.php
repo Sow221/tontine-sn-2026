@@ -75,6 +75,29 @@
         </div>
     </div>
 
+    {{-- WhatsApp Status — visible pendant la présentation --}}
+    <div class="card mb-4 border-{{ $whatsappState === 'authorized' ? 'success' : 'warning' }}">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fab fa-whatsapp fs-5 text-{{ $whatsappState === 'authorized' ? 'green' : 'warning' }}"></i>
+                <span class="fw-semibold small">WhatsApp</span>
+                @if($whatsappState === 'authorized')
+                <span class="badge bg-green-light text-green px-2 py-1" style="font-size:10px;">Connecté ✅</span>
+                @elseif($whatsappState)
+                <span class="badge bg-warning-light text-warning px-2 py-1" style="font-size:10px;">{{ $whatsappState }}</span>
+                @else
+                <span class="badge bg-secondary-light text-secondary px-2 py-1" style="font-size:10px;">Non configuré</span>
+                @endif
+            </div>
+            <form method="POST" action="{{ route('admin.whatsapp.test') }}" class="m-0">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-outline-green rounded-pill" style="font-size:11px;padding:3px 10px;min-height:auto;">
+                    <i class="fab fa-whatsapp me-1"></i>Tester →
+                </button>
+            </form>
+        </div>
+    </div>
+
     {{-- Actions rapides --}}
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">

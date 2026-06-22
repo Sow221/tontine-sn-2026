@@ -198,6 +198,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/notifications', [AdminLogController::class, 'notifications'])->name('notifications');
     Route::get('/stats', [AdminDashboardController::class, 'stats'])->name('stats');
     Route::get('/referrals', [AdminDashboardController::class, 'referrals'])->name('referrals');
+    Route::post('/whatsapp/test', [AdminDashboardController::class, 'whatsappTest'])->name('whatsapp.test')->middleware('throttle:3,1');
     Route::get('/api-docs', [ApiDocsController::class, 'index'])->name('api-docs');
     // Déploiement (protégé par auth admin + token dans l'env)
     Route::get('/deploy', [DeployController::class, 'migrate'])->name('deploy');

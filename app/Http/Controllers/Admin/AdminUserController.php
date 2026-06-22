@@ -252,7 +252,7 @@ class AdminUserController extends Controller
             $this->notifications->send($user, 'kyc_approved', 'Votre identité a été vérifiée avec succès.');
             Cache::forget('admin.stats');
 
-            $next = \App\Models\User::kycPending()->where('id', '!=', $user->id)->oldest()->first();
+            $next = User::kycPending()->where('id', '!=', $user->id)->oldest()->first();
 
             $endRedirect = redirect()->route('admin.users', ['kyc' => 'pending'])
                 ->with('success', 'KYC approuvé. Aucun autre dossier en attente.');
@@ -290,7 +290,7 @@ class AdminUserController extends Controller
             $this->notifications->send($user, 'kyc_rejected', "Votre document KYC a été refusé. Motif : {$reason}");
             Cache::forget('admin.stats');
 
-            $next = \App\Models\User::kycPending()->where('id', '!=', $user->id)->oldest()->first();
+            $next = User::kycPending()->where('id', '!=', $user->id)->oldest()->first();
 
             $endRedirect = redirect()->route('admin.users', ['kyc' => 'pending'])
                 ->with('success', 'KYC refusé. Aucun autre dossier en attente.');
