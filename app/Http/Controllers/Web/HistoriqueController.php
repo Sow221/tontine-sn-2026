@@ -122,6 +122,7 @@ class HistoriqueController extends Controller
             $decaissements = Cycle::where('beneficiary_id', $user->id)
                 ->where('status', 'paid')
                 ->with('tontine')
+                ->withSum(['transactions as collected_amount' => fn ($q) => $q->where('status', 'success')], 'amount')
                 ->orderByDesc('drawn_at')
                 ->get();
 

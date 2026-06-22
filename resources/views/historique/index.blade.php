@@ -54,7 +54,7 @@
                 </div>
                 <div class="text-end" style="flex-shrink:0;">
                     <span class="fw-bold text-green" style="font-size:15px;">
-                        + {{ number_format($cycle->total_collected, 0, ',', ' ') }} FCFA
+                        + {{ number_format($cycle->collected_amount ?? $cycle->total_collected, 0, ',', ' ') }} FCFA
                     </span>
                     <br>
                     <span class="badge-pot-recu">Pot reçu</span>
