@@ -315,16 +315,31 @@
             @csrf @method('PUT')
             <div class="mb-3">
                 <label class="form-label fw-semibold small">Mot de passe actuel</label>
-                <input type="password" name="current_password" class="form-control @error('current_password') is-invalid @enderror" required>
+                <div class="input-group">
+                    <input type="password" name="current_password" id="current_password" class="form-control @error('current_password') is-invalid @enderror" required>
+                    <button type="button" class="btn btn-outline-secondary" onclick="togglePwd('current_password', this)" aria-label="Afficher">
+                        <i class="fas fa-eye" aria-hidden="true"></i>
+                    </button>
+                </div>
                 @error('current_password') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
             <div class="mb-3">
                 <label class="form-label fw-semibold small">Nouveau mot de passe</label>
-                <input type="password" name="password" class="form-control" minlength="8" required>
+                <div class="input-group">
+                    <input type="password" name="password" id="profile_password" class="form-control" minlength="8" required>
+                    <button type="button" class="btn btn-outline-secondary" onclick="togglePwd('profile_password', this)" aria-label="Afficher">
+                        <i class="fas fa-eye" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
             <div class="mb-3">
                 <label class="form-label fw-semibold small">Confirmer le nouveau mot de passe</label>
-                <input type="password" name="password_confirmation" class="form-control" required>
+                <div class="input-group">
+                    <input type="password" name="password_confirmation" id="profile_password_confirmation" class="form-control" required>
+                    <button type="button" class="btn btn-outline-secondary" onclick="togglePwd('profile_password_confirmation', this)" aria-label="Afficher">
+                        <i class="fas fa-eye" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
             <button type="submit" class="btn btn-outline-primary w-100">
                 <i class="fas fa-lock me-2"></i>Mettre à jour le mot de passe
@@ -404,4 +419,19 @@
 
 
 </div>
+@push('scripts')
+<script nonce="{{ $cspNonce ?? '' }}">
+function togglePwd(fieldId, btn) {
+    const input = document.getElementById(fieldId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+</script>
+@endpush
 @endsection
