@@ -5,6 +5,7 @@
 @section('content')
 <div class="container py-4" x-data="{
     type: '{{ old('type', 'fixed') }}',
+    open: {{ $errors->hasAny(['quorum','veto_threshold','weighted_draw','draw_method','penalty_rate']) ? 'true' : 'false' }},
     needsEndDate() { return ['forced_saving', 'ceremonial'].includes(this.type) },
     endDateLabel() {
         if (this.type === 'ceremonial')    return 'Date de l\'événement *'
@@ -159,7 +160,7 @@
         </div>
 
         {{-- Options avancées --}}
-        <div class="mb-4" x-data="{ open: {{ $errors->hasAny(['quorum','veto_threshold','weighted_draw','draw_method','penalty_rate']) ? 'true' : 'false' }} }">
+        <div class="mb-4">
             <button type="button" class="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-between"
                     @click="open = !open">
                 <span><i class="fas fa-sliders-h me-2"></i>Options avancées (quorum, véto, tirage pondéré…)</span>

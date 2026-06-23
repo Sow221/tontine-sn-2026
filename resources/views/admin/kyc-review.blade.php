@@ -90,8 +90,8 @@
                     @endif
                 @else
                     <p class="text-muted small mb-0">
-                        Tesseract OCR non installé sur ce serveur. Vérification visuelle manuelle requise.
-                        <br><a href="https://tesseract-ocr.github.io/tessdoc/Installation.html" target="_blank" class="small">Installer Tesseract</a>
+                        Service OCR non disponible (clé API non configurée ou limite atteinte).
+                        Vérification visuelle manuelle requise.
                     </p>
                 @endif
             </div>
