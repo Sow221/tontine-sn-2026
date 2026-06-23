@@ -231,7 +231,7 @@ class NotificationService
     public function notifyBeneficiary(User $user, string $tontineName, int $amount): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $msg = "🎉 Bonjour {$user->name}, c'est votre tour ! Vous êtes bénéficiaire de la tontine {$tontineName}. Montant à recevoir : {$montant} FCFA. Connectez-vous sur TontineSN.";
+        $msg = "🎉 *C'est votre tour !*\n\nBonjour {$user->name}, vous êtes désigné(e) bénéficiaire de la tontine *{$tontineName}*.\n\n💰 Montant à recevoir : *{$montant} FCFA*\n\n_Connectez-vous sur TontineSN pour voir les détails._";
 
         $this->sendWebPush($user, "🎉 C'est votre tour !", "Bénéficiaire de {$tontineName} — {$montant} FCFA à recevoir");
 
@@ -254,8 +254,8 @@ class NotificationService
     public function notifyPaymentConfirmed(User $user, int $amount, string $tontineName, ?int $cycleNumber = null): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $cycleInfo = $cycleNumber ? " (Cycle n°{$cycleNumber})" : '';
-        $msg = "✅ Bonjour {$user->name}, paiement confirmé{$cycleInfo} ! Votre cotisation de {$montant} FCFA pour la tontine {$tontineName} a été enregistrée. Merci !";
+        $cycleInfo = $cycleNumber ? " — Cycle n°{$cycleNumber}" : '';
+        $msg = "✅ *Paiement confirmé*{$cycleInfo}\n\nBonjour {$user->name}, votre cotisation de *{$montant} FCFA* pour la tontine *{$tontineName}* a bien été enregistrée.\n\n_Merci pour votre ponctualité !_ 🙏";
         $receipt = [
             'userName' => $user->name,
             'amount' => $amount,
@@ -306,7 +306,7 @@ class NotificationService
     public function notifyPaymentReminder(User $user, string $tontineName, int $amount, int $daysLeft): void
     {
         $montant = number_format($amount, 0, ',', ' ');
-        $msg = "🔔 Bonjour {$user->name}, rappel : votre cotisation de {$montant} FCFA pour la tontine {$tontineName} est due dans {$daysLeft} jour(s). Payez à temps pour garder votre score crédit.";
+        $msg = "🔔 *Rappel cotisation*\n\nBonjour {$user->name}, votre cotisation de *{$montant} FCFA* pour la tontine *{$tontineName}* est due dans *{$daysLeft} jour(s)*.\n\n_Payez à temps pour garder votre score crédit._ ⭐";
 
         $this->sendWebPush($user, '🔔 Rappel cotisation', "{$montant} FCFA — dans {$daysLeft} j — {$tontineName}");
 
