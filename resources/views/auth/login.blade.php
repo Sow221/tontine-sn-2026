@@ -64,6 +64,11 @@
                            placeholder="••••••••"
                            autocomplete="current-password"
                            required>
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="togglePwd('password', this)"
+                            aria-label="Afficher le mot de passe">
+                        <i class="fas fa-eye" aria-hidden="true"></i>
+                    </button>
                     @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
@@ -99,5 +104,18 @@
     </div>
 </div>
 
+<script>
+function togglePwd(fieldId, btn) {
+    const input = document.getElementById(fieldId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+</script>
 </body>
 </html>
