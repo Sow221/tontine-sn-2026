@@ -24,3 +24,14 @@ railway.toml.bak
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Environment files: only the example and test configs are tracked
+.env.*
+!.env.example
+!.env.testing
+
+# Local backups and private keys
+*.backup
+*.bak
+*.pem
+*.key
